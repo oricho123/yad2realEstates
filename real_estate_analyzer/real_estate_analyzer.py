@@ -15,6 +15,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 from dash.exceptions import PreventUpdate
+import time
 
 def parse_arguments():
     """Parse command line arguments"""
@@ -59,10 +60,14 @@ def create_empty_dataframe():
 def create_dashboard(df, port=8051):
     """Create and run an interactive Dash app for visualizing the data"""
     
-    # Create a custom stylesheet
+    # Create a custom stylesheet with enhanced design
     external_stylesheets = [
         {
-            'href': 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap',
+            'href': 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
+            'rel': 'stylesheet'
+        },
+        {
+            'href': 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
             'rel': 'stylesheet'
         }
     ]
@@ -104,349 +109,651 @@ def create_dashboard(df, port=8051):
         {'label': 'באר שבע', 'value': 900}
     ]
     
-    # Define CSS styles (similar to vehicle analyzer)
+    # Enhanced CSS styles with modern design
     styles = {
         'container': {
-            'font-family': 'Roboto, sans-serif',
-            'max-width': '1200px',
+            'font-family': 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+            'max-width': '1400px',
             'margin': '0 auto',
             'padding': '20px',
-            'background-color': '#f9f9f9',
-            'border-radius': '8px',
-            'box-shadow': '0 4px 8px rgba(0,0,0,0.1)'
+            'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'min-height': '100vh'
+        },
+        'content_wrapper': {
+            'background-color': 'rgba(255, 255, 255, 0.95)',
+            'border-radius': '20px',
+            'padding': '30px',
+            'box-shadow': '0 20px 40px rgba(0,0,0,0.1)',
+            'backdrop-filter': 'blur(10px)'
         },
         'header': {
-            'background-color': '#2c3e50',
+            'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             'color': 'white',
-            'padding': '15px 20px',
-            'margin-bottom': '20px',
-            'border-radius': '5px',
-            'text-align': 'center'
+            'padding': '25px',
+            'margin': '-30px -30px 30px -30px',
+            'border-radius': '20px 20px 0 0',
+            'text-align': 'center',
+            'position': 'relative',
+            'overflow': 'hidden'
+        },
+        'header_overlay': {
+            'position': 'absolute',
+            'top': '0',
+            'left': '0',
+            'right': '0',
+            'bottom': '0',
+            'background': 'rgba(255,255,255,0.1)',
+            'z-index': '1'
+        },
+        'header_content': {
+            'position': 'relative',
+            'z-index': '2'
         },
         'filter_container': {
-            'display': 'flex',
-            'flex-wrap': 'wrap',
-            'gap': '15px',
-            'background-color': 'white',
-            'padding': '15px',
-            'border-radius': '5px',
-            'box-shadow': '0 2px 4px rgba(0,0,0,0.05)',
-            'margin-bottom': '20px'
+            'display': 'grid',
+            'grid-template-columns': 'repeat(auto-fit, minmax(280px, 1fr))',
+            'gap': '20px',
+            'background': 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+            'padding': '25px',
+            'border-radius': '15px',
+            'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
+            'margin-bottom': '25px',
+            'backdrop-filter': 'blur(10px)',
+            'border': '1px solid rgba(255,255,255,0.2)'
         },
         'filter': {
-            'width': '23%',
-            'min-width': '200px',
-            'padding': '10px'
+            'background': 'rgba(255,255,255,0.9)',
+            'padding': '20px',
+            'border-radius': '12px',
+            'box-shadow': '0 4px 15px rgba(0,0,0,0.08)',
+            'border': '1px solid rgba(255,255,255,0.3)',
+            'transition': 'all 0.3s ease'
         },
         'label': {
-            'font-weight': 'bold',
-            'margin-bottom': '5px',
-            'color': '#2c3e50'
+            'font-weight': '600',
+            'margin-bottom': '10px',
+            'color': '#2c3e50',
+            'font-size': '14px',
+            'display': 'flex',
+            'align-items': 'center',
+            'gap': '8px'
         },
         'graph': {
-            'background-color': 'white',
-            'padding': '15px',
-            'border-radius': '5px',
-            'box-shadow': '0 2px 4px rgba(0,0,0,0.05)',
-            'margin-bottom': '20px'
+            'background': 'rgba(255,255,255,0.95)',
+            'padding': '25px',
+            'border-radius': '15px',
+            'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
+            'margin-bottom': '25px',
+            'border': '1px solid rgba(255,255,255,0.2)'
         },
         'summary': {
-            'background-color': 'white',
-            'padding': '15px',
-            'border-radius': '5px',
-            'box-shadow': '0 2px 4px rgba(0,0,0,0.05)'
+            'background': 'rgba(255,255,255,0.95)',
+            'padding': '25px',
+            'border-radius': '15px',
+            'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
+            'border': '1px solid rgba(255,255,255,0.2)'
         },
         'summary_header': {
             'color': '#2c3e50',
-            'border-bottom': '2px solid #3498db',
-            'padding-bottom': '10px',
-            'margin-bottom': '15px'
+            'border-bottom': '3px solid #667eea',
+            'padding-bottom': '15px',
+            'margin-bottom': '20px',
+            'font-weight': '600'
         },
         'click_instruction': {
             'text-align': 'center',
             'font-style': 'italic',
-            'color': '#3498db',
-            'margin': '10px 0',
-            'padding': '8px',
-            'background-color': '#f0f7ff',
-            'border-radius': '5px',
-            'border-left': '3px solid #3498db'
+            'color': '#667eea',
+            'margin': '15px 0',
+            'padding': '15px',
+            'background': 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+            'border-radius': '12px',
+            'border-left': '4px solid #667eea',
+            'font-weight': '500'
         },
         'search_container': {
-            'background-color': '#e8f5e8',
-            'padding': '20px',
-            'border-radius': '5px',
-            'box-shadow': '0 2px 4px rgba(0,0,0,0.05)',
-            'margin-bottom': '20px',
-            'border-left': '4px solid #27ae60'
+            'background': 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
+            'padding': '25px',
+            'border-radius': '15px',
+            'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
+            'margin-bottom': '25px',
+            'border': '1px solid rgba(255,255,255,0.3)'
         },
         'search_header': {
-            'color': '#27ae60',
-            'font-weight': 'bold',
-            'font-size': '18px',
-            'margin-bottom': '15px',
-            'text-align': 'center'
+            'color': '#155724',
+            'font-weight': '700',
+            'font-size': '20px',
+            'margin-bottom': '20px',
+            'text-align': 'center',
+            'display': 'flex',
+            'align-items': 'center',
+            'justify-content': 'center',
+            'gap': '10px'
         },
         'search_controls': {
-            'display': 'flex',
-            'flex-wrap': 'wrap',
-            'gap': '15px',
+            'display': 'grid',
+            'grid-template-columns': 'repeat(auto-fit, minmax(200px, 1fr))',
+            'gap': '20px',
             'align-items': 'end'
         },
         'search_filter': {
-            'width': '20%',
-            'min-width': '150px',
-            'padding': '5px'
+            'background': 'rgba(255,255,255,0.9)',
+            'padding': '15px',
+            'border-radius': '10px',
+            'box-shadow': '0 4px 15px rgba(0,0,0,0.08)'
         },
         'scrape_button': {
-            'background-color': '#27ae60',
+            'background': 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
             'color': 'white',
             'border': 'none',
-            'padding': '12px 24px',
-            'border-radius': '5px',
+            'padding': '15px 25px',
+            'border-radius': '10px',
             'cursor': 'pointer',
-            'font-weight': 'bold',
+            'font-weight': '600',
             'font-size': '14px',
-            'min-width': '150px',
-            'height': '40px'
+            'min-width': '180px',
+            'height': '50px',
+            'transition': 'all 0.3s ease',
+            'box-shadow': '0 4px 15px rgba(40, 167, 69, 0.3)',
+            'display': 'flex',
+            'align-items': 'center',
+            'justify-content': 'center',
+            'gap': '8px'
+        },
+        'loading_overlay': {
+            'position': 'fixed',
+            'top': '0',
+            'left': '0',
+            'right': '0',
+            'bottom': '0',
+            'background': 'rgba(0,0,0,0.7)',
+            'display': 'flex',
+            'align-items': 'center',
+            'justify-content': 'center',
+            'z-index': '9999',
+            'backdrop-filter': 'blur(5px)'
+        },
+        'loading_content': {
+            'background': 'white',
+            'padding': '40px',
+            'border-radius': '20px',
+            'text-align': 'center',
+            'box-shadow': '0 20px 40px rgba(0,0,0,0.3)',
+            'max-width': '400px',
+            'margin': '20px'
+        },
+        'spinner': {
+            'width': '60px',
+            'height': '60px',
+            'border': '6px solid #f3f3f3',
+            'border-top': '6px solid #667eea',
+            'border-radius': '50%',
+            'animation': 'spin 1s linear infinite',
+            'margin': '0 auto 20px auto'
         },
         'loading_text': {
-            'color': '#e67e22',
-            'font-weight': 'bold',
-            'text-align': 'center',
-            'padding': '10px',
-            'background-color': '#fef9e7',
-            'border-radius': '5px',
-            'border-left': '3px solid #e67e22'
+            'color': '#667eea',
+            'font-weight': '600',
+            'font-size': '18px',
+            'margin-bottom': '10px'
+        },
+        'loading_subtitle': {
+            'color': '#6c757d',
+            'font-size': '14px',
+            'line-height': '1.5'
         }
     }
     
-    # Create the app layout
+    # Add custom CSS for animations and enhanced styling
+    app.index_string = '''
+    <!DOCTYPE html>
+    <html>
+        <head>
+            {%metas%}
+            <title>{%title%}</title>
+            {%favicon%}
+            {%css%}
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                
+                @keyframes pulse {
+                    0% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                    100% { opacity: 1; }
+                }
+                
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                
+                .fade-in {
+                    animation: fadeIn 0.6s ease-out;
+                }
+                
+                .pulse {
+                    animation: pulse 2s infinite;
+                }
+                
+                .filter-hover:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+                }
+                
+                .button-hover:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4) !important;
+                }
+                
+                body {
+                    margin: 0;
+                    padding: 0;
+                }
+                
+                .loading-dots::after {
+                    content: '';
+                    animation: dots 1.5s steps(5, end) infinite;
+                }
+                
+                @keyframes dots {
+                    0%, 20% { content: ''; }
+                    40% { content: '.'; }
+                    60% { content: '..'; }
+                    80%, 100% { content: '...'; }
+                }
+            </style>
+        </head>
+        <body>
+            {%app_entry%}
+            <footer>
+                {%config%}
+                {%scripts%}
+                {%renderer%}
+            </footer>
+        </body>
+    </html>
+    '''
+    
+    # Enhanced loading component
+    def create_loading_component(component_id, children, loading_text="Loading"):
+        return dcc.Loading(
+            id=f"loading-{component_id}",
+            type="default",
+            children=children,
+            style={'margin': '20px 0'},
+            color='#667eea',
+            overlay_style={
+                "visibility": "visible",
+                "filter": "blur(2px)",
+                "opacity": 0.5
+            },
+            custom_spinner=html.Div([
+                html.Div(className="spinner", style=styles['spinner']),
+                html.Div(loading_text, style=styles['loading_text']),
+                html.Div("Please wait while we process your request...", style=styles['loading_subtitle'])
+            ], style={'text-align': 'center'})
+        )
+    
+    # Create the enhanced app layout
     app.layout = html.Div([
-        # Header
-        html.Div([
-            html.H1("🏠 Real Estate Price Analysis Dashboard", style={'margin': '0'})
-        ], style=styles['header']),
+        # Global loading overlay (initially hidden)
+        html.Div(
+            id='global-loading-overlay',
+            children=[
+                html.Div([
+                    html.Div(style=styles['spinner']),
+                    html.Div("Processing your request", style=styles['loading_text'], className="loading-dots"),
+                    html.Div("This may take a few moments...", style=styles['loading_subtitle'])
+                ], style=styles['loading_content'])
+            ],
+            style={**styles['loading_overlay'], 'display': 'none'},
+            className="fade-in"
+        ),
         
-        # Search Controls Section
+        # Main content wrapper
         html.Div([
-            html.Div("🔍 Search New Properties", style=styles['search_header']),
+            # Enhanced Header
+            html.Div([
+                html.Div(style=styles['header_overlay']),
+                html.Div([
+                    html.H1([
+                        html.I(className="fas fa-home", style={'margin-right': '15px'}),
+                        "Real Estate Price Analysis Dashboard"
+                    ], style={'margin': '0', 'font-weight': '700', 'font-size': '28px'}),
+                    html.P("Discover market insights with interactive data visualization", 
+                           style={'margin': '10px 0 0 0', 'opacity': '0.9', 'font-size': '16px'})
+                ], style=styles['header_content'])
+            ], style=styles['header']),
+            
+            # Enhanced Search Controls Section
             html.Div([
                 html.Div([
-                    html.Label("City:", style=styles['label']),
-                    dcc.Dropdown(
-                        id='search-city-dropdown',
-                        options=city_options,
-                        value=9500,
-                        clearable=False
-                    ),
-                ], style=styles['search_filter']),
-                
+                    html.I(className="fas fa-search", style={'margin-right': '10px'}),
+                    "Search New Properties"
+                ], style=styles['search_header']),
                 html.Div([
-                    html.Label("Area ID (Optional):", style=styles['label']),
-                    dcc.Input(
-                        id='search-area',
-                        type='number',
-                        value=6,
-                        placeholder="Area ID",
-                        style={'width': '100%', 'padding': '8px', 'border-radius': '4px', 'border': '1px solid #ddd'}
-                    ),
-                ], style=styles['search_filter']),
-                
-                html.Div([
-                    html.Label("Min Price (₪):", style=styles['label']),
-                    dcc.Input(
-                        id='search-min-price',
-                        type='number',
-                        value=1000000,
-                        step=50000,
-                        style={'width': '100%', 'padding': '8px', 'border-radius': '4px', 'border': '1px solid #ddd'}
-                    ),
-                ], style=styles['search_filter']),
-                
-                html.Div([
-                    html.Label("Max Price (₪):", style=styles['label']),
-                    dcc.Input(
-                        id='search-max-price',
-                        type='number',
-                        value=2000000,
-                        step=50000,
-                        style={'width': '100%', 'padding': '8px', 'border-radius': '4px', 'border': '1px solid #ddd'}
-                    ),
-                ], style=styles['search_filter']),
-                
-                html.Div([
-                    html.Label("Min Rooms:", style=styles['label']),
-                    dcc.Dropdown(
-                        id='search-min-rooms',
-                        options=[{'label': 'Any', 'value': 'any'}] + [
-                            {'label': f'{i}', 'value': i} for i in [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6]
-                        ],
-                        value='any',
-                        clearable=True,
-                        placeholder="Min rooms"
-                    ),
-                ], style=styles['search_filter']),
-                
-                html.Div([
-                    html.Label("Max Rooms:", style=styles['label']),
-                    dcc.Dropdown(
-                        id='search-max-rooms',
-                        options=[{'label': 'Any', 'value': 'any'}] + [
-                            {'label': f'{i}', 'value': i} for i in [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8]
-                        ],
-                        value='any',
-                        clearable=True,
-                        placeholder="Max rooms"
-                    ),
-                ], style=styles['search_filter']),
-                
-                html.Div([
-                    html.Label("Min sqm:", style=styles['label']),
-                    dcc.Input(
-                        id='search-min-sqm',
-                        type='number',
-                        value=None,
-                        placeholder="Min sqm",
-                        style={'width': '100%', 'padding': '8px', 'border-radius': '4px', 'border': '1px solid #ddd'}
-                    ),
-                ], style=styles['search_filter']),
-                
-                html.Div([
-                    html.Label("Max sqm:", style=styles['label']),
-                    dcc.Input(
-                        id='search-max-sqm',
-                        type='number',
-                        value=None,
-                        placeholder="Max sqm",
-                        style={'width': '100%', 'padding': '8px', 'border-radius': '4px', 'border': '1px solid #ddd'}
-                    ),
-                ], style=styles['search_filter']),
-                
-                html.Div([
-                    html.Label("Action:", style=styles['label']),
-                    html.Button(
-                        "🔍 Scrape New Data", 
+                    html.Div([
+                        html.Label([
+                            html.I(className="fas fa-map-marker-alt", style={'margin-right': '5px'}),
+                            "City:"
+                        ], style=styles['label']),
+                        dcc.Dropdown(
+                            id='search-city-dropdown',
+                            options=city_options,
+                            value=9500,
+                            clearable=False,
+                            style={'border-radius': '8px'}
+                        ),
+                    ], style=styles['search_filter'], className="filter-hover"),
+                    
+                    html.Div([
+                        html.Label([
+                            html.I(className="fas fa-map", style={'margin-right': '5px'}),
+                            "Area ID:"
+                        ], style=styles['label']),
+                        dcc.Input(
+                            id='search-area',
+                            type='number',
+                            value=6,
+                            placeholder="Area ID",
+                            style={'width': '100%', 'padding': '12px', 'border-radius': '8px', 
+                                   'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        ),
+                    ], style=styles['search_filter'], className="filter-hover"),
+                    
+                    html.Div([
+                        html.Label([
+                            html.I(className="fas fa-shekel-sign", style={'margin-right': '5px'}),
+                            "Min Price:"
+                        ], style=styles['label']),
+                        dcc.Input(
+                            id='search-min-price',
+                            type='number',
+                            value=1000000,
+                            step=50000,
+                            style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
+                                   'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        ),
+                    ], style=styles['search_filter'], className="filter-hover"),
+                    
+                    html.Div([
+                        html.Label([
+                            html.I(className="fas fa-shekel-sign", style={'margin-right': '5px'}),
+                            "Max Price:"
+                        ], style=styles['label']),
+                        dcc.Input(
+                            id='search-max-price',
+                            type='number',
+                            value=2000000,
+                            step=50000,
+                            style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
+                                   'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        ),
+                    ], style=styles['search_filter'], className="filter-hover"),
+                    
+                    html.Div([
+                        html.Label([
+                            html.I(className="fas fa-bed", style={'margin-right': '5px'}),
+                            "Min Rooms:"
+                        ], style=styles['label']),
+                        dcc.Dropdown(
+                            id='search-min-rooms',
+                            options=[{'label': 'Any', 'value': 'any'}] + [
+                                {'label': f'{i}', 'value': i} for i in [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6]
+                            ],
+                            value='any',
+                            clearable=True,
+                            placeholder="Min rooms"
+                        ),
+                    ], style=styles['search_filter'], className="filter-hover"),
+                    
+                    html.Div([
+                        html.Label([
+                            html.I(className="fas fa-bed", style={'margin-right': '5px'}),
+                            "Max Rooms:"
+                        ], style=styles['label']),
+                        dcc.Dropdown(
+                            id='search-max-rooms',
+                            options=[{'label': 'Any', 'value': 'any'}] + [
+                                {'label': f'{i}', 'value': i} for i in [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8]
+                            ],
+                            value='any',
+                            clearable=True,
+                            placeholder="Max rooms"
+                        ),
+                    ], style=styles['search_filter'], className="filter-hover"),
+                    
+                    html.Div([
+                        html.Label([
+                            html.I(className="fas fa-ruler-combined", style={'margin-right': '5px'}),
+                            "Min sqm:"
+                        ], style=styles['label']),
+                        dcc.Input(
+                            id='search-min-sqm',
+                            type='number',
+                            value=None,
+                            placeholder="Min sqm",
+                            style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
+                                   'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        ),
+                    ], style=styles['search_filter'], className="filter-hover"),
+                    
+                    html.Div([
+                        html.Label([
+                            html.I(className="fas fa-ruler-combined", style={'margin-right': '5px'}),
+                            "Max sqm:"
+                        ], style=styles['label']),
+                        dcc.Input(
+                            id='search-max-sqm',
+                            type='number',
+                            value=None,
+                            placeholder="Max sqm",
+                            style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
+                                   'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        ),
+                    ], style=styles['search_filter'], className="filter-hover"),
+                    
+                    html.Div([
+                        html.Label("Action:", style=styles['label']),
+                        html.Button([
+                            html.I(id='scrape-button-icon', className="fas fa-search", style={'margin-right': '8px'}),
+                            html.Span(id='scrape-button-text', children="Scrape New Data")
+                        ], 
                         id='scrape-button', 
                         style=styles['scrape_button'],
+                        className="button-hover",
                         n_clicks=0
+                        ),
+                    ], style=styles['search_filter']),
+                ], style=styles['search_controls']),
+                
+                # Enhanced Loading/Status message
+                html.Div(id='scrape-status', style={'margin-top': '20px'}),
+            ], style=styles['search_container'], className="fade-in"),
+            
+            # Enhanced Current Data Filter section
+            html.Div([
+                html.Div([
+                    html.Label([
+                        html.I(className="fas fa-shekel-sign", style={'margin-right': '5px'}),
+                        "Price Range:"
+                    ], style=styles['label']),
+                    create_loading_component("price-filter", 
+                        dcc.RangeSlider(
+                            id='price-range-slider',
+                            min=0 if len(df) == 0 else df['price'].min(),
+                            max=10000000 if len(df) == 0 else df['price'].max(),
+                            value=[0, 10000000] if len(df) == 0 else [df['price'].min(), df['price'].max()],
+                            marks={
+                                0: "₪0", 10000000: "₪10,000,000"
+                            } if len(df) == 0 else {
+                                int(df['price'].min()): f"₪{df['price'].min():,.0f}",
+                                int(df['price'].max()): f"₪{df['price'].max():,.0f}"
+                            },
+                            tooltip={"placement": "bottom", "always_visible": True}
+                        ), "Updating price range"
                     ),
-                ], style=styles['search_filter']),
-            ], style=styles['search_controls']),
+                ], style=styles['filter'], className="filter-hover"),
+                
+                html.Div([
+                    html.Label([
+                        html.I(className="fas fa-ruler-combined", style={'margin-right': '5px'}),
+                        "Square Meters:"
+                    ], style=styles['label']),
+                    create_loading_component("sqm-filter",
+                        dcc.RangeSlider(
+                            id='sqm-range-slider',
+                            min=0 if len(df) == 0 else df['square_meters'].min(),
+                            max=500 if len(df) == 0 else df['square_meters'].max(),
+                            value=[0, 500] if len(df) == 0 else [df['square_meters'].min(), df['square_meters'].max()],
+                            marks={
+                                0: "0", 500: "500"
+                            } if len(df) == 0 else {
+                                int(df['square_meters'].min()): f"{df['square_meters'].min():.0f}",
+                                int(df['square_meters'].max()): f"{df['square_meters'].max():.0f}"
+                            },
+                            tooltip={"placement": "bottom", "always_visible": True}
+                        ), "Updating size range"
+                    ),
+                ], style=styles['filter'], className="filter-hover"),
+                
+                html.Div([
+                    html.Label([
+                        html.I(className="fas fa-map-marker-alt", style={'margin-right': '5px'}),
+                        "Neighborhood:"
+                    ], style=styles['label']),
+                    dcc.Dropdown(
+                        id='neighborhood-filter',
+                        options=neighborhoods,
+                        value='all',
+                        clearable=False
+                    ),
+                ], style=styles['filter'], className="filter-hover"),
+                
+                html.Div([
+                    html.Label([
+                        html.I(className="fas fa-ban", style={'margin-right': '5px'}),
+                        "Exclude Neighborhoods:"
+                    ], style=styles['label']),
+                    dcc.Dropdown(
+                        id='exclude-neighborhoods-filter',
+                        options=[{'label': n, 'value': n} for n in sorted(df['neighborhood'].dropna().unique())] if len(df) > 0 else [],
+                        value=[],
+                        multi=True,
+                        placeholder="Select neighborhoods to exclude",
+                        style={'min-height': '38px'}
+                    ),
+                ], style=styles['filter'], className="filter-hover"),
+                
+                html.Div([
+                    html.Label([
+                        html.I(className="fas fa-bed", style={'margin-right': '5px'}),
+                        "Room Count:"
+                    ], style=styles['label']),
+                    dcc.RangeSlider(
+                        id='rooms-range-slider',
+                        min=1 if len(df) == 0 else df['rooms'].min(),
+                        max=8 if len(df) == 0 else df['rooms'].max(),
+                        value=[1, 8] if len(df) == 0 else [df['rooms'].min(), df['rooms'].max()],
+                        marks={
+                            1: "1", 8: "8+"
+                        } if len(df) == 0 else {
+                            int(df['rooms'].min()): f"{df['rooms'].min():.0f}",
+                            int(df['rooms'].max()): f"{df['rooms'].max():.0f}"
+                        },
+                        step=0.5,
+                        tooltip={"placement": "bottom", "always_visible": True}
+                    ),
+                ], style=styles['filter'], className="filter-hover"),
+                
+                html.Div([
+                    html.Label([
+                        html.I(className="fas fa-tools", style={'margin-right': '5px'}),
+                        "Condition:"
+                    ], style=styles['label']),
+                    dcc.Dropdown(
+                        id='condition-filter',
+                        options=conditions,
+                        value='all',
+                        clearable=False
+                    ),
+                ], style=styles['filter'], className="filter-hover"),
+                
+                html.Div([
+                    html.Label([
+                        html.I(className="fas fa-tag", style={'margin-right': '5px'}),
+                        "Ad Type:"
+                    ], style=styles['label']),
+                    dcc.Dropdown(
+                        id='ad-type-filter',
+                        options=ad_types,
+                        value='all',
+                        clearable=False
+                    ),
+                ], style=styles['filter'], className="filter-hover"),
+                
+            ], style=styles['filter_container'], className="fade-in"),
             
-            # Loading/Status message
-            html.Div(id='scrape-status', style={'margin-top': '10px'}),
-        ], style=styles['search_container']),
-        
-        # Current Data Filter section
-        html.Div([
+            # Enhanced click instruction
             html.Div([
-                html.Label("Price Range (₪):", style=styles['label']),
-                dcc.RangeSlider(
-                    id='price-range-slider',
-                    min=0 if len(df) == 0 else df['price'].min(),
-                    max=10000000 if len(df) == 0 else df['price'].max(),
-                    value=[0, 10000000] if len(df) == 0 else [df['price'].min(), df['price'].max()],
-                    marks={
-                        0: "₪0", 10000000: "₪10,000,000"
-                    } if len(df) == 0 else {
-                        int(df['price'].min()): f"₪{df['price'].min():,.0f}",
-                        int(df['price'].max()): f"₪{df['price'].max():,.0f}"
-                    },
-                    tooltip={"placement": "bottom", "always_visible": True}
-                ),
-            ], style=styles['filter']),
+                html.I(className="fas fa-mouse-pointer", style={'margin-right': '8px'}),
+                html.Span("Click on any point in the graph to open the property listing in a new tab")
+            ], style=styles['click_instruction'], className="fade-in"),
             
+            # Enhanced Graph section with comprehensive loading
             html.Div([
-                html.Label("Square Meters:", style=styles['label']),
-                dcc.RangeSlider(
-                    id='sqm-range-slider',
-                    min=0 if len(df) == 0 else df['square_meters'].min(),
-                    max=500 if len(df) == 0 else df['square_meters'].max(),
-                    value=[0, 500] if len(df) == 0 else [df['square_meters'].min(), df['square_meters'].max()],
-                    marks={
-                        0: "0", 500: "500"
-                    } if len(df) == 0 else {
-                        int(df['square_meters'].min()): f"{df['square_meters'].min():.0f}",
-                        int(df['square_meters'].max()): f"{df['square_meters'].max():.0f}"
-                    },
-                    tooltip={"placement": "bottom", "always_visible": True}
-                ),
-            ], style=styles['filter']),
+                create_loading_component("main-graph", 
+                    dcc.Graph(
+                        id='price-sqm-scatter',
+                        config={
+                            'displayModeBar': True,
+                            'displaylogo': False,
+                            'modeBarButtonsToAdd': ['select2d', 'lasso2d'],
+                            'toImageButtonOptions': {
+                                'format': 'png',
+                                'filename': 'real_estate_analysis',
+                                'height': 800,
+                                'width': 1200,
+                                'scale': 2
+                            }
+                        }
+                    ), "Analyzing data and creating visualization"
+                )
+            ], style=styles['graph'], className="fade-in"),
             
+            # Enhanced Summary section
             html.Div([
-                html.Label("Neighborhood:", style=styles['label']),
-                dcc.Dropdown(
-                    id='neighborhood-filter',
-                    options=neighborhoods,
-                    value='all',
-                    clearable=False
-                ),
-            ], style=styles['filter']),
+                html.H3([
+                    html.I(className="fas fa-chart-bar", style={'margin-right': '10px'}),
+                    "Data Summary"
+                ], style=styles['summary_header']),
+                create_loading_component("summary", 
+                    html.Div(id='summary-stats'), "Calculating statistics"
+                )
+            ], style=styles['summary'], className="fade-in"),
             
-            html.Div([
-                html.Label("Room Count:", style=styles['label']),
-                dcc.Dropdown(
-                    id='rooms-filter',
-                    options=[{'label': 'All', 'value': 'all'}] + [
-                        {'label': f"{r} rooms", 'value': r} 
-                        for r in sorted(df['rooms'].dropna().unique())
-                    ],
-                    value='all',
-                    clearable=False
-                ),
-            ], style=styles['filter']),
+            # Store for clicked links
+            dcc.Store(id='clicked-link', storage_type='memory'),
             
-            html.Div([
-                html.Label("Property Condition:", style=styles['label']),
-                dcc.Dropdown(
-                    id='condition-filter',
-                    options=conditions,
-                    value='all',
-                    clearable=False
-                ),
-            ], style=styles['filter']),
+            # Store for current dataset
+            dcc.Store(id='current-dataset', data=df.to_dict('records'), storage_type='session'),
             
-            html.Div([
-                html.Label("Ad Type:", style=styles['label']),
-                dcc.Dropdown(
-                    id='ad-type-filter',
-                    options=ad_types,
-                    value='all',
-                    clearable=False
-                ),
-            ], style=styles['filter']),
+            # Store for loading states
+            dcc.Store(id='loading-state', data={'scraping': False}, storage_type='memory'),
             
-        ], style=styles['filter_container']),
-        
-        # Click instruction
-        html.Div([
-            html.P("👆 Click on any point in the graph to open the property listing in a new tab")
-        ], style=styles['click_instruction']),
-        
-        # Graph section
-        html.Div([
-            dcc.Graph(id='price-sqm-scatter')
-        ], style=styles['graph']),
-        
-        # Summary section
-        html.Div([
-            html.H3("Data Summary", style=styles['summary_header']),
-            html.Div(id='summary-stats')
-        ], style=styles['summary']),
-        
-        # Store for clicked links
-        dcc.Store(id='clicked-link', storage_type='memory'),
-        
-        # Store for current dataset
-        dcc.Store(id='current-dataset', data=df.to_dict('records'), storage_type='session'),
+        ], style=styles['content_wrapper'])
     ], style=styles['container'])
     
-    # Callback for scraping new data
+    # Enhanced callback for scraping with comprehensive loading experience
     @app.callback(
         [Output('current-dataset', 'data'),
          Output('scrape-status', 'children'),
-         Output('scrape-button', 'disabled')],
+         Output('scrape-button', 'disabled'),
+         Output('loading-state', 'data'),
+         Output('global-loading-overlay', 'style')],
         [Input('scrape-button', 'n_clicks')],
         [State('search-city-dropdown', 'value'),
          State('search-area', 'value'),
@@ -455,14 +762,112 @@ def create_dashboard(df, port=8051):
          State('search-min-rooms', 'value'),
          State('search-max-rooms', 'value'),
          State('search-min-sqm', 'value'),
-         State('search-max-sqm', 'value')],
+         State('search-max-sqm', 'value'),
+         State('loading-state', 'data')],
         prevent_initial_call=True
     )
-    def scrape_new_data(n_clicks, city, area, min_price, max_price, min_rooms, max_rooms, min_sqm, max_sqm):
+    def scrape_new_data(n_clicks, city, area, min_price, max_price, min_rooms, max_rooms, min_sqm, max_sqm, loading_state):
         if n_clicks is None or n_clicks == 0:
             raise PreventUpdate
+        
+        # Function to create progressive loading messages
+        def create_progress_message(step, total_steps, current_action, search_desc):
+            progress_percentage = (step / total_steps) * 100
+            
+            return html.Div([
+                # Progress header
+                html.Div([
+                    html.Div([
+                        html.Div(style={
+                            'width': '24px',
+                            'height': '24px',
+                            'border': '3px solid #f3f3f3',
+                            'border-top': '3px solid #667eea',
+                            'border-radius': '50%',
+                            'animation': 'spin 1s linear infinite',
+                            'margin-right': '15px'
+                        }),
+                        html.Span("Processing Your Request", style={'font-weight': '700', 'font-size': '18px', 'color': '#2c3e50'})
+                    ], style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'margin-bottom': '20px'}),
+                    
+                    # Progress bar
+                    html.Div([
+                        html.Div([
+                            html.Div(
+                                style={
+                                    'width': f'{progress_percentage}%',
+                                    'height': '100%',
+                                    'background': 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                                    'border-radius': '10px',
+                                    'transition': 'width 0.5s ease'
+                                }
+                            )
+                        ], style={
+                            'width': '100%',
+                            'height': '8px',
+                            'background-color': '#e9ecef',
+                            'border-radius': '10px',
+                            'margin-bottom': '15px',
+                            'overflow': 'hidden'
+                        }),
+                        html.Div(f"Step {step} of {total_steps} ({progress_percentage:.0f}%)", 
+                                style={'text-align': 'center', 'font-size': '12px', 'color': '#6c757d', 'margin-bottom': '15px'})
+                    ]),
+                    
+                    # Current action
+                    html.Div([
+                        html.I(className="fas fa-cog fa-spin", style={'color': '#667eea', 'margin-right': '10px'}),
+                        html.Span(current_action, style={'font-weight': '600', 'color': '#495057', 'font-size': '16px'})
+                    ], style={'margin-bottom': '20px', 'text-align': 'center'}),
+                    
+                    # Search parameters
+                    html.Div([
+                        html.Div([
+                            html.I(className="fas fa-search", style={'color': '#667eea', 'margin-right': '8px'}),
+                            html.Span("Search Parameters:", style={'font-weight': '600', 'color': '#2c3e50', 'font-size': '14px'})
+                        ], style={'margin-bottom': '8px'}),
+                        html.Div(search_desc, style={'color': '#495057', 'font-size': '13px', 'line-height': '1.5', 'margin-bottom': '15px'}),
+                    ]),
+                    
+                    # Steps indicator
+                    html.Div([
+                        html.Div("Steps:", style={'font-weight': '600', 'color': '#2c3e50', 'margin-bottom': '10px', 'font-size': '14px'}),
+                        html.Div([
+                            html.Div([
+                                html.I(className="fas fa-check" if i < step else "fas fa-circle", 
+                                       style={'color': '#28a745' if i < step else '#667eea' if i == step else '#dee2e6', 
+                                              'margin-right': '8px', 'font-size': '12px'}),
+                                html.Span(action, style={'font-size': '12px', 
+                                                        'color': '#28a745' if i < step else '#2c3e50' if i == step else '#6c757d',
+                                                        'font-weight': '500' if i == step else '400'})
+                            ], style={'margin-bottom': '5px', 'display': 'flex', 'align-items': 'center'})
+                            for i, action in enumerate([
+                                "Preparing search parameters",
+                                "Clearing old data files", 
+                                "Fetching property listings",
+                                "Processing and filtering data",
+                                "Updating dashboard"
+                            ], 1)
+                        ])
+                    ])
+                ])
+            ], style={
+                'background': 'linear-gradient(135deg, #fff9e6 0%, #ffeaa7 100%)',
+                'border': '1px solid #ffeaa7',
+                'border-left': '5px solid #ffc107',
+                'border-radius': '15px',
+                'padding': '25px',
+                'box-shadow': '0 8px 25px rgba(255, 193, 7, 0.2)',
+                'text-align': 'left',
+                'max-width': '500px',
+                'margin': '0 auto'
+            }, className="fade-in")
             
         try:
+            # Step 1: Show initial loading and prepare parameters
+            loading_overlay_style = {**styles['loading_overlay'], 'display': 'flex'}
+            loading_state['scraping'] = True
+            
             # Build search parameters description
             search_desc = f"City: {city}"
             if area: search_desc += f", Area: {area}"
@@ -482,13 +887,21 @@ def create_dashboard(df, port=8051):
                     else: sqm_range = f"≤{max_sqm}"
                 search_desc += f", Size: {sqm_range}sqm"
             
-            # Show loading status
-            loading_msg = html.Div([
-                html.Span("🔄 Scraping new data... "),
-                html.Span(search_desc)
-            ], style=styles['loading_text'])
+            # Progressive loading steps
             
-            # Delete old data files first
+            # Step 1: Preparing search parameters
+            step1_msg = create_progress_message(1, 5, "Preparing search parameters", search_desc)
+            # Note: In a real app, you'd return this via an interval callback for real-time updates
+            # For now, we'll show this in the global overlay
+            
+            # Update global loading overlay with step 1
+            loading_overlay_content = html.Div([
+                html.Div([
+                    step1_msg
+                ], style=styles['loading_content'])
+            ])
+            
+            # Step 2: Delete old data files
             output_dir = Path("scraped_real_estate")
             csv_files = list(output_dir.glob("real_estate_listings_*.csv"))
             json_files = list(output_dir.glob("real_estate_listings_*.json"))
@@ -501,7 +914,10 @@ def create_dashboard(df, port=8051):
                 except Exception as e:
                     print(f"⚠️  Could not delete {file}: {e}")
             
-            # Create scraper instance
+            # Show comprehensive loading status with all steps
+            loading_status = create_progress_message(2, 5, "Processing your request - this may take 30-60 seconds", search_desc)
+            
+            # Create scraper instance and build parameters
             scraper = RealEstateScraper("scraped_real_estate")
             
             # Build API parameters
@@ -523,8 +939,15 @@ def create_dashboard(df, port=8051):
             if max_sqm:
                 api_params['max_square_meters'] = max_sqm
             
+            # Status update for fetching data
+            fetching_status = create_progress_message(3, 5, "Fetching property listings from Yad2", search_desc)
+            
             # Scrape new data with user parameters
             csv_path, json_path = scraper.scrape_and_save(**api_params)
+            
+            # Hide loading overlay
+            loading_overlay_style = {**styles['loading_overlay'], 'display': 'none'}
+            loading_state['scraping'] = False
             
             if csv_path:
                 # Load new data
@@ -537,33 +960,93 @@ def create_dashboard(df, port=8051):
                 new_df['lat'] = pd.to_numeric(new_df['lat'], errors='coerce')
                 new_df['lng'] = pd.to_numeric(new_df['lng'], errors='coerce')
                 
-                # Success message
+                # Enhanced success message
                 success_msg = html.Div([
-                    html.Span("✅ Success! "),
-                    html.Span(f"Found {len(new_df)} new properties. Dashboard updated! Old data cleared.")
-                ], style={'color': '#27ae60', 'font-weight': 'bold', 'text-align': 'center', 
-                         'padding': '10px', 'background-color': '#d5f4e6', 'border-radius': '5px'})
+                    html.Div([
+                        html.I(className="fas fa-check-circle", style={'color': '#28a745', 'font-size': '24px', 'margin-bottom': '10px'}),
+                        html.H4("Success!", style={'color': '#28a745', 'margin': '10px 0', 'font-weight': '600'}),
+                        html.P([
+                            html.Span(f"Found {len(new_df)} new properties ", style={'font-weight': '600'}),
+                            html.Span("and updated the dashboard!")
+                        ], style={'color': '#155724', 'margin': '0 0 10px 0'}),
+                        html.P("Previous data has been cleared automatically.", 
+                               style={'color': '#6c757d', 'font-size': '13px', 'margin': '0', 'font-style': 'italic'})
+                    ], style={'text-align': 'center'})
+                ], style={
+                    'background': 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
+                    'border': '1px solid #c3e6cb',
+                    'border-left': '5px solid #28a745',
+                    'border-radius': '12px',
+                    'padding': '20px',
+                    'box-shadow': '0 4px 15px rgba(40, 167, 69, 0.2)'
+                }, className="fade-in")
                 
-                return new_df.to_dict('records'), success_msg, False
+                return new_df.to_dict('records'), success_msg, False, loading_state, loading_overlay_style
             else:
-                # Error message
+                # Enhanced error message
                 error_msg = html.Div([
-                    html.Span("❌ Error: "),
-                    html.Span("Failed to scrape data. Please try again.")
-                ], style={'color': '#e74c3c', 'font-weight': 'bold', 'text-align': 'center',
-                         'padding': '10px', 'background-color': '#fdf2f2', 'border-radius': '5px'})
+                    html.Div([
+                        html.I(className="fas fa-exclamation-triangle", style={'color': '#dc3545', 'font-size': '24px', 'margin-bottom': '10px'}),
+                        html.H4("Scraping Failed", style={'color': '#dc3545', 'margin': '10px 0', 'font-weight': '600'}),
+                        html.P("Unable to retrieve data. Please check your parameters and try again.", 
+                               style={'color': '#721c24', 'margin': '0'})
+                    ], style={'text-align': 'center'})
+                ], style={
+                    'background': 'linear-gradient(135deg, #f8d7da 0%, #f1aeb5 100%)',
+                    'border': '1px solid #f1aeb5',
+                    'border-left': '5px solid #dc3545',
+                    'border-radius': '12px',
+                    'padding': '20px',
+                    'box-shadow': '0 4px 15px rgba(220, 53, 69, 0.2)'
+                }, className="fade-in")
                 
-                raise PreventUpdate
+                return dash.no_update, error_msg, False, loading_state, loading_overlay_style
                 
         except Exception as e:
-            # Error message
-            error_msg = html.Div([
-                html.Span("❌ Error: "),
-                html.Span(f"Scraping failed: {str(e)}")
-            ], style={'color': '#e74c3c', 'font-weight': 'bold', 'text-align': 'center',
-                     'padding': '10px', 'background-color': '#fdf2f2', 'border-radius': '5px'})
+            # Hide loading overlay on error
+            loading_overlay_style = {**styles['loading_overlay'], 'display': 'none'}
+            loading_state['scraping'] = False
             
-            return dash.no_update, error_msg, False
+            # Enhanced error message
+            error_msg = html.Div([
+                html.Div([
+                    html.I(className="fas fa-exclamation-circle", style={'color': '#dc3545', 'font-size': '24px', 'margin-bottom': '10px'}),
+                    html.H4("Error Occurred", style={'color': '#dc3545', 'margin': '10px 0', 'font-weight': '600'}),
+                    html.P(f"Scraping failed: {str(e)}", style={'color': '#721c24', 'margin': '0', 'font-size': '14px'})
+                ], style={'text-align': 'center'})
+            ], style={
+                'background': 'linear-gradient(135deg, #f8d7da 0%, #f1aeb5 100%)',
+                'border': '1px solid #f1aeb5',
+                'border-left': '5px solid #dc3545',
+                'border-radius': '12px',
+                'padding': '20px',
+                'box-shadow': '0 4px 15px rgba(220, 53, 69, 0.2)'
+            }, className="fade-in")
+            
+            return dash.no_update, error_msg, False, loading_state, loading_overlay_style
+    
+    # Enhanced callback to update button state during loading
+    @app.callback(
+        [Output('scrape-button-icon', 'className'),
+         Output('scrape-button-text', 'children'),
+         Output('scrape-button', 'style')],
+        [Input('loading-state', 'data')]
+    )
+    def update_button_loading_state(loading_state):
+        if loading_state and loading_state.get('scraping', False):
+            # Loading state
+            return (
+                "fas fa-spinner fa-spin",
+                "Scraping Properties...",
+                {**styles['scrape_button'], 'opacity': '0.8', 'cursor': 'not-allowed'}
+            )
+        else:
+            # Normal state
+            return (
+                "fas fa-search",
+                "Scrape New Data", 
+                styles['scrape_button']
+            )
     
     # Client-side callback to open links in new tab
     app.clientside_callback(
@@ -583,7 +1066,7 @@ def create_dashboard(df, port=8051):
         prevent_initial_call=True
     )
     
-    # Callback to update filter ranges when new data is loaded
+    # Enhanced callback to update filter ranges when new data is loaded with loading indicators
     @app.callback(
         [Output('price-range-slider', 'min'),
          Output('price-range-slider', 'max'),
@@ -595,8 +1078,12 @@ def create_dashboard(df, port=8051):
          Output('sqm-range-slider', 'marks'),
          Output('neighborhood-filter', 'options'),
          Output('neighborhood-filter', 'value'),
-         Output('rooms-filter', 'options'),
-         Output('rooms-filter', 'value'),
+         Output('exclude-neighborhoods-filter', 'options'),
+         Output('exclude-neighborhoods-filter', 'value'),
+         Output('rooms-range-slider', 'min'),
+         Output('rooms-range-slider', 'max'),
+         Output('rooms-range-slider', 'value'),
+         Output('rooms-range-slider', 'marks'),
          Output('condition-filter', 'options'),
          Output('condition-filter', 'value'),
          Output('ad-type-filter', 'options'),
@@ -608,9 +1095,14 @@ def create_dashboard(df, port=8051):
         current_df = pd.DataFrame(current_data)
         
         if len(current_df) == 0:
-            # Return default values if no data
+            # Return default values if no data (20 values total now)
+            default_neighborhoods = [{'label': 'All Neighborhoods', 'value': 'all'}]
+            default_exclude_neighborhoods = []
+            default_conditions = [{'label': 'All Conditions', 'value': 'all'}]
+            default_ad_types = [{'label': 'All', 'value': 'all'}]
             return (0, 1000000, [0, 1000000], {}, 0, 100, [0, 100], {}, 
-                   [], 'all', [], 'all', [], 'all', [], 'all')
+                   default_neighborhoods, 'all', default_exclude_neighborhoods, [], 
+                   1, 8, [1, 8], {}, default_conditions, 'all', default_ad_types, 'all')
         
         # Update price range
         price_min = current_df['price'].min()
@@ -628,15 +1120,22 @@ def create_dashboard(df, port=8051):
             int(sqm_max): f"{sqm_max:.0f}"
         }
         
+        # Update rooms range
+        rooms_min = current_df['rooms'].min()
+        rooms_max = current_df['rooms'].max()
+        rooms_marks = {
+            int(rooms_min): f"{rooms_min:.0f}",
+            int(rooms_max): f"{rooms_max:.0f}"
+        }
+        
         # Update neighborhood options
         neighborhoods = [{'label': 'All Neighborhoods', 'value': 'all'}] + [
             {'label': n, 'value': n} for n in sorted(current_df['neighborhood'].dropna().unique())
         ]
         
-        # Update rooms options
-        rooms_options = [{'label': 'All', 'value': 'all'}] + [
-            {'label': f"{r} rooms", 'value': r} 
-            for r in sorted(current_df['rooms'].dropna().unique())
+        # Update exclude neighborhood options (all available neighborhoods)
+        exclude_neighborhoods_options = [
+            {'label': n, 'value': n} for n in sorted(current_df['neighborhood'].dropna().unique())
         ]
         
         # Update condition options
@@ -649,27 +1148,31 @@ def create_dashboard(df, port=8051):
             {'label': at, 'value': at} for at in sorted(current_df['ad_type'].unique())
         ]
         
-        print(f"🔄 Updated filters - Price: ₪{price_min:,.0f}-₪{price_max:,.0f}, Size: {sqm_min:.0f}-{sqm_max:.0f}sqm")
-        print(f"🔄 Neighborhoods: {len(neighborhoods)-1}, Rooms: {len(rooms_options)-1}, Conditions: {len(conditions)-1}, Ad Types: {len(ad_types)-1}")
+        print(f"🔄 Updated filters - Price: ₪{price_min:,.0f}-₪{price_max:,.0f}, Size: {sqm_min:.0f}-{sqm_max:.0f}sqm, Rooms: {rooms_min:.0f}-{rooms_max:.0f}")
+        print(f"🔄 Neighborhoods: {len(neighborhoods)-1}, Exclude Options: {len(exclude_neighborhoods_options)}, Conditions: {len(conditions)-1}, Ad Types: {len(ad_types)-1}")
         
         return (
             price_min, price_max, [price_min, price_max], price_marks,
             sqm_min, sqm_max, [sqm_min, sqm_max], sqm_marks,
-            neighborhoods, 'all', rooms_options, 'all', conditions, 'all', ad_types, 'all'
+            neighborhoods, 'all', exclude_neighborhoods_options, [],
+            rooms_min, rooms_max, [rooms_min, rooms_max], rooms_marks,
+            conditions, 'all', ad_types, 'all'
         )
     
+    # Enhanced callback for updating graph and summary with better loading experience
     @app.callback(
         [Output('price-sqm-scatter', 'figure'),
          Output('summary-stats', 'children')],
         [Input('price-range-slider', 'value'),
          Input('sqm-range-slider', 'value'),
          Input('neighborhood-filter', 'value'),
-         Input('rooms-filter', 'value'),
+         Input('exclude-neighborhoods-filter', 'value'),
+         Input('rooms-range-slider', 'value'),
          Input('condition-filter', 'value'),
          Input('ad-type-filter', 'value'),
          Input('current-dataset', 'data')]
     )
-    def update_graph(price_range, sqm_range, neighborhood, rooms, condition, ad_type, current_data):
+    def update_graph(price_range, sqm_range, neighborhood, exclude_neighborhoods, rooms, condition, ad_type, current_data):
         # Convert current data back to DataFrame
         current_df = pd.DataFrame(current_data)
         
@@ -679,6 +1182,7 @@ def create_dashboard(df, port=8051):
         print(f"   - Price range: {price_range}")
         print(f"   - Size range: {sqm_range}")
         print(f"   - Neighborhood: '{neighborhood}' (type: {type(neighborhood)})")
+        print(f"   - Exclude neighborhoods: '{exclude_neighborhoods}' (type: {type(exclude_neighborhoods)})")
         print(f"   - Rooms: '{rooms}' (type: {type(rooms)})")
         print(f"   - Condition: '{condition}' (type: {type(condition)})")
         print(f"   - Ad Type: '{ad_type}' (type: {type(ad_type)})")
@@ -734,11 +1238,23 @@ def create_dashboard(df, port=8051):
         else:
             print(f"📈 Neighborhood filter: keeping all (value='{neighborhood}')")
             
-        # Apply rooms filter
-        if rooms is not None and rooms != 'all' and 'rooms' in filtered_df.columns:
+        # Apply exclude neighborhoods filter
+        if exclude_neighborhoods and len(exclude_neighborhoods) > 0 and 'neighborhood' in filtered_df.columns:
             before_count = len(filtered_df)
-            filtered_df = filtered_df[filtered_df['rooms'] == rooms]
-            print(f"📈 Rooms filter ('{rooms}'): {before_count} → {len(filtered_df)} rows")
+            filtered_df = filtered_df[~filtered_df['neighborhood'].isin(exclude_neighborhoods)]
+            print(f"📈 Exclude neighborhoods filter: {before_count} → {len(filtered_df)} rows (excluded: {exclude_neighborhoods})")
+        else:
+            print(f"📈 Exclude neighborhoods filter: no exclusions (value='{exclude_neighborhoods}')")
+            
+        # Apply rooms filter
+        if rooms is not None and len(rooms) == 2 and rooms[0] is not None and rooms[1] is not None and 'rooms' in filtered_df.columns:
+            rooms_min, rooms_max = rooms
+            before_count = len(filtered_df)
+            filtered_df = filtered_df[
+                (filtered_df['rooms'] >= rooms_min) & 
+                (filtered_df['rooms'] <= rooms_max)
+            ]
+            print(f"📈 Rooms filter ({rooms_min:.1f}-{rooms_max:.1f}): {before_count} → {len(filtered_df)} rows")
         else:
             print(f"📈 Rooms filter: keeping all (value='{rooms}')")
             
@@ -863,62 +1379,96 @@ def create_dashboard(df, port=8051):
             margin=dict(l=40, r=40, t=60, b=40)
         )
         
-        # Enhanced summary statistics
+        # Enhanced summary statistics with modern design
         summary_style = {
             'container': {
-                'display': 'flex',
-                'flex-wrap': 'wrap',
+                'display': 'grid',
+                'grid-template-columns': 'repeat(auto-fit, minmax(220px, 1fr))',
                 'gap': '20px'
             },
             'card': {
-                'flex': '1',
-                'min-width': '180px',
-                'padding': '15px',
-                'border-radius': '5px',
-                'background-color': '#f5f9ff',
-                'box-shadow': '0 2px 4px rgba(0,0,0,0.05)',
-                'text-align': 'center'
+                'padding': '20px',
+                'border-radius': '12px',
+                'background': 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                'box-shadow': '0 4px 15px rgba(0,0,0,0.08)',
+                'text-align': 'center',
+                'border': '1px solid rgba(255,255,255,0.3)',
+                'transition': 'all 0.3s ease'
             },
             'value': {
-                'font-size': '20px',
-                'font-weight': 'bold',
-                'color': '#2c3e50',
-                'margin': '10px 0'
+                'font-size': '24px',
+                'font-weight': '700',
+                'color': '#667eea',
+                'margin': '10px 0',
+                'text-shadow': '0 1px 3px rgba(0,0,0,0.1)'
             },
             'label': {
                 'font-size': '14px',
-                'color': '#7f8c8d',
-                'margin': '0'
+                'color': '#495057',
+                'margin': '0',
+                'font-weight': '500',
+                'display': 'flex',
+                'align-items': 'center',
+                'justify-content': 'center',
+                'gap': '6px'
+            },
+            'icon': {
+                'color': '#667eea',
+                'font-size': '16px'
             }
         }
         
-        # Create summary stats
+        # Create enhanced summary stats with icons and better layout
         summary = html.Div([
             html.Div([
-                html.P("Number of Properties", style=summary_style['label']),
-                html.P(f"{len(plot_df)}", style=summary_style['value'])
-            ], style=summary_style['card']),
+                html.P([
+                    html.I(className="fas fa-home", style=summary_style['icon']),
+                    "Properties Found"
+                ], style=summary_style['label']),
+                html.P(f"{len(plot_df):,}", style=summary_style['value'])
+            ], style=summary_style['card'], className="filter-hover"),
             
             html.Div([
-                html.P("Average Price", style=summary_style['label']),
+                html.P([
+                    html.I(className="fas fa-shekel-sign", style=summary_style['icon']),
+                    "Average Price"
+                ], style=summary_style['label']),
                 html.P(f"₪{plot_df['price'].mean():,.0f}", style=summary_style['value'])
-            ], style=summary_style['card']),
+            ], style=summary_style['card'], className="filter-hover"),
             
             html.Div([
-                html.P("Avg Price/sqm", style=summary_style['label']),
+                html.P([
+                    html.I(className="fas fa-calculator", style=summary_style['icon']),
+                    "Avg Price/sqm"
+                ], style=summary_style['label']),
                 html.P(f"₪{plot_df['price_per_sqm'].mean():,.0f}", style=summary_style['value'])
-            ], style=summary_style['card']),
+            ], style=summary_style['card'], className="filter-hover"),
             
             html.Div([
-                html.P("Average Size", style=summary_style['label']),
+                html.P([
+                    html.I(className="fas fa-ruler-combined", style=summary_style['icon']),
+                    "Average Size"
+                ], style=summary_style['label']),
                 html.P(f"{plot_df['square_meters'].mean():,.0f} sqm", style=summary_style['value'])
-            ], style=summary_style['card']),
+            ], style=summary_style['card'], className="filter-hover"),
             
             html.Div([
-                html.P("Average Rooms", style=summary_style['label']),
+                html.P([
+                    html.I(className="fas fa-bed", style=summary_style['icon']),
+                    "Average Rooms"
+                ], style=summary_style['label']),
                 html.P(f"{plot_df['rooms'].mean():.1f}", style=summary_style['value'])
-            ], style=summary_style['card']),
-        ], style=summary_style['container'])
+            ], style=summary_style['card'], className="filter-hover"),
+            
+            html.Div([
+                html.P([
+                    html.I(className="fas fa-chart-line", style=summary_style['icon']),
+                    "Price Range"
+                ], style=summary_style['label']),
+                html.P(f"₪{plot_df['price'].min():,.0f} - ₪{plot_df['price'].max():,.0f}", 
+                       style={**summary_style['value'], 'font-size': '18px'})
+            ], style=summary_style['card'], className="filter-hover"),
+        ], style=summary_style['container'], className="fade-in")
         
         return fig, summary
     
