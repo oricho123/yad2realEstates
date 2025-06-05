@@ -5,3 +5,4 @@ vehicles_analyzer/scraped_vehicles/*
 TEST_SUMMARY.md
 .DS_Store
 .coverage
+coverage.xml
