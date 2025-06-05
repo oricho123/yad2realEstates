@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 from typing import Dict, Any, Optional
 
 from src.config.constants import ChartConfiguration, ValueAnalysisConstants
-from src.visualization.charts.scatter_plot import AnalyticsHoverData, HoverTemplate
+from src.visualization.hover_data import AnalyticsHoverData, HoverTemplate
 
 
 class PropertyAnalyticsCharts:

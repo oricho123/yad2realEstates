@@ -2,7 +2,7 @@
 
 import dash
 from dash import clientside_callback, Output, Input
-from src.visualization.charts.scatter_plot import HoverDataFields, MapHoverDataFields
+from src.visualization.hover_data import HoverDataFields, MapHoverDataFields
 
 
 class InteractionCallbackManager:

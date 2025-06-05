@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 from typing import Dict, Any, Optional
 
 from src.config.constants import MapConfiguration, ChartConfiguration
-from src.visualization.charts.scatter_plot import MapHoverData, HoverTemplate
+from src.visualization.hover_data import MapHoverData, HoverTemplate
 
 
 class PropertyMapView:

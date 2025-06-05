@@ -8,6 +8,10 @@ from .charts import (
     PropertyVisualizationFactory
 )
 from .components import PropertyTableComponents
+from .hover_data import (
+    PropertyHoverData, MapHoverData, AnalyticsHoverData,
+    HoverTemplate, HoverDataFields, MapHoverDataFields, AnalyticsHoverDataFields
+)
 
 __all__ = [
     'PropertyMapView',
@@ -15,5 +19,7 @@ __all__ = [
     'PropertyAnalyticsCharts',
     'ChartUtils',
     'PropertyVisualizationFactory',
-    'PropertyTableComponents'
+    'PropertyTableComponents',
+    'PropertyHoverData', 'MapHoverData', 'AnalyticsHoverData',
+    'HoverTemplate', 'HoverDataFields', 'MapHoverDataFields', 'AnalyticsHoverDataFields'
 ]
