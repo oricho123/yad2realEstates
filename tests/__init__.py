@@ -1,1 +1,0 @@
-# Tests package for yad2listings real estate analyzer 

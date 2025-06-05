@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """Comprehensive test script for all structured hover data implementations."""
 
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
+
 import pandas as pd
 import numpy as np
-from src.visualization.charts.scatter_plot import (
+from visualization.charts.scatter_plot import (
     PropertyHoverData,
     MapHoverData,
     AnalyticsHoverData,
@@ -13,8 +19,8 @@ from src.visualization.charts.scatter_plot import (
     AnalyticsHoverDataFields,
     PropertyScatterPlot
 )
-from src.visualization.charts.map_view import PropertyMapView
-from src.visualization.charts.analytics import PropertyAnalyticsCharts
+from visualization.charts.map_view import PropertyMapView
+from visualization.charts.analytics import PropertyAnalyticsCharts
 
 
 def create_sample_dataframe() -> pd.DataFrame:

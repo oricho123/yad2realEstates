@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """Test script for structured hover data implementation."""
 
-import pandas as pd
-import numpy as np
-from src.visualization.charts.scatter_plot import (
+from visualization.charts.scatter_plot import (
     PropertyHoverData,
     HoverTemplate,
     HoverDataFields,
     PropertyScatterPlot
 )
+import numpy as np
+import pandas as pd
+import sys
+from pathlib import Path
+
+# Add src to path for imports (3 levels up: tests/unit/../.. -> project root -> src)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 
 def test_property_hover_data():

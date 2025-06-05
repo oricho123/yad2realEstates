@@ -12,8 +12,8 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
-from src.dashboard.app import create_real_estate_app
-from src.data.models import PropertyDataFrame
+from dashboard.app import create_real_estate_app
+from data.models import PropertyDataFrame
 
 
 def create_test_data() -> PropertyDataFrame:
@@ -102,7 +102,7 @@ def test_click_functionality():
     # Check if interaction callbacks are registered
     print("\n🔧 Checking callback registration...")
     try:
-        from src.dashboard.callbacks.interactions import InteractionCallbackManager
+        from dashboard.callbacks.interactions import InteractionCallbackManager
         print("✅ InteractionCallbackManager imported successfully")
         
         # Check if the app has the necessary components

@@ -91,7 +91,7 @@ class ScrapingCallbackManager:
                 ], style={'color': '#007bff', 'font-weight': '500'})
 
                 # Actually run the scraper with the search parameters
-                from real_estate_scraper import RealEstateScraper
+                from src.scraping import Yad2Scraper, ScrapingParams
                 from src.config.settings import AppSettings
 
                 try:
@@ -114,53 +114,36 @@ class ScrapingCallbackManager:
                                         f"⚠️  Could not delete {old_file}: {e}")
 
                     # Initialize scraper with data directory
-                    scraper = RealEstateScraper(
+                    scraper = Yad2Scraper(
                         str(AppSettings.DATA_DIRECTORY))
 
                     # Prepare scraping parameters with API filters
                     from src.config.constants import ScrapingConfiguration
 
-                    scraping_params = {
-                        'city': city,
-                        'area': area,
-                        # Add default topArea as shown in API example
-                        'top_area': ScrapingConfiguration.DEFAULT_TOP_AREA
-                    }
-
-                    # Add price filters if provided
-                    if min_price is not None:
-                        scraping_params['min_price'] = min_price
-                    if max_price is not None:
-                        scraping_params['max_price'] = max_price
-
-                    # Add room filters if provided and not 'any'
-                    if min_rooms is not None and min_rooms != 'any':
-                        scraping_params['min_rooms'] = min_rooms
-                    if max_rooms is not None and max_rooms != 'any':
-                        scraping_params['max_rooms'] = max_rooms
-
-                    # Add square meter filters if provided
-                    if min_sqm is not None:
-                        scraping_params['min_square_meters'] = min_sqm
-                    if max_sqm is not None:
-                        scraping_params['max_square_meters'] = max_sqm
+                    # Create ScrapingParams object with the provided filters
+                    scraping_params = ScrapingParams(
+                        city=city,
+                        area=area,
+                        top_area=ScrapingConfiguration.DEFAULT_TOP_AREA,
+                        min_price=min_price if min_price is not None else None,
+                        max_price=max_price if max_price is not None else None,
+                        min_rooms=min_rooms if min_rooms is not None and min_rooms != 'any' else None,
+                        max_rooms=max_rooms if max_rooms is not None and max_rooms != 'any' else None,
+                        min_square_meters=min_sqm if min_sqm is not None else None,
+                        max_square_meters=max_sqm if max_sqm is not None else None
+                    )
 
                     print(
                         f"DEBUG: Scraping with API parameters: {scraping_params}")
 
-                    # Run the scraper
-                    result = scraper.scrape_and_save(**scraping_params)
+                    # Run the scraper using the new interface
+                    result = scraper.scrape(scraping_params)
 
-                    if result and len(result) == 2:
-                        csv_path, json_path = result
-                    else:
-                        csv_path, json_path = None, None
-
-                    if csv_path and csv_path != "" and csv_path != "None":
+                    if result.success and result.csv_path:
                         # Load the freshly scraped data
                         data_loader = PropertyDataLoader()
                         property_data = data_loader.load_property_listings(
-                            csv_path)
+                            result.csv_path)
                         df = property_data.data
 
                         # Success message
@@ -187,10 +170,10 @@ class ScrapingCallbackManager:
                         )
                     else:
                         # Scraping failed - provide more specific error message
-                        if csv_path == "":
-                            error_msg = "No data returned from API. The search parameters may be too restrictive or the API may be temporarily unavailable."
+                        if result.error_message:
+                            error_msg = f"Scraping failed: {result.error_message}"
                         else:
-                            error_msg = f"Failed to scrape data. CSV path: {csv_path}, JSON path: {json_path}"
+                            error_msg = "No data returned from API. The search parameters may be too restrictive or the API may be temporarily unavailable."
 
                         error_message = html.Div([
                             html.I(className="fas fa-exclamation-triangle",

@@ -3,4 +3,5 @@ vehicles_analyzer/scraped_vehicles/*
 *__pycache__*
 *.pytest_cache*
 TEST_SUMMARY.md
+.DS_Store
 .coverage

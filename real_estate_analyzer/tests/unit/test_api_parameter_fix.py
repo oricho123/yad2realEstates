@@ -4,7 +4,7 @@ Test script to verify the API parameter construction fixes.
 This test verifies that the scraping parameters match the expected API format.
 """
 
-from src.config.constants import ScrapingConfiguration
+from config.constants import ScrapingConfiguration
 from real_estate_scraper import RealEstateScraper
 import sys
 from pathlib import Path

@@ -22,7 +22,6 @@ def parse_arguments():
         epilog="""
 Examples:
   %(prog)s                                    # Run with default settings
-  %(prog)s --skip-scrape                      # Use existing data only
   %(prog)s --port 8080 --debug                # Run on port 8080 in debug mode
   %(prog)s --data-dir /path/to/data          # Use custom data directory
         """
@@ -34,12 +33,6 @@ Examples:
         type=str,
         default=str(AppSettings.DATA_DIRECTORY),
         help='Directory containing scraped real estate data'
-    )
-
-    parser.add_argument(
-        '--skip-scrape',
-        action='store_true',
-        help='Skip scraping and use existing data only'
     )
 
     # Server options
@@ -88,7 +81,7 @@ def load_initial_data(data_directory: str, min_properties: int = 1) -> PropertyD
 
     if latest_file is None:
         print("⚠️  No existing data files found.")
-        print("💡 Tip: Run the scraper first or use --skip-scrape=false")
+        print("💡 Tip: Run the scraper first from the UI")
         return loader.create_empty_dataframe()
 
     print(f"📄 Loading data from: {latest_file.name}")
@@ -160,11 +153,6 @@ def main():
         print("   • New data scraping capabilities")
         print("   • Best deals identification")
         print("   • Market insights and recommendations")
-
-        if not args.skip_scrape:
-            print("   • New data scraping enabled")
-        else:
-            print("   • New data scraping disabled (--skip-scrape)")
 
         print(f"\n🎉 Open your browser to: http://{args.host}:{args.port}")
         print("⏹️  Press Ctrl+C to stop the server")
