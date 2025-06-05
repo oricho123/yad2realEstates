@@ -27,26 +27,56 @@ def parse_arguments():
     return parser.parse_args()
 
 def load_data(csv_path):
-    """Load and prepare the CSV data for visualization"""
+    """Load and prepare the CSV data for visualization with strict data quality checks"""
     try:
         df = pd.read_csv(csv_path)
+        initial_count = len(df)
+        print(f"📁 Loaded {initial_count} raw records from CSV")
         
-        # Filter out properties with no price or price = 0
-        df = df[df['price'] > 0]
+        # Data quality checks with detailed reporting
+        original_df = df.copy()
         
-        # Filter out properties with missing square meters data
+        # Filter out properties with no price or invalid price
+        before_price = len(df)
+        df = df[df['price'].notna() & (df['price'] > 0)]
+        removed_price = before_price - len(df)
+        if removed_price > 0:
+            print(f"🗑️  Removed {removed_price} properties with missing/invalid price")
+        
+        # Filter out properties with missing/invalid square meters data
+        before_sqm = len(df)
         df = df[df['square_meters'].notna() & (df['square_meters'] > 0)]
+        removed_sqm = before_sqm - len(df)
+        if removed_sqm > 0:
+            print(f"🗑️  Removed {removed_sqm} properties with missing/invalid square meters")
         
-        # Ensure price_per_sqm is calculated
+        # Ensure price_per_sqm is calculated correctly
         df['price_per_sqm'] = df['price'] / df['square_meters']
         
-        # Convert coordinates to numeric
+        # Remove any properties with unrealistic price per sqm (data quality check)
+        before_realistic = len(df)
+        df = df[(df['price_per_sqm'] >= 1000) & (df['price_per_sqm'] <= 100000)]  # Reasonable range for Israel
+        removed_unrealistic = before_realistic - len(df)
+        if removed_unrealistic > 0:
+            print(f"🗑️  Removed {removed_unrealistic} properties with unrealistic price/sqm values")
+        
+        # Convert coordinates to numeric (but don't remove - some properties might not have coordinates)
         df['lat'] = pd.to_numeric(df['lat'], errors='coerce')
         df['lng'] = pd.to_numeric(df['lng'], errors='coerce')
         
+        # Final data quality summary
+        final_count = len(df)
+        total_removed = initial_count - final_count
+        quality_percentage = (final_count / initial_count) * 100
+        
+        print(f"✅ Data Quality Summary:")
+        print(f"   • Started with: {initial_count} properties")
+        print(f"   • Removed: {total_removed} incomplete/invalid properties")
+        print(f"   • Final dataset: {final_count} high-quality properties ({quality_percentage:.1f}%)")
+        
         return df
     except Exception as e:
-        print(f"Error loading data: {str(e)}")
+        print(f"❌ Error loading data: {str(e)}")
         return pd.DataFrame()  # Return empty DataFrame instead of exiting
 
 def create_empty_dataframe():
@@ -56,6 +86,719 @@ def create_empty_dataframe():
         'neighborhood', 'rooms', 'condition_text', 'ad_type', 
         'property_type', 'street', 'floor', 'full_url'
     ])
+
+def create_map_figure(df):
+    """Create an interactive map visualization of properties"""
+    if len(df) == 0:
+        # Return empty map
+        empty_fig = go.Figure()
+        empty_fig.update_layout(
+            title="No data available for map",
+            geo=dict(projection_type='natural earth'),
+            height=600
+        )
+        return empty_fig
+    
+    # Filter out properties without coordinates
+    map_df = df.dropna(subset=['lat', 'lng'])
+    
+    if len(map_df) == 0:
+        # Return empty map with message
+        empty_fig = go.Figure()
+        empty_fig.update_layout(
+            title="No properties with location data",
+            geo=dict(projection_type='natural earth'),
+            height=600
+        )
+        return empty_fig
+    
+    # Create the map using Plotly's scatter_mapbox
+    fig = px.scatter_mapbox(
+        map_df,
+        lat='lat',
+        lon='lng',
+        color='price_per_sqm',
+        size='rooms',
+        size_max=20,
+        hover_data=['neighborhood', 'price', 'square_meters', 'rooms', 'condition_text'],
+        color_continuous_scale='viridis',
+        zoom=11,
+        height=600,
+        labels={'price_per_sqm': 'Price/sqm (₪)', 'lat': 'Latitude', 'lng': 'Longitude'}
+    )
+    
+    # Calculate center point for map
+    center_lat = map_df['lat'].mean()
+    center_lon = map_df['lng'].mean()
+    
+    # Update layout for better appearance
+    fig.update_layout(
+        mapbox_style="open-street-map",
+        mapbox=dict(
+            center=dict(lat=center_lat, lon=center_lon),
+            zoom=11
+        ),
+        margin={"r": 0, "t": 30, "l": 0, "b": 0},
+        title={
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 16}
+        },
+        coloraxis_colorbar=dict(
+            title="₪/sqm",
+            title_font=dict(size=13),
+            tickfont=dict(size=11)
+        )
+    )
+    
+    # Prepare custom data for click functionality
+    street_display = map_df.apply(lambda row: 
+        f"{row['street']}" if pd.notna(row['street']) and row['street'].strip() != '' 
+        else f"{row['neighborhood']}", axis=1)
+    
+    custom_data = np.column_stack((
+        map_df['neighborhood'].fillna('Unknown'),           # 0
+        map_df['price'].round(0),                           # 1 - Fixed: Add price
+        map_df['rooms'],                                    # 2 - Fixed: Moved rooms to index 2
+        map_df['condition_text'].fillna('Not specified'),  # 3
+        map_df['ad_type'],                                  # 4
+        street_display,                                     # 5
+        map_df['floor'].fillna('Not specified'),           # 6
+        map_df['full_url'].fillna('')                      # 7
+    ))
+    
+    # Update traces with custom hover template
+    fig.update_traces(
+        customdata=custom_data,
+        hovertemplate='<b>🏡 %{customdata[0]}</b><br>' +
+                      '<i>📍 %{customdata[5]}</i><br>' +
+                      '<br>' +
+                      '<b>Price:</b> ₪%{customdata[1]:,.0f}<br>' +
+                      '<b>Size:</b> %{text} sqm<br>' +
+                      '<b>Price/sqm:</b> ₪%{marker.color:,.0f}<br>' +
+                      '<b>Rooms:</b> %{customdata[2]}<br>' +
+                      '<b>Condition:</b> %{customdata[3]}<br>' +
+                      '<br>' +
+                      '<b>👆 Click to view listing</b>' +
+                      '<extra></extra>',
+        text=map_df['square_meters']
+    )
+    
+    return fig
+
+def create_enhanced_scatter_plot(df):
+    """Create an enhanced scatter plot with trend lines, median lines, and value analysis"""
+    if len(df) == 0:
+        return px.scatter(title="No data available")
+    
+    plot_df = df.copy()
+    
+    # Calculate trend line using numpy polyfit
+    x = plot_df['square_meters'].values
+    y = plot_df['price'].values
+    
+    # Fit polynomial trend line (degree 1 for linear)
+    try:
+        z = np.polyfit(x, y, 1)
+        trend_line_y = np.poly1d(z)(x)
+        
+        # Calculate value score: how far above/below trend line each property is
+        plot_df['value_score'] = ((y - trend_line_y) / trend_line_y * 100)  # Percentage above/below trend
+        plot_df['value_category'] = plot_df['value_score'].apply(lambda x: 
+            'Excellent Deal' if x < -15 else
+            'Good Deal' if x < -5 else
+            'Fair Price' if x < 5 else
+            'Above Market' if x < 15 else
+            'Overpriced'
+        )
+    except:
+        plot_df['value_score'] = 0
+        plot_df['value_category'] = 'Unknown'
+        trend_line_y = y.copy()
+    
+    # Create the enhanced scatter plot
+    fig = px.scatter(
+        plot_df, 
+        x='square_meters', 
+        y='price',
+        color='value_category',
+        size='rooms',
+        size_max=15,
+        color_discrete_map={
+            'Excellent Deal': '#28a745',  # Green
+            'Good Deal': '#20c997',       # Teal
+            'Fair Price': '#6c757d',      # Gray
+            'Above Market': '#fd7e14',    # Orange
+            'Overpriced': '#dc3545'       # Red
+        },
+        hover_data=['neighborhood', 'rooms', 'condition_text', 'price_per_sqm', 'value_score'],
+        labels={'square_meters': 'Square Meters', 
+               'price': 'Price (₪)', 
+               'value_category': 'Market Value'},
+    )
+    
+    # Add trend line
+    fig.add_scatter(
+        x=x, 
+        y=trend_line_y,
+        mode='lines',
+        name='Market Trend',
+        line=dict(color='rgba(102, 126, 234, 0.8)', width=3, dash='dash'),
+        hoverinfo='skip'
+    )
+    
+    # Add median lines
+    median_price = plot_df['price'].median()
+    median_sqm = plot_df['square_meters'].median()
+    
+    # Vertical line for median square meters
+    fig.add_vline(
+        x=median_sqm, 
+        line_dash="dot", 
+        line_color="rgba(102, 126, 234, 0.6)",
+        annotation_text=f"Median Size: {median_sqm:.0f}sqm",
+        annotation_position="top"
+    )
+    
+    # Horizontal line for median price
+    fig.add_hline(
+        y=median_price, 
+        line_dash="dot", 
+        line_color="rgba(102, 126, 234, 0.6)",
+        annotation_text=f"Median Price: ₪{median_price:,.0f}",
+        annotation_position="right"
+    )
+    
+    # Prepare custom data for hover and click functionality
+    street_display = plot_df.apply(lambda row: 
+        f"{row['street']}" if pd.notna(row['street']) and row['street'].strip() != '' 
+        else f"{row['neighborhood']}", axis=1)
+    
+    custom_data = np.column_stack((
+        plot_df['neighborhood'].fillna('Unknown'),           # 0
+        plot_df['rooms'],                                     # 1
+        plot_df['price_per_sqm'].round(0),                   # 2 - Fixed: Price per sqm
+        plot_df['condition_text'].fillna('Not specified'),   # 3 - Fixed: Moved condition to index 3
+        plot_df['ad_type'],                                   # 4
+        street_display,                                       # 5
+        plot_df['floor'].fillna('Not specified'),            # 6
+        plot_df['full_url'].fillna(''),                      # 7
+        plot_df['value_score'].round(1),                     # 8
+        plot_df['value_category']                            # 9
+    ))
+    
+    # Update traces with enhanced hover template
+    fig.update_traces(
+        marker=dict(
+            opacity=0.8,
+            line=dict(width=1, color='DarkSlateGrey')
+        ),
+        customdata=custom_data,
+        hovertemplate='<b>🏡 %{customdata[0]}</b><br>' +
+                      '<i>📍 %{customdata[5]}</i><br>' +
+                      '<br>' +
+                      '<b>Price:</b> ₪%{y:,.0f}<br>' +
+                      '<b>Size:</b> %{x} sqm<br>' +
+                      '<b>Price/sqm:</b> ₪%{customdata[2]:,.0f}<br>' +
+                      '<b>Rooms:</b> %{customdata[1]}<br>' +
+                      '<b>Condition:</b> %{customdata[3]}<br>' +
+                      '<br>' +
+                      '<b>💡 Value Analysis:</b><br>' +
+                      '<b>Market Position:</b> %{customdata[9]}<br>' +
+                      '<b>Value Score:</b> %{customdata[8]}%<br>' +
+                      '<br>' +
+                      '<b>👆 Click to view listing</b>' +
+                      '<extra></extra>',
+        selector=dict(mode='markers')
+    )
+    
+    # Update layout
+    fig.update_layout(
+        clickmode='event+select',
+        hoverdistance=100,
+        hovermode='closest',
+        dragmode='zoom',
+        plot_bgcolor='rgba(240,240,240,0.2)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(family="Roboto, sans-serif"),
+        xaxis=dict(
+            title_font=dict(size=14),
+            tickfont=dict(size=12),
+            gridcolor='#eee'
+        ),
+        yaxis=dict(
+            title_font=dict(size=14),
+            tickfont=dict(size=12),
+            gridcolor='#eee'
+        ),
+        title=dict(font=dict(size=16)),
+        margin=dict(l=40, r=40, t=60, b=40),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    return fig
+
+def create_neighborhood_ranking(df):
+    """Create neighborhood ranking analysis with proper affordability calculation"""
+    if len(df) == 0 or 'neighborhood' not in df.columns:
+        return px.bar(title="No neighborhood data available")
+    
+    # Calculate neighborhood statistics
+    neighborhood_stats = df.groupby('neighborhood').agg({
+        'price': ['mean', 'median', 'count'],
+        'price_per_sqm': ['mean', 'median'],
+        'square_meters': 'mean',
+        'rooms': 'mean'
+    }).round(0)
+    
+    # Flatten column names
+    neighborhood_stats.columns = ['avg_price', 'median_price', 'count', 'avg_price_per_sqm', 'median_price_per_sqm', 'avg_size', 'avg_rooms']
+    neighborhood_stats = neighborhood_stats.reset_index()
+    
+    # Filter neighborhoods with at least 3 properties
+    neighborhood_stats = neighborhood_stats[neighborhood_stats['count'] >= 3]
+    
+    if len(neighborhood_stats) == 0:
+        return px.bar(title="Not enough data for neighborhood comparison")
+    
+    # Calculate REAL affordability score based on total price and opportunity
+    # Lower average total price = more affordable
+    max_avg_price = neighborhood_stats['avg_price'].max()
+    min_avg_price = neighborhood_stats['avg_price'].min()
+    
+    # Affordability score: higher score = more affordable (inverse of price)
+    neighborhood_stats['affordability_score'] = ((max_avg_price - neighborhood_stats['avg_price']) / (max_avg_price - min_avg_price) * 100)
+    
+    # Add value efficiency: price per sqm adjusted for size
+    # Smaller properties naturally have higher price/sqm, so we normalize by size
+    overall_avg_size = df['square_meters'].mean()
+    neighborhood_stats['size_adjusted_price_per_sqm'] = neighborhood_stats['avg_price_per_sqm'] * (neighborhood_stats['avg_size'] / overall_avg_size)
+    
+    # Calculate value score: combination of affordability and efficiency
+    max_adjusted_price_per_sqm = neighborhood_stats['size_adjusted_price_per_sqm'].max()
+    min_adjusted_price_per_sqm = neighborhood_stats['size_adjusted_price_per_sqm'].min()
+    
+    efficiency_score = ((max_adjusted_price_per_sqm - neighborhood_stats['size_adjusted_price_per_sqm']) / (max_adjusted_price_per_sqm - min_adjusted_price_per_sqm) * 100)
+    
+    # Combined affordability: 70% total price affordability + 30% size-adjusted efficiency
+    neighborhood_stats['real_affordability_score'] = (neighborhood_stats['affordability_score'] * 0.7 + efficiency_score * 0.3)
+    
+    # Sort by real affordability score
+    neighborhood_stats = neighborhood_stats.sort_values('real_affordability_score', ascending=False)
+    
+    # Create ranking chart showing real affordability
+    fig = px.bar(
+        neighborhood_stats.head(10),
+        x='neighborhood', 
+        y='avg_price',
+        color='real_affordability_score',
+        title='Real Neighborhood Affordability Ranking',
+        labels={
+            'avg_price': 'Average Total Price (₪)',
+            'neighborhood': 'Neighborhood',
+            'real_affordability_score': 'Real Affordability Score'
+        },
+        color_continuous_scale='RdYlGn',
+        text='count'
+    )
+    
+    # Add property count as text
+    fig.update_traces(texttemplate='%{text} properties', textposition="outside")
+    
+    # Add comprehensive hover data
+    fig.update_traces(
+        hovertemplate='<b>%{x}</b><br>' +
+                      '<b>Avg Total Price:</b> ₪%{y:,.0f}<br>' +
+                      '<b>Avg Size:</b> %{customdata[0]:.0f} sqm<br>' +
+                      '<b>Avg Price/sqm:</b> ₪%{customdata[1]:,.0f}<br>' +
+                      '<b>Properties:</b> %{text}<br>' +
+                      '<b>Real Affordability:</b> %{marker.color:.0f}/100<br>' +
+                      '<br><i>Higher score = more affordable</i>' +
+                      '<extra></extra>',
+        customdata=neighborhood_stats.head(10)[['avg_size', 'avg_price_per_sqm']].values
+    )
+    
+    fig.update_layout(
+        xaxis={'tickangle': 45},
+        height=400,
+        title_x=0.5,
+        showlegend=False
+    )
+    
+    return fig
+
+def create_best_deals_table(df):
+    """Create a table showing the best deals based on value analysis"""
+    if len(df) == 0:
+        return html.Div("No data available for best deals analysis")
+    
+    # Calculate value scores (same logic as in scatter plot)
+    plot_df = df.copy()
+    x = plot_df['square_meters'].values
+    y = plot_df['price'].values
+    
+    try:
+        z = np.polyfit(x, y, 1)
+        trend_line_y = np.poly1d(z)(x)
+        plot_df['value_score'] = ((y - trend_line_y) / trend_line_y * 100)
+    except:
+        plot_df['value_score'] = 0
+    
+    # Filter for best deals (below market value)
+    best_deals = plot_df[plot_df['value_score'] < -5].copy()
+    best_deals = best_deals.sort_values('value_score').head(10)
+    
+    if len(best_deals) == 0:
+        return html.Div([
+            html.P("No properties found significantly below market value.", 
+                  style={'text-align': 'center', 'color': '#6c757d', 'font-style': 'italic'})
+        ])
+    
+    # Create table rows
+    table_rows = []
+    for _, prop in best_deals.iterrows():
+        savings = abs(prop['value_score'])
+        row_style = {
+            'background': 'linear-gradient(90deg, rgba(40,167,69,0.1) 0%, rgba(255,255,255,0.1) 100%)' if savings > 15 else
+                         'rgba(40,167,69,0.05)',
+            'border-radius': '8px',
+            'margin-bottom': '10px',
+            'padding': '15px',
+            'border-left': f'4px solid {"#28a745" if savings > 15 else "#20c997"}',
+            'box-shadow': '0 2px 8px rgba(0,0,0,0.1)'
+        }
+        
+        table_rows.append(
+            html.Div([
+                html.Div([
+                    html.Div([
+                        html.H5(f"{prop['neighborhood']}", 
+                               style={'margin': '0 0 5px 0', 'color': '#2c3e50', 'font-weight': '600'}),
+                        html.P(f"{prop.get('street', 'Address not available')}", 
+                               style={'margin': '0 0 10px 0', 'color': '#6c757d', 'font-size': '14px'})
+                    ], style={'flex': '1'}),
+                    html.Div([
+                        html.Span(f"{savings:.1f}% below market", 
+                                style={'background': '#28a745', 'color': 'white', 'padding': '4px 8px', 
+                                      'border-radius': '12px', 'font-size': '12px', 'font-weight': '600'})
+                    ], style={'display': 'flex', 'align-items': 'flex-start'})
+                ], style={'display': 'flex', 'justify-content': 'space-between', 'align-items': 'flex-start'}),
+                
+                html.Div([
+                    html.Div([
+                        html.Strong("₪{:,.0f}".format(prop['price'])),
+                        html.Span(" | ", style={'color': '#dee2e6', 'margin': '0 8px'}),
+                        html.Span(f"{prop['square_meters']:.0f} sqm"),
+                        html.Span(" | ", style={'color': '#dee2e6', 'margin': '0 8px'}),
+                        html.Span(f"{prop['rooms']:.1f} rooms"),
+                        html.Span(" | ", style={'color': '#dee2e6', 'margin': '0 8px'}),
+                        html.Span(f"₪{prop['price_per_sqm']:,.0f}/sqm")
+                    ], style={'color': '#495057', 'font-size': '14px'}),
+                ], style={'margin-top': '8px'}),
+                
+                html.Div([
+                    html.A("View Listing", 
+                          href=prop.get('full_url', '#'), 
+                          target="_blank",
+                          style={'color': '#667eea', 'text-decoration': 'none', 'font-weight': '500',
+                                'font-size': '13px', 'display': 'flex', 'align-items': 'center', 'gap': '5px'}),
+                ], style={'margin-top': '10px'})
+            ], style=row_style)
+        )
+    
+    return html.Div([
+        html.H5("🎯 Best Property Deals", 
+               style={'color': '#28a745', 'margin-bottom': '20px', 'font-weight': '600'}),
+        html.Div(table_rows)
+    ])
+
+def create_market_insights_summary(df):
+    """Create market insights and recommendations"""
+    if len(df) == 0:
+        return html.Div("No data available for market insights")
+    
+    # Calculate market statistics
+    avg_price = df['price'].mean()
+    avg_price_per_sqm = df['price_per_sqm'].mean()
+    total_properties = len(df)
+    
+    # Find price ranges
+    price_quartiles = df['price'].quantile([0.25, 0.5, 0.75])
+    
+    # Real affordability analysis - based on total price, not price per sqm
+    if 'neighborhood' in df.columns and len(df) > 5:
+        neighborhood_analysis = df.groupby('neighborhood').agg({
+            'price': 'mean',
+            'price_per_sqm': 'mean',
+            'square_meters': 'mean'
+        }).reset_index()
+        
+        # Find most and least affordable by total price
+        most_affordable_area = neighborhood_analysis.loc[neighborhood_analysis['price'].idxmin(), 'neighborhood']
+        most_expensive_area = neighborhood_analysis.loc[neighborhood_analysis['price'].idxmax(), 'neighborhood']
+        
+        most_affordable_total_price = neighborhood_analysis['price'].min()
+        most_expensive_total_price = neighborhood_analysis['price'].max()
+        
+        # Find best value (lowest price per sqm adjusted for size)
+        overall_avg_size = df['square_meters'].mean()
+        neighborhood_analysis['size_adjusted_price_per_sqm'] = neighborhood_analysis['price_per_sqm'] * (neighborhood_analysis['square_meters'] / overall_avg_size)
+        best_value_area = neighborhood_analysis.loc[neighborhood_analysis['size_adjusted_price_per_sqm'].idxmin(), 'neighborhood']
+    else:
+        most_expensive_area = "N/A"
+        most_affordable_area = "N/A"
+        best_value_area = "N/A"
+        most_affordable_total_price = 0
+        most_expensive_total_price = 0
+    
+    # Best value analysis
+    x = df['square_meters'].values
+    y = df['price'].values
+    try:
+        z = np.polyfit(x, y, 1)
+        trend_line_y = np.poly1d(z)(x)
+        value_scores = ((y - trend_line_y) / trend_line_y * 100)
+        undervalued_count = len([score for score in value_scores if score < -5])
+        overvalued_count = len([score for score in value_scores if score > 5])
+    except:
+        undervalued_count = 0
+        overvalued_count = 0
+    
+    insights_style = {
+        'container': {
+            'background': 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+            'border-radius': '15px',
+            'padding': '25px',
+            'margin': '20px 0'
+        },
+        'insight_card': {
+            'background': 'white',
+            'border-radius': '10px',
+            'padding': '15px',
+            'margin': '10px 0',
+            'border-left': '4px solid #667eea',
+            'box-shadow': '0 2px 10px rgba(0,0,0,0.05)'
+        },
+        'metric': {
+            'font-size': '18px',
+            'font-weight': '600',
+            'color': '#667eea'
+        },
+        'label': {
+            'font-size': '14px',
+            'color': '#6c757d',
+            'margin-bottom': '5px'
+        }
+    }
+    
+    return html.Div([
+        html.H4("📊 Market Insights & Recommendations", 
+               style={'color': '#2c3e50', 'margin-bottom': '20px', 'font-weight': '600'}),
+        
+        html.Div([
+            # Market Overview
+            html.Div([
+                html.H6("Market Overview", style={'color': '#495057', 'margin-bottom': '10px'}),
+                html.P(f"Analyzing {total_properties} properties with an average price of ₪{avg_price:,.0f}", 
+                      style={'margin': '0', 'font-size': '14px'})
+            ], style=insights_style['insight_card']),
+            
+            # Price Analysis
+            html.Div([
+                html.H6("Price Distribution", style={'color': '#495057', 'margin-bottom': '10px'}),
+                html.P([
+                    f"Budget Range: ₪{price_quartiles[0.25]:,.0f} - ₪{price_quartiles[0.75]:,.0f} ",
+                    html.Span("(middle 50%)", style={'color': '#6c757d', 'font-style': 'italic'})
+                ], style={'margin': '0', 'font-size': '14px'})
+            ], style=insights_style['insight_card']),
+            
+            # Real Affordability Analysis
+            html.Div([
+                html.H6("Affordability Analysis (by total price)", style={'color': '#495057', 'margin-bottom': '10px'}),
+                html.P([
+                    f"Most Affordable: ", 
+                    html.Strong(f"{most_affordable_area}", style={'color': '#28a745'}),
+                    f" (Avg: ₪{most_affordable_total_price:,.0f})"
+                ], style={'margin': '0 0 5px 0', 'font-size': '14px'}),
+                html.P([
+                    f"Most Expensive: ", 
+                    html.Strong(f"{most_expensive_area}", style={'color': '#dc3545'}),
+                    f" (Avg: ₪{most_expensive_total_price:,.0f})"
+                ], style={'margin': '0 0 5px 0', 'font-size': '14px'}),
+                html.P([
+                    f"Best Value: ", 
+                    html.Strong(f"{best_value_area}", style={'color': '#667eea'}),
+                    f" (size-adjusted efficiency)"
+                ], style={'margin': '0', 'font-size': '14px'})
+            ], style=insights_style['insight_card']),
+            
+            # Value Opportunities
+            html.Div([
+                html.H6("Investment Opportunities", style={'color': '#495057', 'margin-bottom': '10px'}),
+                html.P([
+                    html.Span("🟢 ", style={'color': '#28a745'}),
+                    f"{undervalued_count} properties below market value"
+                ], style={'margin': '0 0 5px 0', 'font-size': '14px'}),
+                html.P([
+                    html.Span("🔴 ", style={'color': '#dc3545'}),
+                    f"{overvalued_count} properties above market value"
+                ], style={'margin': '0', 'font-size': '14px'})
+            ], style=insights_style['insight_card']),
+            
+        ], style=insights_style['container'])
+    ])
+
+def create_analytics_dashboard(df):
+    """Create advanced analytics charts for deeper insights"""
+    if len(df) == 0:
+        # Create proper empty figures instead of incorrectly calling px functions
+        def create_empty_figure(title):
+            fig = go.Figure()
+            fig.update_layout(
+                title=title,
+                xaxis_title="",
+                yaxis_title="",
+                height=350,
+                showlegend=False
+            )
+            return fig
+        
+        empty_charts = {
+            'price_histogram': create_empty_figure("Price Distribution - No data available"),
+            'price_boxplot': create_empty_figure("Price/SQM Distribution - No data available"),
+            'neighborhood_comparison': create_empty_figure("Neighborhood Comparison - No data available"), 
+            'room_efficiency': create_empty_figure("Room Efficiency - No data available"),
+            'neighborhood_ranking': create_empty_figure("Neighborhood Ranking - No data available")
+        }
+        return empty_charts
+    
+    analytics_df = df.copy()
+    
+    # 1. Price Distribution Histogram
+    price_histogram = px.histogram(
+        analytics_df,
+        x='price',
+        nbins=20,
+        title='Property Price Distribution',
+        labels={'price': 'Price (₪)', 'count': 'Number of Properties'},
+        color_discrete_sequence=['#667eea']
+    )
+    price_histogram.update_layout(
+        xaxis_title='Price (₪)',
+        yaxis_title='Number of Properties',
+        bargap=0.1,
+        title_x=0.5,
+        height=350
+    )
+    
+    # 2. Price per SQM Box Plot by Neighborhood
+    if 'neighborhood' in analytics_df.columns and len(analytics_df['neighborhood'].unique()) > 1:
+        # Limit to top 8 neighborhoods by count to avoid clutter
+        top_neighborhoods = analytics_df['neighborhood'].value_counts().head(8).index
+        boxplot_df = analytics_df[analytics_df['neighborhood'].isin(top_neighborhoods)]
+        
+        price_boxplot = px.box(
+            boxplot_df,
+            x='neighborhood',
+            y='price_per_sqm',
+            title='Price/SQM Distribution by Neighborhood',
+            labels={'price_per_sqm': 'Price per SQM (₪)', 'neighborhood': 'Neighborhood'},
+            color='neighborhood',
+            color_discrete_sequence=px.colors.qualitative.Set3
+        )
+        price_boxplot.update_layout(
+            xaxis_title='Neighborhood',
+            yaxis_title='Price per SQM (₪)',
+            xaxis={'tickangle': 45},
+            title_x=0.5,
+            height=350,
+            showlegend=False
+        )
+    else:
+        price_boxplot = px.box(
+            analytics_df,
+            y='price_per_sqm',
+            title='Overall Price/SQM Distribution',
+            labels={'price_per_sqm': 'Price per SQM (₪)'},
+            color_discrete_sequence=['#667eea']
+        )
+        price_boxplot.update_layout(height=350, title_x=0.5)
+    
+    # 3. Neighborhood Comparison Bar Chart
+    if 'neighborhood' in analytics_df.columns and len(analytics_df['neighborhood'].unique()) > 1:
+        neighborhood_stats = analytics_df.groupby('neighborhood').agg({
+            'price': 'mean',
+            'price_per_sqm': 'mean',
+            'square_meters': 'mean',
+            'rooms': 'mean'
+        }).round(0).reset_index()
+        
+        # Limit to top 10 neighborhoods by count
+        top_neighborhoods = analytics_df['neighborhood'].value_counts().head(10).index
+        neighborhood_stats = neighborhood_stats[neighborhood_stats['neighborhood'].isin(top_neighborhoods)]
+        
+        neighborhood_comparison = px.bar(
+            neighborhood_stats,
+            x='neighborhood',
+            y='price_per_sqm',
+            title='Average Price/SQM by Neighborhood',
+            labels={'price_per_sqm': 'Avg Price per SQM (₪)', 'neighborhood': 'Neighborhood'},
+            color='price_per_sqm',
+            color_continuous_scale='viridis'
+        )
+        neighborhood_comparison.update_layout(
+            xaxis_title='Neighborhood',
+            yaxis_title='Average Price per SQM (₪)',
+            xaxis={'tickangle': 45},
+            title_x=0.5,
+            height=350
+        )
+    else:
+        neighborhood_comparison = px.bar(
+            x=['Overall Average'],
+            y=[analytics_df['price_per_sqm'].mean()],
+            title='Overall Average Price/SQM',
+            labels={'y': 'Price per SQM (₪)', 'x': 'Category'},
+            color_discrete_sequence=['#667eea']
+        )
+        neighborhood_comparison.update_layout(height=350, title_x=0.5)
+    
+    # 4. Room Efficiency Analysis  
+    room_efficiency = px.scatter(
+        analytics_df,
+        x='rooms',
+        y='square_meters',
+        size='price',
+        color='price_per_sqm',
+        title='Room Count vs Property Size',
+        labels={
+            'rooms': 'Number of Rooms',
+            'square_meters': 'Square Meters',
+            'price_per_sqm': 'Price/SQM (₪)'
+        },
+        color_continuous_scale='viridis',
+        size_max=15
+    )
+    room_efficiency.update_layout(
+        xaxis_title='Number of Rooms',
+        yaxis_title='Square Meters',
+        title_x=0.5,
+        height=350
+    )
+    
+    return {
+        'price_histogram': price_histogram,
+        'price_boxplot': price_boxplot,
+        'neighborhood_comparison': neighborhood_comparison,
+        'room_efficiency': room_efficiency,
+        'neighborhood_ranking': create_neighborhood_ranking(analytics_df)
+    }
 
 def create_dashboard(df, port=8051):
     """Create and run an interactive Dash app for visualizing the data"""
@@ -178,12 +921,24 @@ def create_dashboard(df, port=8051):
             'align-items': 'center',
             'gap': '8px'
         },
+        'dual_view_container': {
+            'display': 'grid',
+            'grid-template-columns': '1fr 1fr',
+            'gap': '25px',
+            'margin-bottom': '25px'
+        },
         'graph': {
             'background': 'rgba(255,255,255,0.95)',
             'padding': '25px',
             'border-radius': '15px',
             'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
-            'margin-bottom': '25px',
+            'border': '1px solid rgba(255,255,255,0.2)'
+        },
+        'map_container': {
+            'background': 'rgba(255,255,255,0.95)',
+            'padding': '25px',
+            'border-radius': '15px',
+            'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
             'border': '1px solid rgba(255,255,255,0.2)'
         },
         'summary': {
@@ -304,7 +1059,7 @@ def create_dashboard(df, port=8051):
         }
     }
     
-    # Add custom CSS for animations and enhanced styling
+    # Add custom CSS for animations and enhanced styling (including responsive grid)
     app.index_string = '''
     <!DOCTYPE html>
     <html>
@@ -364,6 +1119,20 @@ def create_dashboard(df, port=8051):
                     60% { content: '..'; }
                     80%, 100% { content: '...'; }
                 }
+                
+                /* Responsive design for dual view */
+                @media (max-width: 1200px) {
+                    .dual-view-responsive {
+                        grid-template-columns: 1fr !important;
+                    }
+                }
+                
+                /* Responsive design for analytics */
+                @media (max-width: 900px) {
+                    .analytics-grid {
+                        grid-template-columns: 1fr !important;
+                    }
+                }
             </style>
         </head>
         <body>
@@ -397,7 +1166,7 @@ def create_dashboard(df, port=8051):
             ], style={'text-align': 'center'})
         )
     
-    # Create the enhanced app layout
+    # Create the enhanced app layout with map integration
     app.layout = html.Div([
         # Global loading overlay (initially hidden)
         html.Div(
@@ -423,7 +1192,7 @@ def create_dashboard(df, port=8051):
                         html.I(className="fas fa-home", style={'margin-right': '15px'}),
                         "Real Estate Price Analysis Dashboard"
                     ], style={'margin': '0', 'font-weight': '700', 'font-size': '28px'}),
-                    html.P("Discover market insights with interactive data visualization", 
+                    html.P("Discover market insights with interactive data visualization & geographic mapping", 
                            style={'margin': '10px 0 0 0', 'opacity': '0.9', 'font-size': '16px'})
                 ], style=styles['header_content'])
         ], style=styles['header']),
@@ -700,29 +1469,176 @@ def create_dashboard(df, port=8051):
             # Enhanced click instruction
         html.Div([
                 html.I(className="fas fa-mouse-pointer", style={'margin-right': '8px'}),
-                html.Span("Click on any point in the graph to open the property listing in a new tab")
+                html.Span("Click on any point in the chart or map to open the property listing in a new tab")
             ], style=styles['click_instruction'], className="fade-in"),
         
-            # Enhanced Graph section with comprehensive loading
-        html.Div([
-                create_loading_component("main-graph", 
-                    dcc.Graph(
-                        id='price-sqm-scatter',
-                        config={
-                            'displayModeBar': True,
-                            'displaylogo': False,
-                            'modeBarButtonsToAdd': ['select2d', 'lasso2d'],
-                            'toImageButtonOptions': {
-                                'format': 'png',
-                                'filename': 'real_estate_analysis',
-                                'height': 800,
-                                'width': 1200,
-                                'scale': 2
+            # NEW: Dual view section with scatter plot and map side by side
+            html.Div([
+                # Scatter Plot section
+            html.Div([
+                    html.H3([
+                        html.I(className="fas fa-chart-scatter", style={'margin-right': '10px', 'color': '#667eea'}),
+                        "Price vs Size Analysis"
+                    ], style={'color': '#2c3e50', 'margin-bottom': '20px', 'font-weight': '600', 'font-size': '18px'}),
+                    create_loading_component("main-graph", 
+                        dcc.Graph(
+                            id='price-sqm-scatter',
+                            config={
+                                'displayModeBar': True,
+                                'displaylogo': False,
+                                'modeBarButtonsToAdd': ['select2d', 'lasso2d'],
+                                'toImageButtonOptions': {
+                                    'format': 'png',
+                                    'filename': 'real_estate_scatter_analysis',
+                                    'height': 600,
+                                    'width': 800,
+                                    'scale': 2
+                                }
                             }
-                        }
-                    ), "Analyzing data and creating visualization"
-                )
-            ], style=styles['graph'], className="fade-in"),
+                        ), "Analyzing data and creating visualization"
+                    )
+                ], style=styles['graph'], className="fade-in"),
+                
+                # Map section
+                html.Div([
+                    html.H3([
+                        html.I(className="fas fa-map-marked-alt", style={'margin-right': '10px', 'color': '#667eea'}),
+                        "Geographic Distribution"
+                    ], style={'color': '#2c3e50', 'margin-bottom': '20px', 'font-weight': '600', 'font-size': '18px'}),
+                    create_loading_component("map-view", 
+                        dcc.Graph(
+                            id='property-map',
+                            config={
+                                'displayModeBar': True,
+                                'displaylogo': False,
+                                'toImageButtonOptions': {
+                                    'format': 'png',
+                                    'filename': 'real_estate_map_view',
+                                    'height': 600,
+                                    'width': 800,
+                                    'scale': 2
+                                }
+                            }
+                        ), "Loading geographic visualization"
+                    )
+                ], style=styles['map_container'], className="fade-in"),
+                
+            ], style={**styles['dual_view_container'], **{'class': 'dual-view-responsive'}}, className="fade-in"),
+            
+            # NEW: Advanced Analytics Section (Phase 7)
+            html.Div([
+                html.H3([
+                    html.I(className="fas fa-chart-line", style={'margin-right': '10px', 'color': '#667eea'}),
+                    "Advanced Analytics Dashboard"
+                ], style={'color': '#2c3e50', 'margin-bottom': '30px', 'font-weight': '600', 'font-size': '22px', 'text-align': 'center'}),
+                
+                # Analytics charts in 2x2 grid
+                html.Div([
+                    # Row 1: Histogram and Box Plot
+                    html.Div([
+                        html.Div([
+                            create_loading_component("price-histogram", 
+                                dcc.Graph(id='price-histogram', config={'displayModeBar': False}),
+                                "Generating price distribution analysis"
+                            )
+                        ], style={'background': 'rgba(255,255,255,0.95)', 'padding': '20px', 'border-radius': '12px', 
+                                 'box-shadow': '0 4px 15px rgba(0,0,0,0.08)', 'border': '1px solid rgba(255,255,255,0.3)'}),
+                        
+                        html.Div([
+                            create_loading_component("price-boxplot", 
+                                dcc.Graph(id='price-boxplot', config={'displayModeBar': False}),
+                                "Creating neighborhood comparison"
+                            )
+                        ], style={'background': 'rgba(255,255,255,0.95)', 'padding': '20px', 'border-radius': '12px', 
+                                 'box-shadow': '0 4px 15px rgba(0,0,0,0.08)', 'border': '1px solid rgba(255,255,255,0.3)'}),
+                    ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr', 'gap': '20px', 'margin-bottom': '20px'}),
+                    
+                    # Row 2: Bar Chart and Efficiency Scatter
+                    html.Div([
+                        html.Div([
+                            create_loading_component("neighborhood-comparison", 
+                                dcc.Graph(id='neighborhood-comparison', config={'displayModeBar': False}),
+                                "Analyzing neighborhood trends"
+                            )
+                        ], style={'background': 'rgba(255,255,255,0.95)', 'padding': '20px', 'border-radius': '12px', 
+                                 'box-shadow': '0 4px 15px rgba(0,0,0,0.08)', 'border': '1px solid rgba(255,255,255,0.3)'}),
+                        
+                        html.Div([
+                            create_loading_component("room-efficiency", 
+                                dcc.Graph(id='room-efficiency', config={'displayModeBar': False}),
+                                "Computing room efficiency metrics"
+                            )
+                        ], style={'background': 'rgba(255,255,255,0.95)', 'padding': '20px', 'border-radius': '12px', 
+                                 'box-shadow': '0 4px 15px rgba(0,0,0,0.08)', 'border': '1px solid rgba(255,255,255,0.3)'}),
+                    ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr', 'gap': '20px', 'margin-bottom': '20px'}),
+                    
+                    # Row 3: Neighborhood ranking (full width)
+                    html.Div([
+                        html.Div([
+                            create_loading_component("neighborhood-ranking", 
+                                dcc.Graph(id='neighborhood-ranking', config={'displayModeBar': False}),
+                                "Ranking neighborhoods by affordability"
+                            )
+                        ], style={'background': 'rgba(255,255,255,0.95)', 'padding': '20px', 'border-radius': '12px', 
+                                 'box-shadow': '0 4px 15px rgba(0,0,0,0.08)', 'border': '1px solid rgba(255,255,255,0.3)'}),
+                    ]),
+                ], style={
+                    'background': 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                    'padding': '25px',
+                    'border-radius': '15px',
+                    'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
+                    'margin-bottom': '25px',
+                    'border': '1px solid rgba(255,255,255,0.3)'
+                })
+            ], className="fade-in"),
+            
+            # NEW: Decision Support Section (Phase 7.5)
+            html.Div([
+                html.H3([
+                    html.I(className="fas fa-lightbulb", style={'margin-right': '10px', 'color': '#28a745'}),
+                    "Investment Decision Support"
+                ], style={'color': '#2c3e50', 'margin-bottom': '30px', 'font-weight': '600', 'font-size': '22px', 'text-align': 'center'}),
+                
+                # Two column layout: Best deals + Market insights
+                html.Div([
+                    # Best deals table
+                    html.Div([
+                        create_loading_component("best-deals", 
+                            html.Div(id='best-deals-table'),
+                            "Finding best property deals"
+                        )
+                    ], style={
+                        'background': 'rgba(255,255,255,0.95)', 
+                        'padding': '25px', 
+                        'border-radius': '12px', 
+                        'box-shadow': '0 4px 15px rgba(0,0,0,0.08)', 
+                        'border': '1px solid rgba(255,255,255,0.3)',
+                        'flex': '1'
+                    }),
+                    
+                    # Market insights
+                    html.Div([
+                        create_loading_component("market-insights", 
+                            html.Div(id='market-insights'),
+                            "Analyzing market trends"
+                        )
+                    ], style={
+                        'background': 'rgba(255,255,255,0.95)', 
+                        'padding': '25px', 
+                        'border-radius': '12px', 
+                        'box-shadow': '0 4px 15px rgba(0,0,0,0.08)', 
+                        'border': '1px solid rgba(255,255,255,0.3)',
+                        'flex': '1'
+                    }),
+                ], style={'display': 'flex', 'gap': '25px', 'align-items': 'flex-start'})
+            ], style={
+                'background': 'linear-gradient(135deg, #e8f5e8 0%, #d4f1d4 100%)',
+                'padding': '25px',
+                'border-radius': '15px',
+                'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
+                'margin-bottom': '25px',
+                'border': '1px solid rgba(255,255,255,0.3)'
+            }, className="fade-in"),
             
             # Enhanced Summary section
         html.Div([
@@ -737,6 +1653,7 @@ def create_dashboard(df, port=8051):
         
         # Store for clicked links
         dcc.Store(id='clicked-link', storage_type='memory'),
+        dcc.Store(id='clicked-map-link', storage_type='memory'),
         
         # Store for current dataset
         dcc.Store(id='current-dataset', data=df.to_dict('records'), storage_type='session'),
@@ -1048,12 +1965,12 @@ def create_dashboard(df, port=8051):
                 styles['scrape_button']
             )
     
-    # Client-side callback to open links in new tab
+    # Client-side callback to open links in new tab (scatter plot)
     app.clientside_callback(
         """
         function(clickData) {
             if(clickData && clickData.points && clickData.points.length > 0) {
-                const link = clickData.points[0].customdata[6];
+                const link = clickData.points[0].customdata[7];
                 if(link && link.length > 0) {
                     window.open(link, '_blank');
                 }
@@ -1063,6 +1980,24 @@ def create_dashboard(df, port=8051):
         """,
         Output('clicked-link', 'data'),
         Input('price-sqm-scatter', 'clickData'),
+        prevent_initial_call=True
+    )
+    
+    # Client-side callback to open links in new tab (map)
+    app.clientside_callback(
+        """
+        function(clickData) {
+            if(clickData && clickData.points && clickData.points.length > 0) {
+                const link = clickData.points[0].customdata[7];
+                if(link && link.length > 0) {
+                    window.open(link, '_blank');
+                }
+            }
+            return window.dash_clientside.no_update;
+        }
+        """,
+        Output('clicked-map-link', 'data'),
+        Input('property-map', 'clickData'),
         prevent_initial_call=True
     )
     
@@ -1159,9 +2094,17 @@ def create_dashboard(df, port=8051):
             conditions, 'all', ad_types, 'all'
         )
     
-    # Enhanced callback for updating graph and summary with better loading experience
+    # Enhanced callback for updating graph, map, analytics, and summary with better loading experience
     @app.callback(
         [Output('price-sqm-scatter', 'figure'),
+         Output('property-map', 'figure'),
+         Output('price-histogram', 'figure'),
+         Output('price-boxplot', 'figure'),
+         Output('neighborhood-comparison', 'figure'),
+         Output('room-efficiency', 'figure'),
+         Output('neighborhood-ranking', 'figure'),
+         Output('best-deals-table', 'children'),
+         Output('market-insights', 'children'),
          Output('summary-stats', 'children')],
         [Input('price-range-slider', 'value'),
          Input('sqm-range-slider', 'value'),
@@ -1190,8 +2133,16 @@ def create_dashboard(df, port=8051):
         if len(current_df) == 0:
             print("❌ No data available")
             empty_fig = px.scatter(title="No data available")
+            empty_map = create_map_figure(pd.DataFrame())
+            empty_analytics = create_analytics_dashboard(pd.DataFrame())
             empty_summary = html.Div("No data to display", style={'text-align': 'center', 'color': '#666'})
-            return empty_fig, empty_summary
+            empty_deals = html.Div("No data available", style={'text-align': 'center', 'color': '#666'})
+            empty_insights = html.Div("No data available", style={'text-align': 'center', 'color': '#666'})
+            return (empty_fig, empty_map, 
+                   empty_analytics['price_histogram'], empty_analytics['price_boxplot'],
+                   empty_analytics['neighborhood_comparison'], empty_analytics['room_efficiency'],
+                   empty_analytics['neighborhood_ranking'], empty_deals, empty_insights,
+                   empty_summary)
         
         # Ensure we have the required columns
         required_cols = ['price', 'square_meters', 'price_per_sqm']
@@ -1199,8 +2150,16 @@ def create_dashboard(df, port=8051):
             if col not in current_df.columns:
                 print(f"❌ Missing column: {col}")
                 empty_fig = px.scatter(title=f"Error: Missing {col} column")
+                empty_map = create_map_figure(pd.DataFrame())
+                empty_analytics = create_analytics_dashboard(pd.DataFrame())
                 empty_summary = html.Div(f"Data error: Missing {col}", style={'text-align': 'center', 'color': '#e74c3c'})
-                return empty_fig, empty_summary
+                empty_deals = html.Div("Data error", style={'text-align': 'center', 'color': '#e74c3c'})
+                empty_insights = html.Div("Data error", style={'text-align': 'center', 'color': '#e74c3c'})
+                return (empty_fig, empty_map,
+                       empty_analytics['price_histogram'], empty_analytics['price_boxplot'],
+                       empty_analytics['neighborhood_comparison'], empty_analytics['room_efficiency'],
+                       empty_analytics['neighborhood_ranking'], empty_deals, empty_insights,
+                       empty_summary)
         
         # Start with all data
         filtered_df = current_df.copy()
@@ -1281,9 +2240,17 @@ def create_dashboard(df, port=8051):
         if len(filtered_df) == 0:
             print("❌ No data remains after filtering")
             empty_fig = px.scatter(title="No properties match current filters")
+            empty_map = create_map_figure(pd.DataFrame())
+            empty_analytics = create_analytics_dashboard(pd.DataFrame())
             empty_summary = html.Div("Try adjusting your filters to see more properties", 
                                    style={'text-align': 'center', 'color': '#e67e22'})
-            return empty_fig, empty_summary
+            empty_deals = html.Div("No properties match filters", style={'text-align': 'center', 'color': '#e67e22'})
+            empty_insights = html.Div("No properties match filters", style={'text-align': 'center', 'color': '#e67e22'})
+            return (empty_fig, empty_map,
+                   empty_analytics['price_histogram'], empty_analytics['price_boxplot'],
+                   empty_analytics['neighborhood_comparison'], empty_analytics['room_efficiency'],
+                   empty_analytics['neighborhood_ranking'], empty_deals, empty_insights,
+                   empty_summary)
         
         # Clean data for plotting - handle NaN values
         plot_df = filtered_df.copy()
@@ -1299,94 +2266,75 @@ def create_dashboard(df, port=8051):
         plot_df['rooms'] = pd.to_numeric(plot_df['rooms'], errors='coerce')
         plot_df['rooms'] = plot_df['rooms'].fillna(3)  # Final fallback
         
-        # Ensure all plotting columns are valid
-        required_plot_cols = ['square_meters', 'price', 'price_per_sqm', 'rooms']
-        for col in required_plot_cols:
-            plot_df[col] = pd.to_numeric(plot_df[col], errors='coerce')
-            if plot_df[col].isna().any():
-                print(f"⚠️  Found NaN values in {col}, using median fill")
-                plot_df[col] = plot_df[col].fillna(plot_df[col].median())
+        # Clean data by removing invalid records instead of filling with fake data
+        initial_count = len(plot_df)
         
-        # Create scatter plot
-        fig = px.scatter(
-            plot_df, 
-            x='square_meters', 
-            y='price',
-            color='price_per_sqm',
-            size='rooms',
-            size_max=15,
-            color_continuous_scale='viridis',
-            hover_data=['neighborhood', 'rooms', 'condition_text', 'ad_type'],
-            labels={'square_meters': 'Square Meters', 
-                   'price': 'Price (₪)', 
-                   'price_per_sqm': 'Price per sqm (₪)'},
-            title=f'Real Estate Prices by Size ({len(plot_df)} properties)'
-        )
+        # Critical fields that must have valid data - never fill these with fake values
+        critical_fields = ['square_meters', 'price', 'price_per_sqm']
         
-        # Create custom data array for hover and click functionality
-        # Prepare street display - combine street with neighborhood for better context
-        street_display = plot_df.apply(lambda row: 
-            f"{row['street']}" if pd.notna(row['street']) and row['street'].strip() != '' 
-            else f"{row['neighborhood']}", axis=1)
+        for col in critical_fields:
+            if col in plot_df.columns:
+                # Convert to numeric
+                plot_df[col] = pd.to_numeric(plot_df[col], errors='coerce')
+                
+                # Remove rows with missing critical data instead of filling
+                before_count = len(plot_df)
+                plot_df = plot_df[plot_df[col].notna()]
+                removed_count = before_count - len(plot_df)
+                
+                if removed_count > 0:
+                    print(f"🗑️  Removed {removed_count} properties with missing/invalid {col} data")
         
-        custom_data = np.column_stack((
-            plot_df['neighborhood'].fillna('Unknown'),
-            plot_df['rooms'],
-            plot_df['condition_text'].fillna('Not specified'),
-            plot_df['ad_type'],
-            street_display,
-            plot_df['floor'].fillna('Not specified'),
-            plot_df['full_url'].fillna('')
-        ))
+        # For non-critical fields, we can be more lenient (only rooms in this case)
+        if 'rooms' in plot_df.columns:
+            plot_df['rooms'] = pd.to_numeric(plot_df['rooms'], errors='coerce')
+            # Only fill rooms if it's a small amount of missing data
+            rooms_missing = plot_df['rooms'].isna().sum()
+            if rooms_missing > 0:
+                if rooms_missing / len(plot_df) < 0.05:  # Less than 5% missing
+                    median_rooms = plot_df['rooms'].median()
+                    plot_df['rooms'] = plot_df['rooms'].fillna(median_rooms)
+                    print(f"🔧 Filled {rooms_missing} missing room values with median: {median_rooms}")
+                else:
+                    # Remove properties with missing room data if too many
+                    plot_df = plot_df[plot_df['rooms'].notna()]
+                    print(f"🗑️  Removed {rooms_missing} properties with missing room data")
         
-        # Update traces for better interactivity
-        fig.update_traces(
-            marker=dict(
-                opacity=0.8,
-                line=dict(width=1, color='DarkSlateGrey')
-            ),
-            customdata=custom_data,
-            hovertemplate='<b>🏡 %{customdata[0]}</b><br>' +
-                          '<i>📍 %{customdata[4]}</i><br>' +
-                          '<br>' +
-                          '<b>Price:</b> ₪%{y:,.0f}<br>' +
-                          '<b>Size:</b> %{x} sqm<br>' +
-                          '<b>Price/sqm:</b> ₪%{marker.color:,.0f}<br>' +
-                          '<b>Rooms:</b> %{customdata[1]}<br>' +
-                          '<b>Condition:</b> %{customdata[2]}<br>' +
-                          '<b>Floor:</b> %{customdata[5]}<br>' +
-                          '<br>' +
-                          '<b>👆 Click to view listing</b>' +
-                          '<extra></extra>'
-        )
+        # Data quality summary
+        final_count = len(plot_df)
+        removed_total = initial_count - final_count
+        if removed_total > 0:
+            print(f"📊 Data Quality: Removed {removed_total} incomplete properties ({removed_total/initial_count*100:.1f}%)")
+            print(f"✅ Final dataset: {final_count} complete, high-quality properties")
         
-        # Configure layout
-        fig.update_layout(
-            clickmode='event+select',
-            hoverdistance=100,
-            hovermode='closest',
-            dragmode='zoom',
-            plot_bgcolor='rgba(240,240,240,0.2)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(family="Roboto, sans-serif"),
-            xaxis=dict(
-                title_font=dict(size=14),
-                tickfont=dict(size=12),
-                gridcolor='#eee'
-            ),
-            yaxis=dict(
-                title_font=dict(size=14),
-                tickfont=dict(size=12),
-                gridcolor='#eee'
-            ),
-            title=dict(font=dict(size=16)),
-            coloraxis_colorbar=dict(
-                title="₪/sqm",
-                title_font=dict(size=13),
-                tickfont=dict(size=11)
-            ),
-            margin=dict(l=40, r=40, t=60, b=40)
-        )
+        # Add data quality warning if significant data was removed
+        data_quality_warning = None
+        if removed_total > 0:
+            quality_percentage = (final_count / initial_count) * 100
+            if quality_percentage < 90:
+                data_quality_warning = html.Div([
+                    html.I(className="fas fa-exclamation-triangle", style={'color': '#f39c12', 'margin-right': '8px'}),
+                    f"Data Quality Notice: {removed_total} properties removed due to missing/invalid data ({100-quality_percentage:.1f}% of original dataset)"
+                ], style={
+                    'background': '#fff3cd',
+                    'border': '1px solid #ffeaa7',
+                    'color': '#856404',
+                    'padding': '12px',
+                    'border-radius': '8px',
+                    'margin-bottom': '20px',
+                    'font-size': '14px'
+                })
+        
+
+        
+        # Create enhanced scatter plot with trend lines and value analysis
+        fig = create_enhanced_scatter_plot(plot_df)
+        
+        # Create the map visualization
+        map_fig = create_map_figure(plot_df)
+        
+        # Create analytics dashboard
+        analytics_charts = create_analytics_dashboard(plot_df)
         
         # Enhanced summary statistics with modern design
         summary_style = {
@@ -1428,7 +2376,7 @@ def create_dashboard(df, port=8051):
         }
         
         # Create enhanced summary stats with icons and better layout
-        summary = html.Div([
+        summary_cards = [
             html.Div([
                 html.P([
                     html.I(className="fas fa-home", style=summary_style['icon']),
@@ -1477,9 +2425,25 @@ def create_dashboard(df, port=8051):
                 html.P(f"₪{plot_df['price'].min():,.0f} - ₪{plot_df['price'].max():,.0f}", 
                        style={**summary_style['value'], 'font-size': '18px'})
             ], style=summary_style['card'], className="filter-hover"),
-        ], style=summary_style['container'], className="fade-in")
+        ]
         
-        return fig, summary
+        # Combine data quality warning (if any) with summary cards
+        summary_components = []
+        if data_quality_warning:
+            summary_components.append(data_quality_warning)
+        
+        summary_components.append(html.Div(summary_cards, style=summary_style['container'], className="fade-in"))
+        summary = html.Div(summary_components)
+        
+        # Create decision support components
+        best_deals_table = create_best_deals_table(plot_df)
+        market_insights = create_market_insights_summary(plot_df)
+        
+        return (fig, map_fig,
+               analytics_charts['price_histogram'], analytics_charts['price_boxplot'],
+               analytics_charts['neighborhood_comparison'], analytics_charts['room_efficiency'],
+               analytics_charts['neighborhood_ranking'], best_deals_table, market_insights,
+               summary)
     
     # Run the app
     print(f"Starting dashboard on http://127.0.0.1:{port}/")
@@ -1492,11 +2456,28 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Start with empty data - users must scrape from UI
-    print("Starting with empty dataset. Use the search controls to scrape data.")
+    # Try to load the most recent CSV file if it exists
+    scraped_dir = output_dir / "scraped_real_estate"
     df = create_empty_dataframe()
     
-    print(f"Loaded {len(df)} valid properties for analysis")
+    if scraped_dir.exists():
+        # Look for the most recent CSV file
+        csv_files = list(scraped_dir.glob("real_estate_listings_*.csv"))
+        if csv_files:
+            # Sort by modification time, get the most recent
+            latest_csv = max(csv_files, key=lambda f: f.stat().st_mtime)
+            print(f"📁 Found existing data file: {latest_csv.name}")
+            print("🔄 Loading existing data...")
+            df = load_data(str(latest_csv))
+            print(f"✅ Loaded {len(df)} properties from existing data")
+        else:
+            print("📂 No existing data files found. Use the search controls to scrape new data.")
+    else:
+        print("📂 No scraped data directory found. Use the search controls to scrape new data.")
+    
+    if len(df) == 0:
+        print("🚀 Starting with empty dataset. Use the search controls to scrape data.")
+        df = create_empty_dataframe()
     
     # Create and run the dashboard
     create_dashboard(df, args.port)
