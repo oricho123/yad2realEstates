@@ -4,7 +4,7 @@ from dash import html, dcc
 from typing import List, Dict, Any
 
 from src.config.styles import DashboardStyles
-from src.config.constants import CityOptions
+from src.config.constants import CityOptions, AreaOptions
 from src.utils.formatters import PriceInputFormatter
 
 
@@ -14,6 +14,7 @@ class SearchComponentManager:
     def __init__(self):
         """Initialize the search component manager."""
         self.city_options = self._get_city_options()
+        self.area_options = self._get_area_options()
 
     def create_search_section(self) -> html.Div:
         """
@@ -46,20 +47,21 @@ class SearchComponentManager:
                     ),
                 ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
 
-                # Area ID input
+                # Area selection dropdown
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-map",
                                style={'margin-right': '5px'}),
-                        "Area ID:"
+                        "Area:"
                     ], style=DashboardStyles.LABEL),
-                    dcc.Input(
+                    dcc.Dropdown(
                         id='search-area',
-                        type='number',
+                        options=self.area_options,
+                        # Default to area code 6 (matches Kiryat Bialik area_code)
                         value=6,
-                        placeholder="Area ID",
-                        style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
-                               'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        clearable=True,
+                        placeholder="Select area...",
+                        style={'border-radius': '8px'}
                     ),
                 ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
 
@@ -191,18 +193,32 @@ class SearchComponentManager:
 
     def _get_city_options(self) -> List[Dict[str, Any]]:
         """
-        Get city options for the dropdown.
+        Get city options for the dropdown from constants.
 
         Returns:
             List of city options with labels and values
         """
         return [
-            {'label': 'קרית ביאליק (Current)', 'value': 9500},
-            {'label': 'תל אביב-יפו', 'value': 5000},
-            {'label': 'ירושלים', 'value': 3000},
-            {'label': 'חיפה', 'value': 8600},
-            {'label': 'פתח תקווה', 'value': 7900},
-            {'label': 'אשדוד', 'value': 1300},
-            {'label': 'נתניה', 'value': 6300},
-            {'label': 'באר שבע', 'value': 900}
+            {
+                'label': f"{city['label']} (Area Code: {city['area_code']})",
+                'value': city['value']
+            }
+            for city in CityOptions.CITIES
         ]
+
+    def _get_area_options(self) -> List[Dict[str, Any]]:
+        """
+        Get area options for the dropdown from constants.
+
+        Returns:
+            List of area options with labels and values
+        """
+        options = []
+        for area in AreaOptions.AREAS:
+            # Convert None values to 'all' to avoid Dash dropdown issues
+            value = area['value'] if area['value'] is not None else 'all'
+            options.append({
+                'label': area['label'],
+                'value': value
+            })
+        return options

@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import datetime
 from pathlib import Path
 import logging
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass
 
 from src.config.settings import AppSettings
@@ -16,9 +16,9 @@ from src.config.settings import AppSettings
 @dataclass
 class ScrapingParams:
     """Type-safe parameters for scraping."""
-    city: Optional[int] = None
-    area: Optional[int] = None
-    top_area: Optional[int] = None
+    city: Optional[Union[int, str]] = None
+    area: Optional[Union[int, str]] = None
+    top_area: Optional[Union[int, str]] = None
     min_price: Optional[int] = None
     max_price: Optional[int] = None
     min_rooms: Optional[float] = None

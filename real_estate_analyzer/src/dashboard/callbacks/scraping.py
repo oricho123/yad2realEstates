@@ -25,6 +25,7 @@ class ScrapingCallbackManager:
         """Register all scraping callbacks."""
         self._register_scraping_callback()
         self._register_button_state_callback()
+        self._register_city_to_area_callback()
 
     def _register_scraping_callback(self) -> None:
         """Register the main scraping callback."""
@@ -81,7 +82,8 @@ class ScrapingCallbackManager:
                                          'align-items': 'center', 'justify-content': 'center', 'z-index': '9999'}
 
                 # Create search description
-                search_desc = f"City: {city}, Area: {area}, Price: ₪{min_price:,}-₪{max_price:,}"
+                area_display = "All Areas" if area == 'all' else area
+                search_desc = f"City: {city}, Area: {area_display}, Price: ₪{min_price:,}-₪{max_price:,}"
 
                 # Status message during scraping
                 status_message = html.Div([
@@ -123,7 +125,7 @@ class ScrapingCallbackManager:
                     # Create ScrapingParams object with the provided filters
                     scraping_params = ScrapingParams(
                         city=city,
-                        area=area,
+                        area=area if area != 'all' else None,
                         top_area=ScrapingConfiguration.DEFAULT_TOP_AREA,
                         min_price=min_price if min_price is not None else None,
                         max_price=max_price if max_price is not None else None,
@@ -304,3 +306,41 @@ class ScrapingCallbackManager:
                     "Search Properties",
                     DashboardStyles.SCRAPE_BUTTON
                 )
+
+    def _register_city_to_area_callback(self) -> None:
+        """Register callback to automatically set area based on selected city."""
+
+        @self.app.callback(
+            Output('search-area', 'value'),
+            [Input('search-city-dropdown', 'value')],
+            prevent_initial_call=True
+        )
+        def update_area_from_city(selected_city):
+            """
+            Update area dropdown value based on selected city's area code.
+
+            Args:
+                selected_city: The selected city value
+
+            Returns:
+                The area code corresponding to the selected city
+            """
+            if selected_city is None:
+                return None
+
+            from src.config.constants import CityOptions
+
+            # Find the selected city and get its area_code
+            for city in CityOptions.CITIES:
+                if city['value'] == selected_city:
+                    # Convert area_code to appropriate type (string to int if needed)
+                    area_code = city['area_code']
+                    try:
+                        # Try to convert to int if it's a numeric string
+                        return int(area_code)
+                    except (ValueError, TypeError):
+                        # If it's not numeric, return as string
+                        return area_code
+
+            # If city not found, return None
+            return None
