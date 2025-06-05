@@ -203,7 +203,10 @@ def create_enhanced_scatter_plot(df):
         trend_line_y = np.poly1d(z)(x)
         
         # Calculate value score: how far above/below trend line each property is
+        plot_df['predicted_price'] = trend_line_y
         plot_df['value_score'] = ((y - trend_line_y) / trend_line_y * 100)  # Percentage above/below trend
+        plot_df['savings_amount'] = trend_line_y - y  # Actual savings in NIS
+        
         plot_df['value_category'] = plot_df['value_score'].apply(lambda x: 
             'Excellent Deal' if x < -15 else
             'Good Deal' if x < -5 else
@@ -214,9 +217,11 @@ def create_enhanced_scatter_plot(df):
     except:
         plot_df['value_score'] = 0
         plot_df['value_category'] = 'Unknown'
+        plot_df['predicted_price'] = y.copy()
+        plot_df['savings_amount'] = 0
         trend_line_y = y.copy()
     
-    # Create the enhanced scatter plot
+    # Create the enhanced scatter plot with detailed title
     fig = px.scatter(
         plot_df, 
         x='square_meters', 
@@ -234,7 +239,8 @@ def create_enhanced_scatter_plot(df):
         hover_data=['neighborhood', 'rooms', 'condition_text', 'price_per_sqm', 'value_score'],
         labels={'square_meters': 'Square Meters', 
                'price': 'Price (₪)', 
-               'value_category': 'Market Value'},
+               'value_category': 'Market Value Analysis'},
+        title='Property Size vs Price with Market Value Analysis<br><sub>Value Score: % above/below expected price for property size | Trend line shows market expectation</sub>'
     )
     
     # Add trend line
@@ -277,14 +283,16 @@ def create_enhanced_scatter_plot(df):
     custom_data = np.column_stack((
         plot_df['neighborhood'].fillna('Unknown'),           # 0
         plot_df['rooms'],                                     # 1
-        plot_df['price_per_sqm'].round(0),                   # 2 - Fixed: Price per sqm
-        plot_df['condition_text'].fillna('Not specified'),   # 3 - Fixed: Moved condition to index 3
+        plot_df['price_per_sqm'].round(0),                   # 2 - Price per sqm
+        plot_df['condition_text'].fillna('Not specified'),   # 3 - Condition
         plot_df['ad_type'],                                   # 4
         street_display,                                       # 5
         plot_df['floor'].fillna('Not specified'),            # 6
         plot_df['full_url'].fillna(''),                      # 7
-        plot_df['value_score'].round(1),                     # 8
-        plot_df['value_category']                            # 9
+        plot_df['value_score'].round(1),                     # 8 - Value score
+        plot_df['value_category'],                           # 9 - Value category
+        plot_df['predicted_price'].round(0),                 # 10 - Market predicted price
+        plot_df['savings_amount'].round(0)                   # 11 - Savings amount
     ))
     
     # Update traces with enhanced hover template
@@ -297,15 +305,22 @@ def create_enhanced_scatter_plot(df):
         hovertemplate='<b>🏡 %{customdata[0]}</b><br>' +
                       '<i>📍 %{customdata[5]}</i><br>' +
                       '<br>' +
-                      '<b>Price:</b> ₪%{y:,.0f}<br>' +
+                      '<b>📊 Property Details:</b><br>' +
+                      '<b>Actual Price:</b> ₪%{y:,.0f}<br>' +
                       '<b>Size:</b> %{x} sqm<br>' +
                       '<b>Price/sqm:</b> ₪%{customdata[2]:,.0f}<br>' +
-                      '<b>Rooms:</b> %{customdata[1]}<br>' +
-                      '<b>Condition:</b> %{customdata[3]}<br>' +
+                      '<b>Rooms:</b> %{customdata[1]} | %{customdata[3]}<br>' +
                       '<br>' +
-                      '<b>💡 Value Analysis:</b><br>' +
-                      '<b>Market Position:</b> %{customdata[9]}<br>' +
+                      '<b>💡 Market Value Analysis:</b><br>' +
+                      '<b>Expected Price:</b> ₪%{customdata[10]:,.0f}<br>' +
                       '<b>Value Score:</b> %{customdata[8]}%<br>' +
+                      '<b>Assessment:</b> %{customdata[9]}<br>' +
+                      '<b>Savings/Premium:</b> ₪%{customdata[11]:,.0f}<br>' +
+                      '<br>' +
+                      '<i>💭 Value Score Explanation:</i><br>' +
+                      '<i>Based on size vs price trend.</i><br>' +
+                      '<i>Negative = Below market (good deal)</i><br>' +
+                      '<i>Positive = Above market (expensive)</i><br>' +
                       '<br>' +
                       '<b>👆 Click to view listing</b>' +
                       '<extra></extra>',
@@ -1479,7 +1494,34 @@ def create_dashboard(df, port=8051):
                     html.H3([
                         html.I(className="fas fa-chart-scatter", style={'margin-right': '10px', 'color': '#667eea'}),
                         "Price vs Size Analysis"
-                    ], style={'color': '#2c3e50', 'margin-bottom': '20px', 'font-weight': '600', 'font-size': '18px'}),
+                    ], style={'color': '#2c3e50', 'margin-bottom': '15px', 'font-weight': '600', 'font-size': '18px'}),
+                    
+                    # Value Score Explanation Box
+                    html.Div([
+                        html.H6([
+                            html.I(className="fas fa-info-circle", style={'margin-right': '8px', 'color': '#17a2b8'}),
+                            "Value Score Explanation"
+                        ], style={'color': '#2c3e50', 'margin-bottom': '10px', 'font-weight': '600'}),
+                        html.P([
+                            "The ", html.Strong("Value Score"), " shows how a property's price compares to market expectations based on its size:"
+                        ], style={'margin': '0 0 8px 0', 'font-size': '13px'}),
+                        html.Ul([
+                            html.Li([html.Strong("Negative score", style={'color': '#28a745'}), " = Below expected price (Good deal)"], 
+                                   style={'font-size': '12px', 'margin-bottom': '4px'}),
+                            html.Li([html.Strong("Positive score", style={'color': '#dc3545'}), " = Above expected price (Expensive)"], 
+                                   style={'font-size': '12px', 'margin-bottom': '4px'}),
+                            html.Li("Example: -15% means property costs 15% less than similar-sized properties", 
+                                   style={'font-size': '12px', 'color': '#6c757d', 'font-style': 'italic'})
+                        ], style={'margin': '0', 'padding-left': '16px'}),
+                    ], style={
+                        'background': 'linear-gradient(135deg, #e3f2fd 0%, #f1f8ff 100%)',
+                        'border': '1px solid #b3d9ff',
+                        'border-radius': '8px',
+                        'padding': '15px',
+                        'margin-bottom': '20px',
+                        'box-shadow': '0 2px 8px rgba(0,0,0,0.05)'
+                    }),
+                    
                     create_loading_component("main-graph", 
                         dcc.Graph(
                             id='price-sqm-scatter',

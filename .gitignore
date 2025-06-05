@@ -1,5 +1,6 @@
 vehicles_analyzer/scraped_vehicles/*
 *.pyc
-real_estate_analyzer/scraped_real_estate/*
+*__pycache__*
+*.pytest_cache*
 TEST_SUMMARY.md
 .coverage
