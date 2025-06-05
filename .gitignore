@@ -1,4 +1,4 @@
-scraped_vehicles/*
+vehicles_analyzer/scraped_vehicles/*
 *.pyc
 real_estate_analyzer/scraped_real_estate/*
 TEST_SUMMARY.md
