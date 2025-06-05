@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
 """Comprehensive test script for all structured hover data implementations."""
 
-import sys
-from pathlib import Path
-
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
-
-import pandas as pd
-import numpy as np
+from visualization.charts.analytics import PropertyAnalyticsCharts
+from visualization.charts.map_view import PropertyMapView
 from visualization.charts.scatter_plot import (
     PropertyHoverData,
     MapHoverData,
@@ -19,8 +13,13 @@ from visualization.charts.scatter_plot import (
     AnalyticsHoverDataFields,
     PropertyScatterPlot
 )
-from visualization.charts.map_view import PropertyMapView
-from visualization.charts.analytics import PropertyAnalyticsCharts
+import numpy as np
+import pandas as pd
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
 
 def create_sample_dataframe() -> pd.DataFrame:
@@ -95,13 +94,16 @@ def test_property_hover_data():
     # Test basic fields
     assert hover_data.neighborhood == 'Tel Aviv'
     assert hover_data.rooms == 3  # Should be converted to int
+    assert hover_data.price == 1800000  # Test the new price field
     assert hover_data.price_per_sqm == 20000
     assert hover_data.street_display == 'Rothschild Blvd'
 
     # Test list conversion
     data_list = hover_data.to_list()
-    assert len(data_list) == 12
+    assert len(data_list) == 13  # Now 13 fields instead of 12
     assert data_list[HoverDataFields.NEIGHBORHOOD] == 'Tel Aviv'
+    # Test the new price field
+    assert data_list[HoverDataFields.PRICE] == 1800000
     assert data_list[HoverDataFields.FULL_URL] == 'https://example.com/1'
 
     print("✅ PropertyHoverData tests passed!")

@@ -15,16 +15,17 @@ class HoverDataFields(IntEnum):
     """Enum for hover data field indices to prevent magic numbers."""
     NEIGHBORHOOD = 0
     ROOMS = 1
-    PRICE_PER_SQM = 2
-    CONDITION_TEXT = 3
-    AD_TYPE = 4
-    STREET_DISPLAY = 5
-    FLOOR = 6
-    FULL_URL = 7
-    VALUE_SCORE = 8
-    VALUE_CATEGORY = 9
-    PREDICTED_PRICE = 10
-    SAVINGS_AMOUNT = 11
+    PRICE = 2
+    PRICE_PER_SQM = 3
+    CONDITION_TEXT = 4
+    AD_TYPE = 5
+    STREET_DISPLAY = 6
+    FLOOR = 7
+    FULL_URL = 8
+    VALUE_SCORE = 9
+    VALUE_CATEGORY = 10
+    PREDICTED_PRICE = 11
+    SAVINGS_AMOUNT = 12
 
 
 class MapHoverDataFields(IntEnum):
@@ -50,6 +51,7 @@ class PropertyHoverData:
     """Structured data for property hover information."""
     neighborhood: str
     rooms: int
+    price: int
     price_per_sqm: int
     condition_text: str
     ad_type: str
@@ -66,6 +68,7 @@ class PropertyHoverData:
         return [
             self.neighborhood,
             self.rooms,
+            self.price,
             self.price_per_sqm,
             self.condition_text,
             self.ad_type,
@@ -90,6 +93,7 @@ class PropertyHoverData:
             neighborhood=str(row['neighborhood']) if pd.notna(
                 row['neighborhood']) else 'Unknown',
             rooms=int(row['rooms']) if pd.notna(row['rooms']) else 0,
+            price=int(round(row['price'])) if pd.notna(row['price']) else 0,
             price_per_sqm=int(round(row['price_per_sqm'])) if pd.notna(
                 row['price_per_sqm']) else 0,
             condition_text=str(row['condition_text']) if pd.notna(
@@ -185,7 +189,7 @@ class HoverTemplate:
             f'<i>📍 %{{customdata[{HoverDataFields.STREET_DISPLAY}]}}</i><br>'
             '<br>'
             '<b>📊 Property Details:</b><br>'
-            '<b>Actual Price:</b> ₪%{y:,.0f}<br>'
+            f'<b>Actual Price:</b> ₪%{{customdata[{HoverDataFields.PRICE}]:,.0f}}<br>'
             '<b>Size:</b> %{x} sqm<br>'
             f'<b>Price/sqm:</b> ₪%{{customdata[{HoverDataFields.PRICE_PER_SQM}]:,.0f}}<br>'
             f'<b>Rooms:</b> %{{customdata[{HoverDataFields.ROOMS}]}} | %{{customdata[{HoverDataFields.CONDITION_TEXT}]}}<br>'
@@ -260,10 +264,14 @@ class PropertyScatterPlot:
 
         plot_df = self.data.copy()
 
+        # Add a unique index to ensure data consistency
+        plot_df = plot_df.reset_index(drop=True)
+        plot_df['property_index'] = range(len(plot_df))
+
         # Calculate trend line and value scores
         plot_df = self._calculate_value_analysis(plot_df)
 
-        # Create the enhanced scatter plot
+        # Create the enhanced scatter plot with proper data mapping
         fig = px.scatter(
             plot_df,
             x='square_meters',
@@ -272,8 +280,7 @@ class PropertyScatterPlot:
             size='rooms',
             size_max=ChartConfiguration.SIZE_MAX,
             color_discrete_map=self._get_value_category_colors(),
-            hover_data=['neighborhood', 'rooms',
-                        'condition_text', 'price_per_sqm', 'value_score'],
+            # Remove hover_data parameter to avoid conflicts
             labels={'square_meters': 'Square Meters',
                     'price': 'Price (₪)',
                     'value_category': 'Market Value Analysis'},
@@ -286,15 +293,19 @@ class PropertyScatterPlot:
         # Add median reference lines
         self._add_median_lines(fig, plot_df)
 
-        # Update hover template and styling
+        # Update hover template and styling with correct data mapping
         self._update_scatter_styling(fig, plot_df)
 
         return fig
 
     def _calculate_value_analysis(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate trend line and value scores for properties."""
-        x = df['square_meters'].values
-        y = df['price'].values
+
+        # Make a proper copy to avoid any reference issues
+        result_df = df.copy(deep=True)
+
+        x = result_df['square_meters'].values
+        y = result_df['price'].values
 
         try:
             # Fit polynomial trend line (linear for now)
@@ -302,22 +313,24 @@ class PropertyScatterPlot:
             trend_line_y = np.poly1d(z)(x)
 
             # Calculate value score: percentage above/below trend line
-            df['predicted_price'] = trend_line_y
-            df['value_score'] = ((y - trend_line_y) / trend_line_y * 100)
-            df['savings_amount'] = trend_line_y - y  # Actual savings in NIS
+            result_df['predicted_price'] = trend_line_y
+            result_df['value_score'] = (
+                (y - trend_line_y) / trend_line_y * 100)
+            result_df['savings_amount'] = trend_line_y - \
+                y  # Actual savings in NIS
 
             # Categorize properties based on value score
-            df['value_category'] = df['value_score'].apply(
+            result_df['value_category'] = result_df['value_score'].apply(
                 self._categorize_property_value)
 
-        except Exception:
+        except Exception as e:
             # Fallback if trend calculation fails
-            df['value_score'] = 0
-            df['value_category'] = 'Unknown'
-            df['predicted_price'] = y.copy()
-            df['savings_amount'] = 0
+            result_df['value_score'] = 0
+            result_df['value_category'] = 'Unknown'
+            result_df['predicted_price'] = y.copy()
+            result_df['savings_amount'] = 0
 
-        return df
+        return result_df
 
     def _categorize_property_value(self, value_score: float) -> str:
         """Categorize property based on value score."""
@@ -350,9 +363,12 @@ class PropertyScatterPlot:
                 y=df['predicted_price'],
                 mode='lines',
                 name='Market Trend',
-                line=dict(color='rgba(102, 126, 234, 0.8)',
-                          width=3, dash='dash'),
-                hoverinfo='skip'
+                line=dict(color='rgba(102, 126, 234, 0.6)',
+                          width=2, dash='dash'),
+                hoverinfo='skip',
+                showlegend=True,
+                legendgroup='trend',
+                visible=True
             )
 
     def _add_median_lines(self, fig: go.Figure, df: pd.DataFrame) -> None:
@@ -380,7 +396,8 @@ class PropertyScatterPlot:
 
     def _update_scatter_styling(self, fig: go.Figure, df: pd.DataFrame) -> None:
         """Update scatter plot styling and hover templates."""
-        # Create structured hover data objects
+
+        # Create structured hover data objects for the entire dataframe
         hover_data_objects = [PropertyHoverData.from_row(
             row) for _, row in df.iterrows()]
 
@@ -389,16 +406,36 @@ class PropertyScatterPlot:
                        for hover_data in hover_data_objects]
 
         # Update traces with enhanced hover template
-        fig.update_traces(
-            marker=dict(
-                opacity=ChartConfiguration.OPACITY,
-                line=dict(width=ChartConfiguration.LINE_WIDTH,
-                          color=ChartConfiguration.LINE_COLOR)
-            ),
-            customdata=custom_data,
-            hovertemplate=HoverTemplate.build_property_hover_template(),
-            selector=dict(mode='markers')
-        )
+        # Important: We need to map custom data correctly to each trace
+        for i, trace in enumerate(fig.data):
+            if hasattr(trace, 'marker') and hasattr(trace, 'x'):
+                # Get the indices of points in this trace by matching the data
+                trace_indices = []
+                if hasattr(trace, 'x') and hasattr(trace, 'y'):
+                    for j, (x_val, y_val) in enumerate(zip(trace.x, trace.y)):
+                        # Find corresponding row in dataframe
+                        matching_rows = df[(df['square_meters'] == x_val) & (
+                            df['price'] == y_val)]
+                        if not matching_rows.empty:
+                            # Use the first match index
+                            original_idx = matching_rows.index[0]
+                            trace_indices.append(original_idx)
+
+                # Set custom data for this trace only
+                if trace_indices:
+                    trace_custom_data = [custom_data[idx]
+                                         for idx in trace_indices]
+                    trace.customdata = trace_custom_data
+
+                # Update trace styling
+                trace.update(
+                    marker=dict(
+                        opacity=ChartConfiguration.OPACITY,
+                        line=dict(width=ChartConfiguration.LINE_WIDTH,
+                                  color=ChartConfiguration.LINE_COLOR)
+                    ),
+                    hovertemplate=HoverTemplate.build_property_hover_template()
+                )
 
         # Update layout
         fig.update_layout(

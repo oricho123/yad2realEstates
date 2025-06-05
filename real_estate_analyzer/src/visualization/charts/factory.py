@@ -9,6 +9,7 @@ from .map_view import PropertyMapView
 from .scatter_plot import PropertyScatterPlot
 from .analytics import PropertyAnalyticsCharts
 from ..components.tables import PropertyTableComponents
+from .utils import ChartUtils
 
 
 class PropertyVisualizationFactory:
@@ -17,7 +18,7 @@ class PropertyVisualizationFactory:
     def __init__(self, data: pd.DataFrame):
         """
         Initialize the factory with property data.
-        
+
         Args:
             data: DataFrame or PropertyDataFrame containing property listings
         """
@@ -26,7 +27,7 @@ class PropertyVisualizationFactory:
             self.data = data.data
         else:
             self.data = data
-        
+
         # Initialize component classes
         self.map_view = PropertyMapView(self.data)
         self.scatter_plot = PropertyScatterPlot(self.data)
@@ -35,40 +36,38 @@ class PropertyVisualizationFactory:
 
     def create_all_charts(self) -> Dict[str, Union[go.Figure, html.Div]]:
         """
-        Create all chart types at once.
-        
+        Create all visualization components.
+
         Returns:
-            Dict containing all chart figures and components
+            Dictionary of chart components
         """
         if len(self.data) == 0:
             return self._create_empty_dashboard()
-        
-        # Create all main visualizations
-        charts = {}
-        
-        # Main visualizations
-        charts['scatter_plot'] = self.scatter_plot.create_enhanced_scatter_plot()
-        charts['map_view'] = self.map_view.create_map_figure()
-        
-        # Analytics charts
+
+        # Get individual analytics charts
         analytics_charts = self.analytics.create_analytics_dashboard()
-        charts.update(analytics_charts)
-        
-        # Table components
-        charts['best_deals_table'] = self.tables.create_best_deals_table()
-        charts['market_insights'] = self.tables.create_market_insights_summary()
-        charts['summary_stats'] = self.tables.create_summary_statistics_cards()
-        
-        return charts
+
+        return {
+            'scatter_plot': self.scatter_plot.create_enhanced_scatter_plot(),
+            'map_view': self.map_view.create_map_figure(),
+            'price_histogram': analytics_charts['price_histogram'],
+            'price_boxplot': analytics_charts['price_boxplot'],
+            'neighborhood_comparison': analytics_charts['neighborhood_comparison'],
+            'room_efficiency': analytics_charts['room_efficiency'],
+            'neighborhood_ranking': analytics_charts['neighborhood_ranking'],
+            'best_deals_table': self.tables.create_best_deals_table(),
+            'market_insights': self.tables.create_market_insights_summary(),
+            'summary_stats': self.tables.create_summary_statistics_cards()
+        }
 
     def create_chart_by_type(self, chart_type: str, **kwargs) -> Union[go.Figure, html.Div]:
         """
         Create a specific chart type.
-        
+
         Args:
             chart_type: Type of chart to create
             **kwargs: Additional parameters for chart creation
-            
+
         Returns:
             Chart figure or HTML component
         """
@@ -84,12 +83,12 @@ class PropertyVisualizationFactory:
             'market_insights': self.tables.create_market_insights_summary,
             'summary_stats': self.tables.create_summary_statistics_cards
         }
-        
+
         if chart_type not in chart_creators:
             raise ValueError(f"Unknown chart type: {chart_type}")
-        
+
         creator = chart_creators[chart_type]
-        
+
         # Pass kwargs if the function accepts them
         try:
             return creator(**kwargs)
@@ -100,7 +99,7 @@ class PropertyVisualizationFactory:
     def get_chart_dependencies(self) -> Dict[str, Any]:
         """
         Get information about chart dependencies and data requirements.
-        
+
         Returns:
             Dict with dependency information
         """
@@ -115,12 +114,12 @@ class PropertyVisualizationFactory:
     def update_data(self, new_data: pd.DataFrame) -> None:
         """
         Update the data for all chart components.
-        
+
         Args:
             new_data: New property data
         """
         self.data = new_data
-        
+
         # Update all component instances
         self.map_view = PropertyMapView(new_data)
         self.scatter_plot = PropertyScatterPlot(new_data)
@@ -130,26 +129,24 @@ class PropertyVisualizationFactory:
     def get_chart_summaries(self) -> Dict[str, Dict[str, Any]]:
         """
         Get summary information for all chart types.
-        
+
         Returns:
             Dict with summary info for each chart type
         """
         summaries = {}
-        
+
         if len(self.data) > 0:
             summaries['map_view'] = self.map_view.get_property_locations_summary()
             summaries['scatter_plot'] = self.scatter_plot.get_value_analysis_summary()
             summaries['analytics'] = self.analytics.get_analytics_summary()
-        
+
         return summaries
 
     def _create_empty_dashboard(self) -> Dict[str, Union[go.Figure, html.Div]]:
         """Create empty charts when no data is available."""
-        from .utils import ChartUtils
-        
         empty_fig = ChartUtils.create_empty_figure("No data available")
         empty_div = html.Div("No data available for analysis")
-        
+
         return {
             'scatter_plot': empty_fig,
             'map_view': empty_fig,
@@ -167,53 +164,57 @@ class PropertyVisualizationFactory:
         """Check if data has location information."""
         if len(self.data) == 0:
             return False
-        
+
         return not self.data[['lat', 'lng']].isna().all().all()
 
     def _has_neighborhood_data(self) -> bool:
         """Check if data has neighborhood information."""
         if len(self.data) == 0:
             return False
-        
+
         return 'neighborhood' in self.data.columns and not self.data['neighborhood'].isna().all()
 
     def _assess_data_quality(self) -> Dict[str, Any]:
         """Assess the quality of the data for visualization."""
         if len(self.data) == 0:
             return {'quality_score': 0, 'issues': ['No data available']}
-        
+
         issues = []
         quality_score = 100
-        
+
         # Check for required columns
         required_columns = ['price', 'square_meters', 'price_per_sqm']
-        missing_columns = [col for col in required_columns if col not in self.data.columns]
+        missing_columns = [
+            col for col in required_columns if col not in self.data.columns]
         if missing_columns:
             issues.append(f"Missing required columns: {missing_columns}")
             quality_score -= 30
-        
+
         # Check for missing data
         if not missing_columns:
-            missing_data_pct = self.data[required_columns].isna().sum().sum() / (len(self.data) * len(required_columns)) * 100
+            missing_data_pct = self.data[required_columns].isna().sum(
+            ).sum() / (len(self.data) * len(required_columns)) * 100
             if missing_data_pct > 5:
-                issues.append(f"High missing data percentage: {missing_data_pct:.1f}%")
+                issues.append(
+                    f"High missing data percentage: {missing_data_pct:.1f}%")
                 quality_score -= 20
-        
+
         # Check for location data
         if not self._has_location_data():
             issues.append("No location data available for map visualization")
             quality_score -= 15
-        
+
         # Check for neighborhood data
         if not self._has_neighborhood_data():
-            issues.append("No neighborhood data available for neighborhood analysis")
+            issues.append(
+                "No neighborhood data available for neighborhood analysis")
             quality_score -= 10
-        
+
         # Check data volume
         if len(self.data) < 10:
             issues.append("Insufficient data for meaningful analysis")
             quality_score -= 25
-        
+
         return {
             'quality_score': max(0, quality_score),
             'issues': issues,
@@ -225,34 +226,38 @@ class PropertyVisualizationFactory:
         """Calculate data completeness for key fields."""
         if len(self.data) == 0:
             return {}
-        
+
         completeness = {}
-        key_fields = ['price', 'square_meters', 'neighborhood', 'lat', 'lng', 'rooms', 'condition_text']
-        
+        key_fields = ['price', 'square_meters', 'neighborhood',
+                      'lat', 'lng', 'rooms', 'condition_text']
+
         for field in key_fields:
             if field in self.data.columns:
-                completeness[field] = (1 - self.data[field].isna().sum() / len(self.data)) * 100
+                completeness[field] = (
+                    1 - self.data[field].isna().sum() / len(self.data)) * 100
             else:
                 completeness[field] = 0
-        
+
         return completeness
 
     def _get_supported_charts(self) -> List[str]:
         """Get list of supported chart types based on available data."""
-        base_charts = ['scatter_plot', 'price_histogram', 'summary_stats', 'market_insights']
-        
+        base_charts = ['scatter_plot', 'price_histogram',
+                       'summary_stats', 'market_insights']
+
         if self._has_location_data():
             base_charts.append('map_view')
-        
+
         if self._has_neighborhood_data():
-            base_charts.extend(['price_boxplot', 'neighborhood_comparison', 'neighborhood_ranking'])
-        
+            base_charts.extend(
+                ['price_boxplot', 'neighborhood_comparison', 'neighborhood_ranking'])
+
         if len(self.data) >= 5:  # Need minimum data for value analysis
             base_charts.append('best_deals_table')
-        
+
         if 'rooms' in self.data.columns and not self.data['rooms'].isna().all():
             base_charts.append('room_efficiency')
-        
+
         return base_charts
 
     @staticmethod
@@ -269,4 +274,4 @@ class PropertyVisualizationFactory:
             'best_deals_table': 'Table of properties with best value scores',
             'market_insights': 'Market analysis summary and recommendations',
             'summary_stats': 'Summary statistics cards'
-        } 
+        }

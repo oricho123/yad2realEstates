@@ -24,6 +24,7 @@ def test_property_hover_data():
     sample_data = {
         'neighborhood': 'Tel Aviv',
         'rooms': 3.5,
+        'price': 1800000,
         'price_per_sqm': 25000,
         'condition_text': 'Good',
         'ad_type': 'Sale',
@@ -42,15 +43,18 @@ def test_property_hover_data():
     # Test that we get the expected values
     assert hover_data.neighborhood == 'Tel Aviv'
     assert hover_data.rooms == 3  # Should be converted to int
+    assert hover_data.price == 1800000  # Test the new price field
     assert hover_data.price_per_sqm == 25000
     assert hover_data.value_score == -5.2
     assert hover_data.street_display == 'Dizengoff St'
 
     # Test conversion to list
     data_list = hover_data.to_list()
-    assert len(data_list) == 12  # Should have 12 fields
+    assert len(data_list) == 13  # Should have 13 fields now (was 12)
     assert data_list[HoverDataFields.NEIGHBORHOOD] == 'Tel Aviv'
     assert data_list[HoverDataFields.ROOMS] == 3
+    # Test the new price field
+    assert data_list[HoverDataFields.PRICE] == 1800000
     assert data_list[HoverDataFields.VALUE_SCORE] == -5.2
 
     print("✅ PropertyHoverData tests passed!")
@@ -84,6 +88,7 @@ def test_enum_consistency():
     sample_data = {
         'neighborhood': 'Test',
         'rooms': 3,
+        'price': 1500000,
         'price_per_sqm': 20000,
         'condition_text': 'Good',
         'ad_type': 'Sale',
@@ -103,6 +108,7 @@ def test_enum_consistency():
     # Test that enum indices match the actual data positions
     assert data_list[HoverDataFields.NEIGHBORHOOD] == hover_data.neighborhood
     assert data_list[HoverDataFields.ROOMS] == hover_data.rooms
+    assert data_list[HoverDataFields.PRICE] == hover_data.price
     assert data_list[HoverDataFields.PRICE_PER_SQM] == hover_data.price_per_sqm
     assert data_list[HoverDataFields.VALUE_SCORE] == hover_data.value_score
     assert data_list[HoverDataFields.VALUE_CATEGORY] == hover_data.value_category
