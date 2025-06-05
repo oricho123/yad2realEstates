@@ -168,6 +168,39 @@ class SearchComponentManager:
                     ),
                 ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
 
+                # Floor range inputs
+                html.Div([
+                    html.Label([
+                        html.I(className="fas fa-building",
+                               style={'margin-right': '5px'}),
+                        "Min Floor:"
+                    ], style=DashboardStyles.LABEL),
+                    dcc.Input(
+                        id='search-min-floor',
+                        type='number',
+                        value=None,
+                        placeholder="Min Floor",
+                        style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
+                               'border': '2px solid #e9ecef', 'font-size': '14px'}
+                    ),
+                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+
+                html.Div([
+                    html.Label([
+                        html.I(className="fas fa-building",
+                               style={'margin-right': '5px'}),
+                        "Max Floor:"
+                    ], style=DashboardStyles.LABEL),
+                    dcc.Input(
+                        id='search-max-floor',
+                        type='number',
+                        value=None,
+                        placeholder="Max Floor",
+                        style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
+                               'border': '2px solid #e9ecef', 'font-size': '14px'}
+                    ),
+                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+
                 # Search button
                 html.Div([
                     html.Button([

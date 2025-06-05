@@ -58,6 +58,11 @@ class PropertyDataFilter:
             filtered_df = self._apply_rooms_filter(
                 filtered_df, filter_params['rooms'])
 
+        # Apply floor filter
+        if 'floors' in filter_params and filter_params['floors']:
+            filtered_df = self._apply_floor_filter(
+                filtered_df, filter_params['floors'])
+
         # Apply condition filter
         if 'condition' in filter_params:
             filtered_df = self._apply_condition_filter(
@@ -152,6 +157,25 @@ class PropertyDataFilter:
 
         logger.debug(
             f"Rooms filter ({rooms_min:.1f}-{rooms_max:.1f}): {before_count} → {len(filtered_df)} properties")
+        return filtered_df
+
+    def _apply_floor_filter(self, df: pd.DataFrame, floors_range: List[float]) -> pd.DataFrame:
+        """Apply floor range filter."""
+        if not floors_range or len(floors_range) != 2 or 'floor' not in df.columns:
+            return df
+
+        floors_min, floors_max = floors_range
+        if floors_min is None or floors_max is None:
+            return df
+
+        before_count = len(df)
+        filtered_df = df[
+            (df['floor'] >= floors_min) &
+            (df['floor'] <= floors_max)
+        ]
+
+        logger.debug(
+            f"Floor filter ({floors_min:.0f}-{floors_max:.0f}): {before_count} → {len(filtered_df)} properties")
         return filtered_df
 
     def _apply_condition_filter(self, df: pd.DataFrame, condition: str) -> pd.DataFrame:
@@ -272,6 +296,21 @@ class PropertyDataFilter:
             int(rooms_max): f"{rooms_max:.0f}"
         }
 
+        # Floor range - handle potential missing/null floor data
+        floor_data = df['floor'].dropna(
+        ) if 'floor' in df.columns else pd.Series([])
+        if not floor_data.empty:
+            floor_min = int(floor_data.min())
+            floor_max = int(floor_data.max())
+            floor_marks = {
+                floor_min: str(floor_min),
+                floor_max: str(floor_max)
+            }
+        else:
+            floor_min = 0
+            floor_max = 40
+            floor_marks = {0: '0', 40: '40'}
+
         # Neighborhood options
         neighborhoods = [{'label': 'All Neighborhoods', 'value': 'all'}] + [
             {'label': n, 'value': n} for n in sorted(df['neighborhood'].dropna().unique())
@@ -302,6 +341,9 @@ class PropertyDataFilter:
             'rooms_min': rooms_min,
             'rooms_max': rooms_max,
             'rooms_marks': rooms_marks,
+            'floor_min': floor_min,
+            'floor_max': floor_max,
+            'floor_marks': floor_marks,
             'neighborhoods': neighborhoods,
             'exclude_neighborhoods_options': exclude_neighborhoods_options,
             'conditions': conditions,
@@ -323,6 +365,9 @@ class PropertyDataFilter:
             'rooms_min': 1,
             'rooms_max': 10,
             'rooms_marks': {1: "1", 10: "10"},
+            'floor_min': 0,
+            'floor_max': 40,
+            'floor_marks': {0: '0', 40: '40'},
             'neighborhoods': [{'label': 'No data', 'value': 'none'}],
             'exclude_neighborhoods_options': [],
             'conditions': [{'label': 'No data', 'value': 'none'}],

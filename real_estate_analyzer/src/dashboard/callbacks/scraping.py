@@ -45,11 +45,14 @@ class ScrapingCallbackManager:
              State('search-max-rooms', 'value'),
              State('search-min-sqm', 'value'),
              State('search-max-sqm', 'value'),
+             State('search-min-floor', 'value'),
+             State('search-max-floor', 'value'),
              State('loading-state', 'data')],
             prevent_initial_call=True
         )
         def handle_scrape_request(n_clicks, city, area, min_price, max_price,
-                                  min_rooms, max_rooms, min_sqm, max_sqm, loading_state):
+                                  min_rooms, max_rooms, min_sqm, max_sqm,
+                                  min_floor, max_floor, loading_state):
             """
             Handle new data scraping requests.
 
@@ -63,6 +66,8 @@ class ScrapingCallbackManager:
                 max_rooms: Maximum rooms filter
                 min_sqm: Minimum square meters filter
                 max_sqm: Maximum square meters filter
+                min_floor: Minimum floor filter
+                max_floor: Maximum floor filter
                 loading_state: Current loading state
 
             Returns:
@@ -132,7 +137,9 @@ class ScrapingCallbackManager:
                         min_rooms=min_rooms if min_rooms is not None and min_rooms != 'any' else None,
                         max_rooms=max_rooms if max_rooms is not None and max_rooms != 'any' else None,
                         min_square_meters=min_sqm if min_sqm is not None else None,
-                        max_square_meters=max_sqm if max_sqm is not None else None
+                        max_square_meters=max_sqm if max_sqm is not None else None,
+                        min_floor=min_floor if min_floor is not None else None,
+                        max_floor=max_floor if max_floor is not None else None
                     )
 
                     print(
@@ -222,6 +229,12 @@ class ScrapingCallbackManager:
                             filtered_df = filtered_df[filtered_df['square_meters'] >= min_sqm]
                         if max_sqm is not None:
                             filtered_df = filtered_df[filtered_df['square_meters'] <= max_sqm]
+                        if min_floor is not None:
+                            filtered_df = filtered_df[filtered_df['floor']
+                                                      >= min_floor]
+                        if max_floor is not None:
+                            filtered_df = filtered_df[filtered_df['floor']
+                                                      <= max_floor]
 
                         # Warning message about using existing data
                         warning_message = html.Div([

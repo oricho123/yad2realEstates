@@ -131,6 +131,26 @@ class FilterComponentManager:
                     )
                 ], style=DashboardStyles.FILTER, className="filter-hover"),
 
+                # Floor range slider
+                html.Div([
+                    html.Label([
+                        html.I(className="fas fa-building",
+                               style={'margin-right': '5px'}),
+                        "Floor:"
+                    ], style=DashboardStyles.LABEL),
+                    dcc.RangeSlider(
+                        id='floor-range-slider',
+                        min=self.filter_options['floors']['min'],
+                        max=self.filter_options['floors']['max'],
+                        value=self.filter_options['floors']['value'],
+                        marks=self.filter_options['floors']['marks'],
+                        tooltip={'placement': 'bottom',
+                                 'always_visible': True},
+                        allowCross=False,
+                        step=1
+                    )
+                ], style=DashboardStyles.FILTER, className="filter-hover"),
+
                 # Condition filter
                 html.Div([
                     html.Label([
@@ -195,6 +215,15 @@ class FilterComponentManager:
         rooms_min = float(self.data['rooms'].min())
         rooms_max = float(self.data['rooms'].max())
 
+        # Floor options - handle potential missing/null floor data
+        floor_data = self.data['floor'].dropna()
+        if not floor_data.empty:
+            floor_min = int(floor_data.min())
+            floor_max = int(floor_data.max())
+        else:
+            floor_min = 0
+            floor_max = 40
+
         return {
             'price': {
                 'min': price_min,
@@ -219,6 +248,13 @@ class FilterComponentManager:
                 'max': rooms_max,
                 'value': [rooms_min, rooms_max],
                 'marks': {i: str(i) for i in range(int(rooms_min), int(rooms_max) + 1)}
+            },
+            'floors': {
+                'min': floor_min,
+                'max': floor_max,
+                'value': [floor_min, floor_max],
+                # Limit marks to avoid clutter
+                'marks': {i: str(i) for i in range(floor_min, min(floor_max + 1, floor_min + 21))}
             },
             'conditions': [{'label': 'All Conditions', 'value': 'all'}] + [
                 {'label': ct, 'value': ct} for ct in sorted(self.data['condition_text'].dropna().unique())
@@ -255,6 +291,12 @@ class FilterComponentManager:
                 'max': 10,
                 'value': [1, 10],
                 'marks': {i: str(i) for i in range(1, 11)}
+            },
+            'floors': {
+                'min': 0,
+                'max': 20,
+                'value': [0, 20],
+                'marks': {i: str(i) for i in range(0, 21)}
             },
             'conditions': [{'label': 'All Conditions', 'value': 'all'}],
             'ad_types': [{'label': 'All', 'value': 'all'}]

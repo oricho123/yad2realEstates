@@ -25,6 +25,8 @@ class ScrapingParams:
     max_rooms: Optional[float] = None
     min_square_meters: Optional[int] = None
     max_square_meters: Optional[int] = None
+    min_floor: Optional[int] = None
+    max_floor: Optional[int] = None
     zoom: int = 11
 
 
@@ -101,6 +103,10 @@ class Yad2Scraper:
             query_params['minSquaremeter'] = params.min_square_meters
         if params.max_square_meters:
             query_params['maxSquaremeter'] = params.max_square_meters
+        if params.min_floor:
+            query_params['minFloor'] = params.min_floor
+        if params.max_floor:
+            query_params['maxFloor'] = params.max_floor
 
         # Add priceOnly=1 parameter as required by API
         query_params['priceOnly'] = 1
