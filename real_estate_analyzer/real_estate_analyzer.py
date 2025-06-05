@@ -403,7 +403,7 @@ def create_dashboard(df, port=8051):
         html.Div(
             id='global-loading-overlay',
             children=[
-                html.Div([
+        html.Div([
                     html.Div(style=styles['spinner']),
                     html.Div("Processing your request", style=styles['loading_text'], className="loading-dots"),
                     html.Div("This may take a few moments...", style=styles['loading_subtitle'])
@@ -426,11 +426,11 @@ def create_dashboard(df, port=8051):
                     html.P("Discover market insights with interactive data visualization", 
                            style={'margin': '10px 0 0 0', 'opacity': '0.9', 'font-size': '16px'})
                 ], style=styles['header_content'])
-            ], style=styles['header']),
-            
+        ], style=styles['header']),
+        
             # Enhanced Search Controls Section
+        html.Div([
             html.Div([
-                html.Div([
                     html.I(className="fas fa-search", style={'margin-right': '10px'}),
                     "Search New Properties"
                 ], style=styles['search_header']),
@@ -440,124 +440,124 @@ def create_dashboard(df, port=8051):
                             html.I(className="fas fa-map-marker-alt", style={'margin-right': '5px'}),
                             "City:"
                         ], style=styles['label']),
-                        dcc.Dropdown(
-                            id='search-city-dropdown',
-                            options=city_options,
-                            value=9500,
+                    dcc.Dropdown(
+                        id='search-city-dropdown',
+                        options=city_options,
+                        value=9500,
                             clearable=False,
                             style={'border-radius': '8px'}
-                        ),
+                    ),
                     ], style=styles['search_filter'], className="filter-hover"),
-                    
-                    html.Div([
+                
+                html.Div([
                         html.Label([
                             html.I(className="fas fa-map", style={'margin-right': '5px'}),
                             "Area ID:"
                         ], style=styles['label']),
-                        dcc.Input(
-                            id='search-area',
-                            type='number',
-                            value=6,
-                            placeholder="Area ID",
+                    dcc.Input(
+                        id='search-area',
+                        type='number',
+                        value=6,
+                        placeholder="Area ID",
                             style={'width': '100%', 'padding': '12px', 'border-radius': '8px', 
                                    'border': '2px solid #e9ecef', 'font-size': '14px'}
-                        ),
+                    ),
                     ], style=styles['search_filter'], className="filter-hover"),
-                    
-                    html.Div([
+                
+                html.Div([
                         html.Label([
                             html.I(className="fas fa-shekel-sign", style={'margin-right': '5px'}),
                             "Min Price:"
                         ], style=styles['label']),
-                        dcc.Input(
-                            id='search-min-price',
-                            type='number',
-                            value=1000000,
-                            step=50000,
+                    dcc.Input(
+                        id='search-min-price',
+                        type='number',
+                        value=1000000,
+                        step=50000,
                             style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                    'border': '2px solid #e9ecef', 'font-size': '14px'}
-                        ),
+                    ),
                     ], style=styles['search_filter'], className="filter-hover"),
-                    
-                    html.Div([
+                
+                html.Div([
                         html.Label([
                             html.I(className="fas fa-shekel-sign", style={'margin-right': '5px'}),
                             "Max Price:"
                         ], style=styles['label']),
-                        dcc.Input(
-                            id='search-max-price',
-                            type='number',
-                            value=2000000,
-                            step=50000,
+                    dcc.Input(
+                        id='search-max-price',
+                        type='number',
+                        value=2000000,
+                        step=50000,
                             style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                    'border': '2px solid #e9ecef', 'font-size': '14px'}
-                        ),
+                    ),
                     ], style=styles['search_filter'], className="filter-hover"),
-                    
-                    html.Div([
+                
+                html.Div([
                         html.Label([
                             html.I(className="fas fa-bed", style={'margin-right': '5px'}),
                             "Min Rooms:"
                         ], style=styles['label']),
-                        dcc.Dropdown(
-                            id='search-min-rooms',
-                            options=[{'label': 'Any', 'value': 'any'}] + [
-                                {'label': f'{i}', 'value': i} for i in [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6]
-                            ],
-                            value='any',
-                            clearable=True,
-                            placeholder="Min rooms"
-                        ),
+                    dcc.Dropdown(
+                        id='search-min-rooms',
+                        options=[{'label': 'Any', 'value': 'any'}] + [
+                            {'label': f'{i}', 'value': i} for i in [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6]
+                        ],
+                        value='any',
+                        clearable=True,
+                        placeholder="Min rooms"
+                    ),
                     ], style=styles['search_filter'], className="filter-hover"),
-                    
-                    html.Div([
+                
+                html.Div([
                         html.Label([
                             html.I(className="fas fa-bed", style={'margin-right': '5px'}),
                             "Max Rooms:"
                         ], style=styles['label']),
-                        dcc.Dropdown(
-                            id='search-max-rooms',
-                            options=[{'label': 'Any', 'value': 'any'}] + [
-                                {'label': f'{i}', 'value': i} for i in [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8]
-                            ],
-                            value='any',
-                            clearable=True,
-                            placeholder="Max rooms"
-                        ),
+                    dcc.Dropdown(
+                        id='search-max-rooms',
+                        options=[{'label': 'Any', 'value': 'any'}] + [
+                            {'label': f'{i}', 'value': i} for i in [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8]
+                        ],
+                        value='any',
+                        clearable=True,
+                        placeholder="Max rooms"
+                    ),
                     ], style=styles['search_filter'], className="filter-hover"),
-                    
-                    html.Div([
+                
+                html.Div([
                         html.Label([
                             html.I(className="fas fa-ruler-combined", style={'margin-right': '5px'}),
                             "Min sqm:"
                         ], style=styles['label']),
-                        dcc.Input(
-                            id='search-min-sqm',
-                            type='number',
-                            value=None,
-                            placeholder="Min sqm",
+                    dcc.Input(
+                        id='search-min-sqm',
+                        type='number',
+                        value=None,
+                        placeholder="Min sqm",
                             style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                    'border': '2px solid #e9ecef', 'font-size': '14px'}
-                        ),
+                    ),
                     ], style=styles['search_filter'], className="filter-hover"),
-                    
-                    html.Div([
+                
+                html.Div([
                         html.Label([
                             html.I(className="fas fa-ruler-combined", style={'margin-right': '5px'}),
                             "Max sqm:"
                         ], style=styles['label']),
-                        dcc.Input(
-                            id='search-max-sqm',
-                            type='number',
-                            value=None,
-                            placeholder="Max sqm",
+                    dcc.Input(
+                        id='search-max-sqm',
+                        type='number',
+                        value=None,
+                        placeholder="Max sqm",
                             style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                    'border': '2px solid #e9ecef', 'font-size': '14px'}
-                        ),
+                    ),
                     ], style=styles['search_filter'], className="filter-hover"),
-                    
-                    html.Div([
-                        html.Label("Action:", style=styles['label']),
+                
+                html.Div([
+                    html.Label("Action:", style=styles['label']),
                         html.Button([
                             html.I(id='scrape-button-icon', className="fas fa-search", style={'margin-right': '8px'}),
                             html.Span(id='scrape-button-text', children="Scrape New Data")
@@ -566,74 +566,74 @@ def create_dashboard(df, port=8051):
                         style=styles['scrape_button'],
                         className="button-hover",
                         n_clicks=0
-                        ),
-                    ], style=styles['search_filter']),
-                ], style=styles['search_controls']),
-                
+                    ),
+                ], style=styles['search_filter']),
+            ], style=styles['search_controls']),
+            
                 # Enhanced Loading/Status message
                 html.Div(id='scrape-status', style={'margin-top': '20px'}),
             ], style=styles['search_container'], className="fade-in"),
             
             # Enhanced Current Data Filter section
+        html.Div([
             html.Div([
-                html.Div([
                     html.Label([
                         html.I(className="fas fa-shekel-sign", style={'margin-right': '5px'}),
                         "Price Range:"
                     ], style=styles['label']),
                     create_loading_component("price-filter", 
-                        dcc.RangeSlider(
-                            id='price-range-slider',
-                            min=0 if len(df) == 0 else df['price'].min(),
-                            max=10000000 if len(df) == 0 else df['price'].max(),
-                            value=[0, 10000000] if len(df) == 0 else [df['price'].min(), df['price'].max()],
-                            marks={
-                                0: "₪0", 10000000: "₪10,000,000"
-                            } if len(df) == 0 else {
-                                int(df['price'].min()): f"₪{df['price'].min():,.0f}",
-                                int(df['price'].max()): f"₪{df['price'].max():,.0f}"
-                            },
-                            tooltip={"placement": "bottom", "always_visible": True}
+                dcc.RangeSlider(
+                    id='price-range-slider',
+                    min=0 if len(df) == 0 else df['price'].min(),
+                    max=10000000 if len(df) == 0 else df['price'].max(),
+                    value=[0, 10000000] if len(df) == 0 else [df['price'].min(), df['price'].max()],
+                    marks={
+                        0: "₪0", 10000000: "₪10,000,000"
+                    } if len(df) == 0 else {
+                        int(df['price'].min()): f"₪{df['price'].min():,.0f}",
+                        int(df['price'].max()): f"₪{df['price'].max():,.0f}"
+                    },
+                    tooltip={"placement": "bottom", "always_visible": True}
                         ), "Updating price range"
-                    ),
+                ),
                 ], style=styles['filter'], className="filter-hover"),
-                
-                html.Div([
+            
+            html.Div([
                     html.Label([
                         html.I(className="fas fa-ruler-combined", style={'margin-right': '5px'}),
                         "Square Meters:"
                     ], style=styles['label']),
                     create_loading_component("sqm-filter",
-                        dcc.RangeSlider(
-                            id='sqm-range-slider',
-                            min=0 if len(df) == 0 else df['square_meters'].min(),
-                            max=500 if len(df) == 0 else df['square_meters'].max(),
-                            value=[0, 500] if len(df) == 0 else [df['square_meters'].min(), df['square_meters'].max()],
-                            marks={
-                                0: "0", 500: "500"
-                            } if len(df) == 0 else {
-                                int(df['square_meters'].min()): f"{df['square_meters'].min():.0f}",
-                                int(df['square_meters'].max()): f"{df['square_meters'].max():.0f}"
-                            },
-                            tooltip={"placement": "bottom", "always_visible": True}
+                dcc.RangeSlider(
+                    id='sqm-range-slider',
+                    min=0 if len(df) == 0 else df['square_meters'].min(),
+                    max=500 if len(df) == 0 else df['square_meters'].max(),
+                    value=[0, 500] if len(df) == 0 else [df['square_meters'].min(), df['square_meters'].max()],
+                    marks={
+                        0: "0", 500: "500"
+                    } if len(df) == 0 else {
+                        int(df['square_meters'].min()): f"{df['square_meters'].min():.0f}",
+                        int(df['square_meters'].max()): f"{df['square_meters'].max():.0f}"
+                    },
+                    tooltip={"placement": "bottom", "always_visible": True}
                         ), "Updating size range"
-                    ),
+                ),
                 ], style=styles['filter'], className="filter-hover"),
-                
-                html.Div([
+            
+            html.Div([
                     html.Label([
                         html.I(className="fas fa-map-marker-alt", style={'margin-right': '5px'}),
                         "Neighborhood:"
                     ], style=styles['label']),
-                    dcc.Dropdown(
-                        id='neighborhood-filter',
-                        options=neighborhoods,
-                        value='all',
-                        clearable=False
-                    ),
+                dcc.Dropdown(
+                    id='neighborhood-filter',
+                    options=neighborhoods,
+                    value='all',
+                    clearable=False
+                ),
                 ], style=styles['filter'], className="filter-hover"),
-                
-                html.Div([
+            
+            html.Div([
                     html.Label([
                         html.I(className="fas fa-ban", style={'margin-right': '5px'}),
                         "Exclude Neighborhoods:"
@@ -653,58 +653,58 @@ def create_dashboard(df, port=8051):
                         html.I(className="fas fa-bed", style={'margin-right': '5px'}),
                         "Room Count:"
                     ], style=styles['label']),
-                    dcc.RangeSlider(
-                        id='rooms-range-slider',
-                        min=1 if len(df) == 0 else df['rooms'].min(),
-                        max=8 if len(df) == 0 else df['rooms'].max(),
-                        value=[1, 8] if len(df) == 0 else [df['rooms'].min(), df['rooms'].max()],
-                        marks={
-                            1: "1", 8: "8+"
-                        } if len(df) == 0 else {
-                            int(df['rooms'].min()): f"{df['rooms'].min():.0f}",
-                            int(df['rooms'].max()): f"{df['rooms'].max():.0f}"
-                        },
-                        step=0.5,
-                        tooltip={"placement": "bottom", "always_visible": True}
-                    ),
+                dcc.RangeSlider(
+                    id='rooms-range-slider',
+                    min=1 if len(df) == 0 else df['rooms'].min(),
+                    max=8 if len(df) == 0 else df['rooms'].max(),
+                    value=[1, 8] if len(df) == 0 else [df['rooms'].min(), df['rooms'].max()],
+                    marks={
+                        1: "1", 8: "8+"
+                    } if len(df) == 0 else {
+                        int(df['rooms'].min()): f"{df['rooms'].min():.0f}",
+                        int(df['rooms'].max()): f"{df['rooms'].max():.0f}"
+                    },
+                    step=0.5,
+                    tooltip={"placement": "bottom", "always_visible": True}
+                ),
                 ], style=styles['filter'], className="filter-hover"),
-                
-                html.Div([
+            
+            html.Div([
                     html.Label([
                         html.I(className="fas fa-tools", style={'margin-right': '5px'}),
                         "Condition:"
                     ], style=styles['label']),
-                    dcc.Dropdown(
-                        id='condition-filter',
-                        options=conditions,
-                        value='all',
-                        clearable=False
-                    ),
+                dcc.Dropdown(
+                    id='condition-filter',
+                    options=conditions,
+                    value='all',
+                    clearable=False
+                ),
                 ], style=styles['filter'], className="filter-hover"),
-                
-                html.Div([
+            
+            html.Div([
                     html.Label([
                         html.I(className="fas fa-tag", style={'margin-right': '5px'}),
                         "Ad Type:"
                     ], style=styles['label']),
-                    dcc.Dropdown(
-                        id='ad-type-filter',
-                        options=ad_types,
-                        value='all',
-                        clearable=False
-                    ),
+                dcc.Dropdown(
+                    id='ad-type-filter',
+                    options=ad_types,
+                    value='all',
+                    clearable=False
+                ),
                 ], style=styles['filter'], className="filter-hover"),
-                
-            ], style=styles['filter_container'], className="fade-in"),
             
+            ], style=styles['filter_container'], className="fade-in"),
+        
             # Enhanced click instruction
-            html.Div([
+        html.Div([
                 html.I(className="fas fa-mouse-pointer", style={'margin-right': '8px'}),
                 html.Span("Click on any point in the graph to open the property listing in a new tab")
             ], style=styles['click_instruction'], className="fade-in"),
-            
+        
             # Enhanced Graph section with comprehensive loading
-            html.Div([
+        html.Div([
                 create_loading_component("main-graph", 
                     dcc.Graph(
                         id='price-sqm-scatter',
@@ -725,7 +725,7 @@ def create_dashboard(df, port=8051):
             ], style=styles['graph'], className="fade-in"),
             
             # Enhanced Summary section
-            html.Div([
+        html.Div([
                 html.H3([
                     html.I(className="fas fa-chart-bar", style={'margin-right': '10px'}),
                     "Data Summary"
@@ -734,12 +734,12 @@ def create_dashboard(df, port=8051):
                     html.Div(id='summary-stats'), "Calculating statistics"
                 )
             ], style=styles['summary'], className="fade-in"),
-            
-            # Store for clicked links
-            dcc.Store(id='clicked-link', storage_type='memory'),
-            
-            # Store for current dataset
-            dcc.Store(id='current-dataset', data=df.to_dict('records'), storage_type='session'),
+        
+        # Store for clicked links
+        dcc.Store(id='clicked-link', storage_type='memory'),
+        
+        # Store for current dataset
+        dcc.Store(id='current-dataset', data=df.to_dict('records'), storage_type='session'),
             
             # Store for loading states
             dcc.Store(id='loading-state', data={'scraping': False}, storage_type='memory'),
@@ -1324,13 +1324,18 @@ def create_dashboard(df, port=8051):
         )
         
         # Create custom data array for hover and click functionality
+        # Prepare street display - combine street with neighborhood for better context
+        street_display = plot_df.apply(lambda row: 
+            f"{row['street']}" if pd.notna(row['street']) and row['street'].strip() != '' 
+            else f"{row['neighborhood']}", axis=1)
+        
         custom_data = np.column_stack((
-            plot_df['neighborhood'].fillna(''),
+            plot_df['neighborhood'].fillna('Unknown'),
             plot_df['rooms'],
-            plot_df['condition_text'].fillna(''),
+            plot_df['condition_text'].fillna('Not specified'),
             plot_df['ad_type'],
-            plot_df['street'].fillna(''),
-            plot_df['floor'].fillna(''),
+            street_display,
+            plot_df['floor'].fillna('Not specified'),
             plot_df['full_url'].fillna('')
         ))
         
@@ -1341,14 +1346,18 @@ def create_dashboard(df, port=8051):
                 line=dict(width=1, color='DarkSlateGrey')
             ),
             customdata=custom_data,
-            hovertemplate='<b>%{customdata[0]}</b><br>' +
-                          'Price: ₪%{y:,.0f}<br>' +
-                          'Size: %{x} sqm<br>' +
-                          'Price/sqm: ₪%{marker.color:,.0f}<br>' +
-                          'Rooms: %{customdata[1]}<br>' +
-                          'Condition: %{customdata[2]}<br>' +
-                          'Floor: %{customdata[5]}<br>' +
-                          '<b>👆 Click to view listing</b>'
+            hovertemplate='<b>🏡 %{customdata[0]}</b><br>' +
+                          '<i>📍 %{customdata[4]}</i><br>' +
+                          '<br>' +
+                          '<b>Price:</b> ₪%{y:,.0f}<br>' +
+                          '<b>Size:</b> %{x} sqm<br>' +
+                          '<b>Price/sqm:</b> ₪%{marker.color:,.0f}<br>' +
+                          '<b>Rooms:</b> %{customdata[1]}<br>' +
+                          '<b>Condition:</b> %{customdata[2]}<br>' +
+                          '<b>Floor:</b> %{customdata[5]}<br>' +
+                          '<br>' +
+                          '<b>👆 Click to view listing</b>' +
+                          '<extra></extra>'
         )
         
         # Configure layout
