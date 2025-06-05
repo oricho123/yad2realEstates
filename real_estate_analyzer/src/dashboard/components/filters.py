@@ -59,7 +59,7 @@ class FilterComponentManager:
                                  'always_visible': True},
                         allowCross=False
                     )
-                ], style=DashboardStyles.FILTER, className="filter-hover"),
+                ], style=DashboardStyles.FILTER),
 
                 # Square meters range slider
                 html.Div([
@@ -78,7 +78,7 @@ class FilterComponentManager:
                                  'always_visible': True},
                         allowCross=False
                     )
-                ], style=DashboardStyles.FILTER, className="filter-hover"),
+                ], style=DashboardStyles.FILTER),
 
                 # Neighborhood filter
                 html.Div([
@@ -93,7 +93,7 @@ class FilterComponentManager:
                         value='all',
                         clearable=False
                     )
-                ], style=DashboardStyles.FILTER, className="filter-hover"),
+                ], style=DashboardStyles.FILTER),
 
                 # Exclude neighborhoods filter
                 html.Div([
@@ -109,7 +109,7 @@ class FilterComponentManager:
                         multi=True,
                         placeholder="Select areas to exclude..."
                     )
-                ], style=DashboardStyles.FILTER, className="filter-hover"),
+                ], style=DashboardStyles.FILTER),
 
                 # Rooms range slider
                 html.Div([
@@ -129,7 +129,7 @@ class FilterComponentManager:
                         allowCross=False,
                         step=0.5
                     )
-                ], style=DashboardStyles.FILTER, className="filter-hover"),
+                ], style=DashboardStyles.FILTER),
 
                 # Floor range slider
                 html.Div([
@@ -149,7 +149,7 @@ class FilterComponentManager:
                         allowCross=False,
                         step=1
                     )
-                ], style=DashboardStyles.FILTER, className="filter-hover"),
+                ], style=DashboardStyles.FILTER),
 
                 # Condition filter
                 html.Div([
@@ -164,7 +164,7 @@ class FilterComponentManager:
                         value='all',
                         clearable=False
                     )
-                ], style=DashboardStyles.FILTER, className="filter-hover"),
+                ], style=DashboardStyles.FILTER),
 
                 # Ad type filter
                 html.Div([
@@ -179,7 +179,7 @@ class FilterComponentManager:
                         value='all',
                         clearable=False
                     )
-                ], style=DashboardStyles.FILTER, className="filter-hover"),
+                ], style=DashboardStyles.FILTER),
 
             ], style=DashboardStyles.FILTER_CONTAINER, className="fade-in")
 

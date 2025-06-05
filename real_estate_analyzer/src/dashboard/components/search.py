@@ -45,7 +45,7 @@ class SearchComponentManager:
                         clearable=False,
                         style={'border-radius': '8px'}
                     ),
-                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+                ], style=DashboardStyles.SEARCH_FILTER),
 
                 # Area selection dropdown
                 html.Div([
@@ -63,7 +63,7 @@ class SearchComponentManager:
                         placeholder="Select area...",
                         style={'border-radius': '8px'}
                     ),
-                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+                ], style=DashboardStyles.SEARCH_FILTER),
 
                 # Price range inputs
                 html.Div([
@@ -82,7 +82,7 @@ class SearchComponentManager:
                         style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                'border': '2px solid #e9ecef', 'font-size': '14px'}
                     )
-                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+                ], style=DashboardStyles.SEARCH_FILTER),
 
                 html.Div([
                     html.Label([
@@ -100,7 +100,7 @@ class SearchComponentManager:
                         style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                'border': '2px solid #e9ecef', 'font-size': '14px'}
                     )
-                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+                ], style=DashboardStyles.SEARCH_FILTER),
 
                 # Room range inputs
                 html.Div([
@@ -117,7 +117,7 @@ class SearchComponentManager:
                         style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                'border': '2px solid #e9ecef', 'font-size': '14px'}
                     ),
-                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+                ], style=DashboardStyles.SEARCH_FILTER),
 
                 html.Div([
                     html.Label([
@@ -133,7 +133,7 @@ class SearchComponentManager:
                         style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                'border': '2px solid #e9ecef', 'font-size': '14px'}
                     ),
-                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+                ], style=DashboardStyles.SEARCH_FILTER),
 
                 # Square meters range inputs
                 html.Div([
@@ -150,7 +150,7 @@ class SearchComponentManager:
                         style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                'border': '2px solid #e9ecef', 'font-size': '14px'}
                     ),
-                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+                ], style=DashboardStyles.SEARCH_FILTER),
 
                 html.Div([
                     html.Label([
@@ -166,7 +166,7 @@ class SearchComponentManager:
                         style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                'border': '2px solid #e9ecef', 'font-size': '14px'}
                     ),
-                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+                ], style=DashboardStyles.SEARCH_FILTER),
 
                 # Floor range inputs
                 html.Div([
@@ -183,7 +183,7 @@ class SearchComponentManager:
                         style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                'border': '2px solid #e9ecef', 'font-size': '14px'}
                     ),
-                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+                ], style=DashboardStyles.SEARCH_FILTER),
 
                 html.Div([
                     html.Label([
@@ -199,7 +199,7 @@ class SearchComponentManager:
                         style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
                                'border': '2px solid #e9ecef', 'font-size': '14px'}
                     ),
-                ], style=DashboardStyles.SEARCH_FILTER, className="filter-hover"),
+                ], style=DashboardStyles.SEARCH_FILTER),
 
                 # Search button
                 html.Div([

@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 class DashboardStyles:
     """Main dashboard styling classes."""
-    
+
     # Color palette
     PRIMARY_COLOR = '#667eea'
     SECONDARY_COLOR = '#764ba2'
@@ -12,7 +12,7 @@ class DashboardStyles:
     WARNING_COLOR = '#ffc107'
     DANGER_COLOR = '#dc3545'
     INFO_COLOR = '#17a2b8'
-    
+
     # Base container styles
     CONTAINER = {
         'font-family': 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
@@ -22,7 +22,7 @@ class DashboardStyles:
         'background': f'linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%)',
         'min-height': '100vh'
     }
-    
+
     CONTENT_WRAPPER = {
         'background-color': 'rgba(255, 255, 255, 0.95)',
         'border-radius': '20px',
@@ -30,7 +30,7 @@ class DashboardStyles:
         'box-shadow': '0 20px 40px rgba(0,0,0,0.1)',
         'backdrop-filter': 'blur(10px)'
     }
-    
+
     # Header styles
     HEADER = {
         'background': f'linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%)',
@@ -42,7 +42,7 @@ class DashboardStyles:
         'position': 'relative',
         'overflow': 'hidden'
     }
-    
+
     HEADER_OVERLAY = {
         'position': 'absolute',
         'top': '0',
@@ -52,12 +52,12 @@ class DashboardStyles:
         'background': 'rgba(255,255,255,0.1)',
         'z-index': '1'
     }
-    
+
     HEADER_CONTENT = {
         'position': 'relative',
         'z-index': '2'
     }
-    
+
     # Filter container styles
     FILTER_CONTAINER = {
         'display': 'grid',
@@ -71,7 +71,7 @@ class DashboardStyles:
         'backdrop-filter': 'blur(10px)',
         'border': '1px solid rgba(255,255,255,0.2)'
     }
-    
+
     FILTER = {
         'background': 'rgba(255,255,255,0.9)',
         'padding': '20px',
@@ -80,7 +80,7 @@ class DashboardStyles:
         'border': '1px solid rgba(255,255,255,0.3)',
         'transition': 'all 0.3s ease'
     }
-    
+
     LABEL = {
         'font-weight': '600',
         'margin-bottom': '10px',
@@ -90,7 +90,7 @@ class DashboardStyles:
         'align-items': 'center',
         'gap': '8px'
     }
-    
+
     # Visualization styles
     DUAL_VIEW_CONTAINER = {
         'display': 'grid',
@@ -98,7 +98,7 @@ class DashboardStyles:
         'gap': '25px',
         'margin-bottom': '25px'
     }
-    
+
     GRAPH = {
         'background': 'rgba(255,255,255,0.95)',
         'padding': '25px',
@@ -106,7 +106,7 @@ class DashboardStyles:
         'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
         'border': '1px solid rgba(255,255,255,0.2)'
     }
-    
+
     MAP_CONTAINER = {
         'background': 'rgba(255,255,255,0.95)',
         'padding': '25px',
@@ -114,7 +114,7 @@ class DashboardStyles:
         'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
         'border': '1px solid rgba(255,255,255,0.2)'
     }
-    
+
     # Summary styles
     SUMMARY = {
         'background': 'rgba(255,255,255,0.95)',
@@ -123,7 +123,7 @@ class DashboardStyles:
         'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
         'border': '1px solid rgba(255,255,255,0.2)'
     }
-    
+
     SUMMARY_HEADER = {
         'color': '#2c3e50',
         'border-bottom': f'3px solid {PRIMARY_COLOR}',
@@ -131,7 +131,7 @@ class DashboardStyles:
         'margin-bottom': '20px',
         'font-weight': '600'
     }
-    
+
     # Search container styles
     SEARCH_CONTAINER = {
         'background': 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
@@ -141,7 +141,7 @@ class DashboardStyles:
         'margin-bottom': '25px',
         'border': '1px solid rgba(255,255,255,0.3)'
     }
-    
+
     SEARCH_HEADER = {
         'color': '#155724',
         'font-weight': '700',
@@ -153,21 +153,21 @@ class DashboardStyles:
         'justify-content': 'center',
         'gap': '10px'
     }
-    
+
     SEARCH_CONTROLS = {
         'display': 'grid',
         'grid-template-columns': 'repeat(auto-fit, minmax(200px, 1fr))',
         'gap': '20px',
         'align-items': 'end'
     }
-    
+
     SEARCH_FILTER = {
         'background': 'rgba(255,255,255,0.9)',
         'padding': '15px',
         'border-radius': '10px',
         'box-shadow': '0 4px 15px rgba(0,0,0,0.08)'
     }
-    
+
     # Button styles
     SCRAPE_BUTTON = {
         'background': f'linear-gradient(135deg, {SUCCESS_COLOR} 0%, #20c997 100%)',
@@ -187,7 +187,7 @@ class DashboardStyles:
         'justify-content': 'center',
         'gap': '8px'
     }
-    
+
     # Loading styles
     LOADING_OVERLAY = {
         'position': 'fixed',
@@ -202,7 +202,7 @@ class DashboardStyles:
         'z-index': '9999',
         'backdrop-filter': 'blur(5px)'
     }
-    
+
     LOADING_CONTENT = {
         'background': 'white',
         'padding': '40px',
@@ -212,7 +212,7 @@ class DashboardStyles:
         'max-width': '400px',
         'margin': '20px'
     }
-    
+
     SPINNER = {
         'width': '60px',
         'height': '60px',
@@ -222,20 +222,20 @@ class DashboardStyles:
         'animation': 'spin 1s linear infinite',
         'margin': '0 auto 20px auto'
     }
-    
+
     LOADING_TEXT = {
         'color': PRIMARY_COLOR,
         'font-weight': '600',
         'font-size': '18px',
         'margin-bottom': '10px'
     }
-    
+
     LOADING_SUBTITLE = {
         'color': '#6c757d',
         'font-size': '14px',
         'line-height': '1.5'
     }
-    
+
     # Click instruction
     CLICK_INSTRUCTION = {
         'text-align': 'center',
@@ -252,13 +252,13 @@ class DashboardStyles:
 
 class SummaryStyles:
     """Styles for summary statistics cards."""
-    
+
     CONTAINER = {
         'display': 'grid',
         'grid-template-columns': 'repeat(auto-fit, minmax(220px, 1fr))',
         'gap': '20px'
     }
-    
+
     CARD = {
         'padding': '20px',
         'border-radius': '12px',
@@ -268,7 +268,7 @@ class SummaryStyles:
         'border': '1px solid rgba(255,255,255,0.3)',
         'transition': 'all 0.3s ease'
     }
-    
+
     VALUE = {
         'font-size': '24px',
         'font-weight': '700',
@@ -276,7 +276,7 @@ class SummaryStyles:
         'margin': '10px 0',
         'text-shadow': '0 1px 3px rgba(0,0,0,0.1)'
     }
-    
+
     LABEL = {
         'font-size': '14px',
         'color': '#495057',
@@ -287,7 +287,7 @@ class SummaryStyles:
         'justify-content': 'center',
         'gap': '6px'
     }
-    
+
     ICON = {
         'color': DashboardStyles.PRIMARY_COLOR,
         'font-size': '16px'
@@ -296,7 +296,7 @@ class SummaryStyles:
 
 class CustomCSS:
     """Custom CSS for animations and responsive design."""
-    
+
     CSS_STRING = """
     @keyframes spin {
         0% { transform: rotate(0deg); }
@@ -322,10 +322,7 @@ class CustomCSS:
         animation: pulse 2s infinite;
     }
     
-    .filter-hover:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
-    }
+
     
     .button-hover:hover {
         transform: translateY(-2px);
@@ -363,7 +360,7 @@ class CustomCSS:
         }
     }
     """
-    
+
     @classmethod
     def get_dash_index_string(cls) -> str:
         """Get the complete HTML index string for Dash app."""
@@ -393,7 +390,7 @@ class CustomCSS:
 
 class StyleUtils:
     """Utility functions for style management."""
-    
+
     @staticmethod
     def get_all_styles() -> Dict[str, Any]:
         """Get all styles as a dictionary for easy access."""
@@ -423,10 +420,10 @@ class StyleUtils:
             'loading_subtitle': DashboardStyles.LOADING_SUBTITLE,
             'click_instruction': DashboardStyles.CLICK_INSTRUCTION
         }
-    
+
     @staticmethod
     def merge_styles(base_style: Dict[str, Any], override_style: Dict[str, Any]) -> Dict[str, Any]:
         """Merge two style dictionaries."""
         merged = base_style.copy()
         merged.update(override_style)
-        return merged 
+        return merged
