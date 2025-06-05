@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Test script for structured hover data implementation."""
 
-from visualization.charts.scatter_plot import (
+from src.visualization.charts.scatter_plot import PropertyScatterPlot
+from src.visualization.hover_data import (
     PropertyHoverData,
     HoverTemplate,
-    HoverDataFields,
-    PropertyScatterPlot
+    HoverDataFields
 )
 import numpy as np
 import pandas as pd
@@ -75,7 +75,7 @@ def test_hover_template():
     assert '🏡' in template  # Property icon
     assert 'Property Details' in template
     assert 'Market Value Analysis' in template
-    assert 'Value Score Explanation' in template
+    assert 'Click to view listing' in template
 
     print("✅ HoverTemplate tests passed!")
 

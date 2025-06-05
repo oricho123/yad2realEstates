@@ -4,8 +4,8 @@ Test script to verify the API parameter construction fixes.
 This test verifies that the scraping parameters match the expected API format.
 """
 
-from config.constants import ScrapingConfiguration
-from scraping import Yad2Scraper, ScrapingParams
+from src.config.constants import ScrapingConfiguration
+from src.scraping import Yad2Scraper, ScrapingParams
 import sys
 from pathlib import Path
 

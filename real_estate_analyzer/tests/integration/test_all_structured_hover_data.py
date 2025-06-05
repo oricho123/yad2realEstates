@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """Comprehensive test script for all structured hover data implementations."""
 
-from visualization.charts.analytics import PropertyAnalyticsCharts
-from visualization.charts.map_view import PropertyMapView
-from visualization.charts.scatter_plot import (
+from src.visualization.charts.analytics import PropertyAnalyticsCharts
+from src.visualization.charts.map_view import PropertyMapView
+from src.visualization.charts.scatter_plot import PropertyScatterPlot
+from src.visualization.hover_data import (
     PropertyHoverData,
     MapHoverData,
     AnalyticsHoverData,
     HoverTemplate,
     HoverDataFields,
     MapHoverDataFields,
-    AnalyticsHoverDataFields,
-    PropertyScatterPlot
+    AnalyticsHoverDataFields
 )
 import numpy as np
 import pandas as pd

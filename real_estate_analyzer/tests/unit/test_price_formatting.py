@@ -4,7 +4,7 @@ Test script to demonstrate price formatting improvements for sliders.
 This shows the current formatting and potential improvements for K/M notation.
 """
 
-from utils.formatters import NumberFormatter
+from src.utils.formatters import NumberFormatter
 import sys
 from pathlib import Path
 

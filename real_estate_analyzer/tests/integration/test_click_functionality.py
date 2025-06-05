@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Test script to verify that the click functionality works properly."""
 
-from data.models import PropertyDataFrame
-from dashboard.app import create_real_estate_app
+from src.data.models import PropertyDataFrame
+from src.dashboard.app import create_real_estate_app
 from datetime import datetime
 import numpy as np
 import pandas as pd
@@ -100,7 +100,7 @@ def test_click_functionality():
     # Check if interaction callbacks are registered
     print("\n🔧 Checking callback registration...")
     try:
-        from dashboard.callbacks.interactions import InteractionCallbackManager
+        from src.dashboard.callbacks.interactions import InteractionCallbackManager
         print("✅ InteractionCallbackManager imported successfully")
 
         # Check if the app has the necessary components
