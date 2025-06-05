@@ -5,7 +5,7 @@ This test verifies that the scraping parameters match the expected API format.
 """
 
 from config.constants import ScrapingConfiguration
-from real_estate_scraper import RealEstateScraper
+from scraping import Yad2Scraper, ScrapingParams
 import sys
 from pathlib import Path
 
@@ -19,19 +19,19 @@ def test_api_parameter_construction():
     print("🧪 Testing API parameter construction...")
 
     # Initialize scraper
-    scraper = RealEstateScraper("test_output")
+    scraper = Yad2Scraper("test_output")
 
     # Test parameters similar to the provided API example
-    test_params = {
-        'city': 9500,
-        'area': 6,
-        'top_area': 25,
-        'min_price': 1350000,
-        'max_price': 1420000,
-        'max_rooms': 4,
-        'min_square_meters': 20,
-        'max_square_meters': 460
-    }
+    test_params = ScrapingParams(
+        city=9500,
+        area=6,
+        top_area=25,
+        min_price=1350000,
+        max_price=1420000,
+        max_rooms=4,
+        min_square_meters=20,
+        max_square_meters=460
+    )
 
     print(f"   Input parameters: {test_params}")
 
@@ -50,7 +50,7 @@ def test_api_parameter_construction():
             mock_get.return_value = mock_response
 
             # Call fetch_listings with test parameters
-            scraper.fetch_listings(**test_params)
+            scraper.fetch_listings(test_params)
 
             # Get the actual parameters that would be sent to the API
             actual_call = mock_get.call_args
@@ -95,14 +95,13 @@ def test_api_parameter_construction():
 
             if success:
                 print("   ✅ API parameter construction test PASSED")
-                return True
             else:
                 print("   ❌ API parameter construction test FAILED")
-                return False
+                assert False, "API parameter construction test failed"
 
     except Exception as e:
         print(f"   ❌ Test failed with error: {e}")
-        return False
+        assert False, f"Test failed with error: {e}"
 
 
 def test_scraping_callback_parameters():
@@ -173,10 +172,9 @@ def test_scraping_callback_parameters():
 
     if success:
         print("   ✅ Scraping callback parameter test PASSED")
-        return True
     else:
         print("   ❌ Scraping callback parameter test FAILED")
-        return False
+        assert False, "Scraping callback parameter test failed"
 
 
 def test_url_construction():
@@ -189,7 +187,7 @@ def test_url_construction():
     print(f"   Expected URL parameters: {expected_url_params}")
 
     # Test parameter construction with the scraper
-    scraper = RealEstateScraper("test_output")
+    scraper = Yad2Scraper("test_output")
 
     test_params = {
         'city': 9500,
@@ -240,10 +238,9 @@ def test_url_construction():
 
     if success:
         print("   ✅ URL construction test PASSED")
-        return True
     else:
         print("   ❌ URL construction test FAILED")
-        return False
+        assert False, "URL construction test failed"
 
 
 def main():
