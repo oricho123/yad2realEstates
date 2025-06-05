@@ -21,34 +21,9 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Real Estate Price Analyzer')
     parser.add_argument('--output-dir', type=str, default='scraped_real_estate',
                         help='Directory to save scraped data')
-    parser.add_argument('--city', type=int, default=9500,
-                        help='City ID to scrape')
-    parser.add_argument('--area', type=int, default=6,
-                        help='Area ID to scrape')
-    parser.add_argument('--top-area', type=int, default=25,
-                        help='Top area ID to scrape')
-    parser.add_argument('--min-price', type=int, default=1350000,
-                        help='Minimum price filter')
-    parser.add_argument('--max-price', type=int, default=1420000,
-                        help='Maximum price filter')
-    parser.add_argument('--skip-scrape', action='store_true',
-                        help='Skip scraping and use existing data')
     parser.add_argument('--port', type=int, default=8051,
                         help='Port to run the web server on')
     return parser.parse_args()
-
-def scrape_data(output_dir, city, area, top_area, min_price, max_price):
-    """Run the scraper to collect real estate data"""
-    print(f"Scraping data for city={city}, area={area}, price range={min_price}-{max_price}...")
-    scraper = RealEstateScraper(output_dir)
-    csv_path, json_path = scraper.scrape_and_save(
-        city=city, 
-        area=area, 
-        top_area=top_area,
-        min_price=min_price, 
-        max_price=max_price
-    )
-    return csv_path
 
 def load_data(csv_path):
     """Load and prepare the CSV data for visualization"""
@@ -71,7 +46,15 @@ def load_data(csv_path):
         return df
     except Exception as e:
         print(f"Error loading data: {str(e)}")
-        sys.exit(1)
+        return pd.DataFrame()  # Return empty DataFrame instead of exiting
+
+def create_empty_dataframe():
+    """Create an empty DataFrame with the expected structure"""
+    return pd.DataFrame(columns=[
+        'price', 'square_meters', 'price_per_sqm', 'lat', 'lng',
+        'neighborhood', 'rooms', 'condition_text', 'ad_type', 
+        'property_type', 'street', 'floor', 'full_url'
+    ])
 
 def create_dashboard(df, port=8051):
     """Create and run an interactive Dash app for visualizing the data"""
@@ -296,10 +279,10 @@ def create_dashboard(df, port=8051):
                     html.Label("Min Rooms:", style=styles['label']),
                     dcc.Dropdown(
                         id='search-min-rooms',
-                        options=[{'label': 'Any', 'value': None}] + [
+                        options=[{'label': 'Any', 'value': 'any'}] + [
                             {'label': f'{i}', 'value': i} for i in [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6]
                         ],
-                        value=None,
+                        value='any',
                         clearable=True,
                         placeholder="Min rooms"
                     ),
@@ -309,10 +292,10 @@ def create_dashboard(df, port=8051):
                     html.Label("Max Rooms:", style=styles['label']),
                     dcc.Dropdown(
                         id='search-max-rooms',
-                        options=[{'label': 'Any', 'value': None}] + [
+                        options=[{'label': 'Any', 'value': 'any'}] + [
                             {'label': f'{i}', 'value': i} for i in [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8]
                         ],
-                        value=None,
+                        value='any',
                         clearable=True,
                         placeholder="Max rooms"
                     ),
@@ -361,10 +344,12 @@ def create_dashboard(df, port=8051):
                 html.Label("Price Range (₪):", style=styles['label']),
                 dcc.RangeSlider(
                     id='price-range-slider',
-                    min=df['price'].min(),
-                    max=df['price'].max(),
-                    value=[df['price'].min(), df['price'].max()],
+                    min=0 if len(df) == 0 else df['price'].min(),
+                    max=10000000 if len(df) == 0 else df['price'].max(),
+                    value=[0, 10000000] if len(df) == 0 else [df['price'].min(), df['price'].max()],
                     marks={
+                        0: "₪0", 10000000: "₪10,000,000"
+                    } if len(df) == 0 else {
                         int(df['price'].min()): f"₪{df['price'].min():,.0f}",
                         int(df['price'].max()): f"₪{df['price'].max():,.0f}"
                     },
@@ -376,10 +361,12 @@ def create_dashboard(df, port=8051):
                 html.Label("Square Meters:", style=styles['label']),
                 dcc.RangeSlider(
                     id='sqm-range-slider',
-                    min=df['square_meters'].min(),
-                    max=df['square_meters'].max(),
-                    value=[df['square_meters'].min(), df['square_meters'].max()],
+                    min=0 if len(df) == 0 else df['square_meters'].min(),
+                    max=500 if len(df) == 0 else df['square_meters'].max(),
+                    value=[0, 500] if len(df) == 0 else [df['square_meters'].min(), df['square_meters'].max()],
                     marks={
+                        0: "0", 500: "500"
+                    } if len(df) == 0 else {
                         int(df['square_meters'].min()): f"{df['square_meters'].min():.0f}",
                         int(df['square_meters'].max()): f"{df['square_meters'].max():.0f}"
                     },
@@ -480,11 +467,11 @@ def create_dashboard(df, port=8051):
             search_desc = f"City: {city}"
             if area: search_desc += f", Area: {area}"
             search_desc += f", Price: ₪{min_price:,.0f} - ₪{max_price:,.0f}"
-            if min_rooms or max_rooms:
+            if (min_rooms and min_rooms != 'any') or (max_rooms and max_rooms != 'any'):
                 room_range = ""
-                if min_rooms: room_range += f"{min_rooms}+"
-                if max_rooms: 
-                    if min_rooms: room_range = f"{min_rooms}-{max_rooms}"
+                if min_rooms and min_rooms != 'any': room_range += f"{min_rooms}+"
+                if max_rooms and max_rooms != 'any': 
+                    if min_rooms and min_rooms != 'any': room_range = f"{min_rooms}-{max_rooms}"
                     else: room_range = f"≤{max_rooms}"
                 search_desc += f", Rooms: {room_range}"
             if min_sqm or max_sqm:
@@ -501,6 +488,19 @@ def create_dashboard(df, port=8051):
                 html.Span(search_desc)
             ], style=styles['loading_text'])
             
+            # Delete old data files first
+            output_dir = Path("scraped_real_estate")
+            csv_files = list(output_dir.glob("real_estate_listings_*.csv"))
+            json_files = list(output_dir.glob("real_estate_listings_*.json"))
+            raw_api_files = list(output_dir.glob("raw_api_response_*.json"))
+            
+            for file in csv_files + json_files + raw_api_files:
+                try:
+                    file.unlink()
+                    print(f"🗑️  Deleted old file: {file}")
+                except Exception as e:
+                    print(f"⚠️  Could not delete {file}: {e}")
+            
             # Create scraper instance
             scraper = RealEstateScraper("scraped_real_estate")
             
@@ -514,9 +514,9 @@ def create_dashboard(df, port=8051):
             # Add optional parameters if provided
             if area: 
                 api_params['area'] = area
-            if min_rooms:
+            if min_rooms and min_rooms != 'any':
                 api_params['min_rooms'] = min_rooms
-            if max_rooms:
+            if max_rooms and max_rooms != 'any':
                 api_params['max_rooms'] = max_rooms  
             if min_sqm:
                 api_params['min_square_meters'] = min_sqm
@@ -540,7 +540,7 @@ def create_dashboard(df, port=8051):
                 # Success message
                 success_msg = html.Div([
                     html.Span("✅ Success! "),
-                    html.Span(f"Found {len(new_df)} new properties. Dashboard updated!")
+                    html.Span(f"Found {len(new_df)} new properties. Dashboard updated! Old data cleared.")
                 ], style={'color': '#27ae60', 'font-weight': 'bold', 'text-align': 'center', 
                          'padding': '10px', 'background-color': '#d5f4e6', 'border-radius': '5px'})
                 
@@ -594,7 +594,13 @@ def create_dashboard(df, port=8051):
          Output('sqm-range-slider', 'value'),
          Output('sqm-range-slider', 'marks'),
          Output('neighborhood-filter', 'options'),
-         Output('rooms-filter', 'options')],
+         Output('neighborhood-filter', 'value'),
+         Output('rooms-filter', 'options'),
+         Output('rooms-filter', 'value'),
+         Output('condition-filter', 'options'),
+         Output('condition-filter', 'value'),
+         Output('ad-type-filter', 'options'),
+         Output('ad-type-filter', 'value')],
         [Input('current-dataset', 'data')]
     )
     def update_filter_ranges(current_data):
@@ -603,7 +609,8 @@ def create_dashboard(df, port=8051):
         
         if len(current_df) == 0:
             # Return default values if no data
-            return 0, 1000000, [0, 1000000], {}, 0, 100, [0, 100], {}, [], []
+            return (0, 1000000, [0, 1000000], {}, 0, 100, [0, 100], {}, 
+                   [], 'all', [], 'all', [], 'all', [], 'all')
         
         # Update price range
         price_min = current_df['price'].min()
@@ -632,12 +639,23 @@ def create_dashboard(df, port=8051):
             for r in sorted(current_df['rooms'].dropna().unique())
         ]
         
+        # Update condition options
+        conditions = [{'label': 'All Conditions', 'value': 'all'}] + [
+            {'label': ct, 'value': ct} for ct in sorted(current_df['condition_text'].dropna().unique())
+        ]
+        
+        # Update ad_type options
+        ad_types = [{'label': 'All', 'value': 'all'}] + [
+            {'label': at, 'value': at} for at in sorted(current_df['ad_type'].unique())
+        ]
+        
         print(f"🔄 Updated filters - Price: ₪{price_min:,.0f}-₪{price_max:,.0f}, Size: {sqm_min:.0f}-{sqm_max:.0f}sqm")
+        print(f"🔄 Neighborhoods: {len(neighborhoods)-1}, Rooms: {len(rooms_options)-1}, Conditions: {len(conditions)-1}, Ad Types: {len(ad_types)-1}")
         
         return (
             price_min, price_max, [price_min, price_max], price_marks,
             sqm_min, sqm_max, [sqm_min, sqm_max], sqm_marks,
-            neighborhoods, rooms_options
+            neighborhoods, 'all', rooms_options, 'all', conditions, 'all', ad_types, 'all'
         )
     
     @app.callback(
@@ -657,10 +675,16 @@ def create_dashboard(df, port=8051):
         
         # Debug info
         print(f"📊 Raw data loaded: {len(current_df)} rows")
-        print(f"🔍 Filter ranges - Price: {price_range}, Size: {sqm_range}")
+        print(f"🔍 Filter values:")
+        print(f"   - Price range: {price_range}")
+        print(f"   - Size range: {sqm_range}")
+        print(f"   - Neighborhood: '{neighborhood}' (type: {type(neighborhood)})")
+        print(f"   - Rooms: '{rooms}' (type: {type(rooms)})")
+        print(f"   - Condition: '{condition}' (type: {type(condition)})")
+        print(f"   - Ad Type: '{ad_type}' (type: {type(ad_type)})")
         
         if len(current_df) == 0:
-            # Return empty plot if no data
+            print("❌ No data available")
             empty_fig = px.scatter(title="No data available")
             empty_summary = html.Div("No data to display", style={'text-align': 'center', 'color': '#666'})
             return empty_fig, empty_summary
@@ -679,52 +703,97 @@ def create_dashboard(df, port=8051):
         print(f"📈 Starting with: {len(filtered_df)} rows")
         
         # Apply price filter if price_range is provided and valid
-        if price_range and len(price_range) == 2:
+        if price_range and len(price_range) == 2 and price_range[0] is not None and price_range[1] is not None:
             price_min, price_max = price_range
+            before_count = len(filtered_df)
             filtered_df = filtered_df[
                 (filtered_df['price'] >= price_min) & 
                 (filtered_df['price'] <= price_max)
             ]
-            print(f"📈 After price filter ({price_min:,.0f}-{price_max:,.0f}): {len(filtered_df)} rows")
+            print(f"📈 Price filter ({price_min:,.0f}-{price_max:,.0f}): {before_count} → {len(filtered_df)} rows")
+        else:
+            print(f"⚠️  Skipping price filter (invalid range: {price_range})")
         
         # Apply sqm filter if sqm_range is provided and valid
-        if sqm_range and len(sqm_range) == 2:
+        if sqm_range and len(sqm_range) == 2 and sqm_range[0] is not None and sqm_range[1] is not None:
             sqm_min, sqm_max = sqm_range
+            before_count = len(filtered_df)
             filtered_df = filtered_df[
                 (filtered_df['square_meters'] >= sqm_min) & 
                 (filtered_df['square_meters'] <= sqm_max)
             ]
-            print(f"📈 After size filter ({sqm_min:.0f}-{sqm_max:.0f}sqm): {len(filtered_df)} rows")
+            print(f"📈 Size filter ({sqm_min:.0f}-{sqm_max:.0f}sqm): {before_count} → {len(filtered_df)} rows")
+        else:
+            print(f"⚠️  Skipping size filter (invalid range: {sqm_range})")
         
-        # Apply other filters only if the values exist in the data
-        if neighborhood and neighborhood != 'all' and 'neighborhood' in filtered_df.columns:
+        # Apply neighborhood filter
+        if neighborhood is not None and neighborhood != 'all' and 'neighborhood' in filtered_df.columns:
+            before_count = len(filtered_df)
             filtered_df = filtered_df[filtered_df['neighborhood'] == neighborhood]
-            print(f"📈 After neighborhood filter ({neighborhood}): {len(filtered_df)} rows")
+            print(f"📈 Neighborhood filter ('{neighborhood}'): {before_count} → {len(filtered_df)} rows")
+        else:
+            print(f"📈 Neighborhood filter: keeping all (value='{neighborhood}')")
             
-        if rooms and rooms != 'all' and 'rooms' in filtered_df.columns:
+        # Apply rooms filter
+        if rooms is not None and rooms != 'all' and 'rooms' in filtered_df.columns:
+            before_count = len(filtered_df)
             filtered_df = filtered_df[filtered_df['rooms'] == rooms]
-            print(f"📈 After rooms filter ({rooms}): {len(filtered_df)} rows")
+            print(f"📈 Rooms filter ('{rooms}'): {before_count} → {len(filtered_df)} rows")
+        else:
+            print(f"📈 Rooms filter: keeping all (value='{rooms}')")
             
-        if condition and condition != 'all' and 'condition_text' in filtered_df.columns:
+        # Apply condition filter
+        if condition is not None and condition != 'all' and 'condition_text' in filtered_df.columns:
+            before_count = len(filtered_df)
             filtered_df = filtered_df[filtered_df['condition_text'] == condition]
-            print(f"📈 After condition filter ({condition}): {len(filtered_df)} rows")
+            print(f"📈 Condition filter ('{condition}'): {before_count} → {len(filtered_df)} rows")
+        else:
+            print(f"📈 Condition filter: keeping all (value='{condition}')")
             
-        if ad_type and ad_type != 'all' and 'ad_type' in filtered_df.columns:
+        # Apply ad_type filter
+        if ad_type is not None and ad_type != 'all' and 'ad_type' in filtered_df.columns:
+            before_count = len(filtered_df)
             filtered_df = filtered_df[filtered_df['ad_type'] == ad_type]
-            print(f"📈 After ad_type filter ({ad_type}): {len(filtered_df)} rows")
+            print(f"📈 Ad type filter ('{ad_type}'): {before_count} → {len(filtered_df)} rows")
+        else:
+            print(f"📈 Ad type filter: keeping all (value='{ad_type}')")
         
         print(f"📈 Final filtered data: {len(filtered_df)} rows")
+        print("="*50)
         
         # If no data after filtering, show message
         if len(filtered_df) == 0:
+            print("❌ No data remains after filtering")
             empty_fig = px.scatter(title="No properties match current filters")
             empty_summary = html.Div("Try adjusting your filters to see more properties", 
                                    style={'text-align': 'center', 'color': '#e67e22'})
             return empty_fig, empty_summary
         
+        # Clean data for plotting - handle NaN values
+        plot_df = filtered_df.copy()
+        
+        # Fill NaN values in rooms column with median or default value
+        if plot_df['rooms'].isna().any():
+            median_rooms = plot_df['rooms'].median()
+            default_rooms = 3 if pd.isna(median_rooms) else median_rooms
+            plot_df['rooms'] = plot_df['rooms'].fillna(default_rooms)
+            print(f"⚠️  Filled {filtered_df['rooms'].isna().sum()} NaN room values with {default_rooms}")
+        
+        # Ensure rooms column has valid numeric values
+        plot_df['rooms'] = pd.to_numeric(plot_df['rooms'], errors='coerce')
+        plot_df['rooms'] = plot_df['rooms'].fillna(3)  # Final fallback
+        
+        # Ensure all plotting columns are valid
+        required_plot_cols = ['square_meters', 'price', 'price_per_sqm', 'rooms']
+        for col in required_plot_cols:
+            plot_df[col] = pd.to_numeric(plot_df[col], errors='coerce')
+            if plot_df[col].isna().any():
+                print(f"⚠️  Found NaN values in {col}, using median fill")
+                plot_df[col] = plot_df[col].fillna(plot_df[col].median())
+        
         # Create scatter plot
         fig = px.scatter(
-            filtered_df, 
+            plot_df, 
             x='square_meters', 
             y='price',
             color='price_per_sqm',
@@ -735,18 +804,18 @@ def create_dashboard(df, port=8051):
             labels={'square_meters': 'Square Meters', 
                    'price': 'Price (₪)', 
                    'price_per_sqm': 'Price per sqm (₪)'},
-            title=f'Real Estate Prices by Size ({len(filtered_df)} properties)'
+            title=f'Real Estate Prices by Size ({len(plot_df)} properties)'
         )
         
         # Create custom data array for hover and click functionality
         custom_data = np.column_stack((
-            filtered_df['neighborhood'].fillna(''),
-            filtered_df['rooms'],
-            filtered_df['condition_text'].fillna(''),
-            filtered_df['ad_type'],
-            filtered_df['street'].fillna(''),
-            filtered_df['floor'].fillna(''),
-            filtered_df['full_url'].fillna('')
+            plot_df['neighborhood'].fillna(''),
+            plot_df['rooms'],
+            plot_df['condition_text'].fillna(''),
+            plot_df['ad_type'],
+            plot_df['street'].fillna(''),
+            plot_df['floor'].fillna(''),
+            plot_df['full_url'].fillna('')
         ))
         
         # Update traces for better interactivity
@@ -827,27 +896,27 @@ def create_dashboard(df, port=8051):
         summary = html.Div([
             html.Div([
                 html.P("Number of Properties", style=summary_style['label']),
-                html.P(f"{len(filtered_df)}", style=summary_style['value'])
+                html.P(f"{len(plot_df)}", style=summary_style['value'])
             ], style=summary_style['card']),
             
             html.Div([
                 html.P("Average Price", style=summary_style['label']),
-                html.P(f"₪{filtered_df['price'].mean():,.0f}", style=summary_style['value'])
+                html.P(f"₪{plot_df['price'].mean():,.0f}", style=summary_style['value'])
             ], style=summary_style['card']),
             
             html.Div([
                 html.P("Avg Price/sqm", style=summary_style['label']),
-                html.P(f"₪{filtered_df['price_per_sqm'].mean():,.0f}", style=summary_style['value'])
+                html.P(f"₪{plot_df['price_per_sqm'].mean():,.0f}", style=summary_style['value'])
             ], style=summary_style['card']),
             
             html.Div([
                 html.P("Average Size", style=summary_style['label']),
-                html.P(f"{filtered_df['square_meters'].mean():,.0f} sqm", style=summary_style['value'])
+                html.P(f"{plot_df['square_meters'].mean():,.0f} sqm", style=summary_style['value'])
             ], style=summary_style['card']),
             
             html.Div([
                 html.P("Average Rooms", style=summary_style['label']),
-                html.P(f"{filtered_df['rooms'].mean():.1f}", style=summary_style['value'])
+                html.P(f"{plot_df['rooms'].mean():.1f}", style=summary_style['value'])
             ], style=summary_style['card']),
         ], style=summary_style['container'])
         
@@ -855,7 +924,7 @@ def create_dashboard(df, port=8051):
     
     # Run the app
     print(f"Starting dashboard on http://127.0.0.1:{port}/")
-    app.run(debug=False, port=port)
+    app.run(debug=True, port=port)
 
 def main():
     args = parse_arguments()
@@ -864,24 +933,13 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Step 1: Scrape the data if not skipped
-    if not args.skip_scrape:
-        csv_path = scrape_data(args.output_dir, args.city, args.area, args.top_area, args.min_price, args.max_price)
-    else:
-        # Find the most recent CSV file
-        csv_files = list(output_dir.glob("real_estate_listings_*.csv"))
-        if not csv_files:
-            print("No existing CSV files found. Please run without --skip-scrape first.")
-            sys.exit(1)
-        csv_path = str(sorted(csv_files)[-1])
-        print(f"Using existing data: {csv_path}")
-    
-    # Step 2: Load the data
-    df = load_data(csv_path)
+    # Start with empty data - users must scrape from UI
+    print("Starting with empty dataset. Use the search controls to scrape data.")
+    df = create_empty_dataframe()
     
     print(f"Loaded {len(df)} valid properties for analysis")
     
-    # Step 3: Create and run the dashboard
+    # Create and run the dashboard
     create_dashboard(df, args.port)
 
 
