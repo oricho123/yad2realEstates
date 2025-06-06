@@ -1,16 +1,15 @@
-"""Scraping callback handlers for the dashboard."""
+"""Scraping callback handlers for the dashboard with browser storage integration."""
 
 import pandas as pd
-from dash import callback, Input, Output, State
+from dash import Input, Output, State, html, clientside_callback
 import dash
-from typing import Tuple, Dict, Any
-import time
 
-from src.data.loaders import PropertyDataLoader
+from src.storage.browser_storage import BrowserStorageManager
+from src.storage.models import DatasetMetadata
 
 
 class ScrapingCallbackManager:
-    """Manages scraping-related callbacks."""
+    """Manages scraping-related callbacks with browser storage integration."""
 
     def __init__(self, app: dash.Dash):
         """
@@ -20,18 +19,20 @@ class ScrapingCallbackManager:
             app: Dash application instance
         """
         self.app = app
+        self.storage_manager = BrowserStorageManager()
 
     def register_all_callbacks(self) -> None:
         """Register all scraping callbacks."""
         self._register_scraping_callback()
+        self._register_storage_integration_callback()
         self._register_button_state_callback()
         self._register_city_to_area_callback()
 
     def _register_scraping_callback(self) -> None:
-        """Register the main scraping callback."""
+        """Register the main scraping callback for browser storage."""
 
         @self.app.callback(
-            [Output('current-dataset', 'data'),
+            [Output('scraped-data-store', 'data'),
              Output('scrape-status', 'children'),
              Output('scrape-button', 'disabled'),
              Output('loading-state', 'data'),
@@ -54,12 +55,12 @@ class ScrapingCallbackManager:
                                   min_rooms, max_rooms, min_sqm, max_sqm,
                                   min_floor, max_floor, loading_state):
             """
-            Handle new data scraping requests.
+            Handle new data scraping requests for browser storage.
 
             Args:
                 n_clicks: Number of button clicks
                 city: Selected city ID
-                area: Area ID
+                area: Area ID  
                 min_price: Minimum price filter
                 max_price: Maximum price filter
                 min_rooms: Minimum rooms filter
@@ -71,9 +72,8 @@ class ScrapingCallbackManager:
                 loading_state: Current loading state
 
             Returns:
-                Tuple of updated components and data
+                Tuple with scraped data and status information
             """
-            from dash import html
 
             try:
                 if not n_clicks:
@@ -97,35 +97,13 @@ class ScrapingCallbackManager:
                     f"Searching for properties... {search_desc}"
                 ], style={'color': '#007bff', 'font-weight': '500'})
 
-                # Actually run the scraper with the search parameters
+                # Run the scraper with browser storage integration
                 from src.scraping import Yad2Scraper, ScrapingParams
-                from src.config.settings import AppSettings
+                from src.config.constants import ScrapingConfiguration
 
                 try:
-                    # Ensure data directory exists
-                    AppSettings.ensure_directories()
-
-                    # Delete old data files before scraping new data
-                    from pathlib import Path
-                    data_dir = Path(AppSettings.DATA_DIRECTORY)
-                    if data_dir.exists():
-                        # Delete old CSV and JSON files
-                        for pattern in ['real_estate_listings_*.csv', 'raw_api_response_*.json']:
-                            for old_file in data_dir.glob(pattern):
-                                try:
-                                    old_file.unlink()
-                                    print(
-                                        f"🗑️  Deleted old file: {old_file.name}")
-                                except Exception as e:
-                                    print(
-                                        f"⚠️  Could not delete {old_file}: {e}")
-
-                    # Initialize scraper with data directory
-                    scraper = Yad2Scraper(
-                        str(AppSettings.DATA_DIRECTORY))
-
-                    # Prepare scraping parameters with API filters
-                    from src.config.constants import ScrapingConfiguration
+                    # Initialize scraper (no file directory needed)
+                    scraper = Yad2Scraper()
 
                     # Create ScrapingParams object with the provided filters
                     scraping_params = ScrapingParams(
@@ -143,46 +121,47 @@ class ScrapingCallbackManager:
                     )
 
                     print(
-                        f"DEBUG: Scraping with API parameters: {scraping_params}")
+                        f"DEBUG: Scraping with parameters: {scraping_params}")
 
-                    # Run the scraper using the new interface
+                    # Run the scraper using the new browser storage interface
                     result = scraper.scrape(scraping_params)
 
-                    if result.success and result.csv_path:
-                        # Load the freshly scraped data
-                        data_loader = PropertyDataLoader()
-                        property_data = data_loader.load_property_listings(
-                            result.csv_path)
-                        df = property_data.data
+                    if result.success and result.listings_data:
+                        # Create metadata for storage
+                        metadata = DatasetMetadata(
+                            name=self.storage_manager.generate_dataset_name(
+                                search_params={'city': city, 'area': area}),
+                            scraped_params=scraping_params.__dict__,
+                            property_count=result.listings_count
+                        )
+
+                        # Prepare storage payload
+                        storage_payload = self.storage_manager.prepare_dataset_for_storage(
+                            # Convert to PropertyDataFrame-like format
+                            pd.DataFrame(result.listings_data),
+                            metadata
+                        )
 
                         # Success message
-                        total_scraped = len(df)
                         success_message = html.Div([
                             html.I(className="fas fa-check-circle",
                                    style={'margin-right': '10px', 'color': '#28a745'}),
-                            f"Successfully scraped {total_scraped} properties matching your search criteria"
+                            f"Successfully scraped {result.listings_count} properties matching your search criteria"
                         ], style={'color': '#28a745', 'font-weight': '500'})
 
-                        # Return updated data and status
-                        records_data = df.to_dict('records')
                         print(
-                            f"DEBUG: Returning {len(records_data)} records to current-dataset store")
-                        print(
-                            f"DEBUG: Sample record keys: {list(records_data[0].keys()) if records_data else 'No records'}")
+                            f"DEBUG: Returning {len(result.listings_data)} records for browser storage")
 
                         return (
-                            records_data,
+                            storage_payload,  # Scraped data with metadata for storage
                             success_message,
                             False,  # Re-enable button
                             {'loading': False},
                             {'display': 'none'}  # Hide loading overlay
                         )
                     else:
-                        # Scraping failed - provide more specific error message
-                        if result.error_message:
-                            error_msg = f"Scraping failed: {result.error_message}"
-                        else:
-                            error_msg = "No data returned from API. The search parameters may be too restrictive or the API may be temporarily unavailable."
+                        # Scraping failed - provide error message
+                        error_msg = result.error_message or "No data returned from API. The search parameters may be too restrictive."
 
                         error_message = html.Div([
                             html.I(className="fas fa-exclamation-triangle",
@@ -191,7 +170,7 @@ class ScrapingCallbackManager:
                         ], style={'color': '#dc3545', 'font-weight': '500'})
 
                         return (
-                            [],
+                            {},  # Empty data
                             error_message,
                             False,  # Re-enable button
                             {'loading': False},
@@ -199,73 +178,22 @@ class ScrapingCallbackManager:
                         )
 
                 except Exception as scraping_error:
-                    # If scraping fails, fallback to loading existing data
                     print(f"Scraping failed with error: {scraping_error}")
 
-                    data_loader = PropertyDataLoader()
-                    latest_file = data_loader.find_latest_data_file()
+                    # Scraping failed - provide error message
+                    error_message = html.Div([
+                        html.I(className="fas fa-exclamation-triangle",
+                               style={'margin-right': '10px', 'color': '#dc3545'}),
+                        f"Scraping failed: {str(scraping_error)}"
+                    ], style={'color': '#dc3545', 'font-weight': '500'})
 
-                    if latest_file:
-                        property_data = data_loader.load_property_listings(
-                            str(latest_file))
-                        df = property_data.data
-
-                        # Apply basic filtering based on search parameters (only if values are provided)
-                        filtered_df = df.copy()
-
-                        if min_price is not None:
-                            filtered_df = filtered_df[filtered_df['price']
-                                                      >= min_price]
-                        if max_price is not None:
-                            filtered_df = filtered_df[filtered_df['price']
-                                                      <= max_price]
-                        if min_rooms is not None and min_rooms != 'any':
-                            filtered_df = filtered_df[filtered_df['rooms']
-                                                      >= min_rooms]
-                        if max_rooms is not None and max_rooms != 'any':
-                            filtered_df = filtered_df[filtered_df['rooms']
-                                                      <= max_rooms]
-                        if min_sqm is not None:
-                            filtered_df = filtered_df[filtered_df['square_meters'] >= min_sqm]
-                        if max_sqm is not None:
-                            filtered_df = filtered_df[filtered_df['square_meters'] <= max_sqm]
-                        if min_floor is not None:
-                            filtered_df = filtered_df[filtered_df['floor']
-                                                      >= min_floor]
-                        if max_floor is not None:
-                            filtered_df = filtered_df[filtered_df['floor']
-                                                      <= max_floor]
-
-                        # Warning message about using existing data
-                        warning_message = html.Div([
-                            html.I(className="fas fa-exclamation-triangle",
-                                   style={'margin-right': '10px', 'color': '#ffc107'}),
-                            f"Could not scrape new data. Using existing data - found {len(filtered_df)} matching properties."
-                        ], style={'color': '#ffc107', 'font-weight': '500'})
-
-                        # Return filtered existing data
-                        return (
-                            filtered_df.to_dict('records'),
-                            warning_message,
-                            False,  # Re-enable button
-                            {'loading': False},
-                            {'display': 'none'}  # Hide loading overlay
-                        )
-                    else:
-                        # No data file found and scraping failed
-                        error_message = html.Div([
-                            html.I(className="fas fa-exclamation-triangle",
-                                   style={'margin-right': '10px', 'color': '#dc3545'}),
-                            f"Scraping failed: {str(scraping_error)}. No existing data found."
-                        ], style={'color': '#dc3545', 'font-weight': '500'})
-
-                        return (
-                            [],
-                            error_message,
-                            False,  # Re-enable button
-                            {'loading': False},
-                            {'display': 'none'}  # Hide loading overlay
-                        )
+                    return (
+                        {},  # Empty data
+                        error_message,
+                        False,  # Re-enable button
+                        {'loading': False},
+                        {'display': 'none'}  # Hide loading overlay
+                    )
 
             except Exception as e:
                 # Error handling
@@ -276,12 +204,50 @@ class ScrapingCallbackManager:
                 ], style={'color': '#dc3545', 'font-weight': '500'})
 
                 return (
-                    [],
+                    {},  # Empty data
                     error_message,
                     False,  # Re-enable button
                     {'loading': False},
                     {'display': 'none'}  # Hide loading overlay
                 )
+
+    def _register_storage_integration_callback(self) -> None:
+        """Register client-side callback to integrate scraped data with browser storage."""
+
+        clientside_callback(
+            """
+            function(scraped_data_payload) {
+                if (!scraped_data_payload || !scraped_data_payload.data || !window.datasetStorage) {
+                    return window.dash_clientside.no_update;
+                }
+
+                try {
+                    // Extract data and metadata from the payload
+                    const data = scraped_data_payload.data;
+                    const metadata = scraped_data_payload.metadata;
+                    
+                    if (data && data.length > 0) {
+                        // Auto-save the scraped data to browser storage
+                        const datasetId = 'scraped_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        window.datasetStorage.saveDataset(datasetId, data, metadata);
+                        
+                        console.log(`Auto-saved scraped dataset: ${datasetId} with ${data.length} properties`);
+                        
+                        // Return the data to populate current-dataset
+                        return data;
+                    }
+                    
+                    return [];
+                } catch (error) {
+                    console.error("Failed to integrate scraped data with storage:", error);
+                    return [];
+                }
+            }
+            """,
+            Output('current-dataset', 'data'),
+            [Input('scraped-data-store', 'data')],
+            prevent_initial_call=True
+        )
 
     def _register_button_state_callback(self) -> None:
         """Register the button state update callback."""

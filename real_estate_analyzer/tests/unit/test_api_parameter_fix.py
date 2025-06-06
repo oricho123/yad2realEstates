@@ -19,7 +19,7 @@ def test_api_parameter_construction():
     print("🧪 Testing API parameter construction...")
 
     # Initialize scraper
-    scraper = Yad2Scraper("test_output")
+    scraper = Yad2Scraper()
 
     # Test parameters similar to the provided API example
     test_params = ScrapingParams(
@@ -39,7 +39,6 @@ def test_api_parameter_construction():
     # This tests the actual parameter construction logic
     try:
         # Mock the API call to see what parameters would be sent
-        import requests
         from unittest.mock import patch, Mock
 
         with patch('requests.get') as mock_get:
@@ -187,7 +186,7 @@ def test_url_construction():
     print(f"   Expected URL parameters: {expected_url_params}")
 
     # Test parameter construction with the scraper
-    scraper = Yad2Scraper("test_output")
+    scraper = Yad2Scraper()
 
     test_params = {
         'city': 9500,

@@ -54,12 +54,12 @@ class BrowserStorageManager:
         """Get maximum storage size in bytes."""
         return getattr(AppSettings, 'MAX_STORAGE_SIZE_MB', 50) * 1024 * 1024
 
-    def prepare_dataset_for_storage(self, data: PropertyDataFrame, metadata: DatasetMetadata) -> Dict[str, Any]:
+    def prepare_dataset_for_storage(self, data, metadata: DatasetMetadata) -> Dict[str, Any]:
         """
         Prepare a dataset for browser storage.
 
         Args:
-            data: PropertyDataFrame to store
+            data: PropertyDataFrame or pandas DataFrame to store
             metadata: Dataset metadata
 
         Returns:
@@ -69,21 +69,33 @@ class BrowserStorageManager:
             StorageError: If data preparation fails
         """
         try:
-            # Convert DataFrame to dictionary format
-            records = data.data.to_dict('records') if not data.is_empty else []
-
-            # Calculate statistics
-            valid_data = data.get_valid_properties()
-            location_data = data.get_properties_with_location()
+            # Handle both PropertyDataFrame and regular DataFrame
+            if hasattr(data, 'data') and hasattr(data, 'is_empty'):
+                # PropertyDataFrame
+                records = data.data.to_dict(
+                    'records') if not data.is_empty else []
+                valid_data = data.get_valid_properties()
+                location_data = data.get_properties_with_location()
+                property_count = len(data)
+                valid_count = len(valid_data)
+                location_count = len(location_data)
+            else:
+                # Regular pandas DataFrame
+                records = data.to_dict('records') if not data.empty else []
+                property_count = len(data)
+                # For regular DataFrame, assume all data is valid
+                valid_count = property_count
+                location_count = len(data.dropna(
+                    subset=['lat', 'lng'])) if 'lat' in data.columns and 'lng' in data.columns else 0
 
             # Update metadata with current statistics
             json_str = json.dumps(records)
             size_bytes = len(json_str.encode('utf-8'))
 
             metadata.update_stats(
-                property_count=len(data),
-                valid_count=len(valid_data),
-                location_count=len(location_data),
+                property_count=property_count,
+                valid_count=valid_count,
+                location_count=location_count,
                 size_bytes=size_bytes
             )
 

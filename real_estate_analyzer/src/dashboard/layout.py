@@ -339,6 +339,9 @@ class DashboardLayoutManager:
             dcc.Store(id='current-dataset', storage_type='memory',
                       data=self.data.data.to_dict('records') if hasattr(self.data, 'data') and not self.data.is_empty else []),
 
+            # Store for scraped data (browser storage integration)
+            dcc.Store(id='scraped-data-store', storage_type='memory'),
+
             # Store for loading state
             dcc.Store(id='loading-state', storage_type='memory',
                       data={'loading': False})
