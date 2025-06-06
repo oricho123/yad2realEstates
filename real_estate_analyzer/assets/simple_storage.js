@@ -113,6 +113,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           property_count: parsed.property_count || parsed.data?.length || 0,
           saved_at: parsed.saved_at || null,
           version: parsed.version || "unknown",
+          has_search_filters: !!parsed.search_filters,
         };
       } catch (e) {
         console.error("Failed to get storage info:", e);
@@ -123,6 +124,29 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           saved_at: null,
           error: e.message,
         };
+      }
+    },
+
+    get_search_filters: function () {
+      try {
+        const data = localStorage.getItem("real_estate_data");
+
+        if (!data) {
+          console.log("No stored data found for search filters");
+          return null;
+        }
+
+        const parsed = JSON.parse(data);
+        if (parsed.search_filters) {
+          console.log("Found saved search filters:", parsed.search_filters);
+          return parsed.search_filters;
+        } else {
+          console.log("No search filters found in stored data");
+          return null;
+        }
+      } catch (e) {
+        console.error("Failed to get search filters from localStorage:", e);
+        return null;
       }
     },
   },

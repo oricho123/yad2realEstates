@@ -334,7 +334,7 @@ class DashboardLayoutManager:
 
             # Auto-load trigger (fires once on page load)
             dcc.Interval(id='auto-load-trigger', interval=1000,
-                         n_intervals=0, max_intervals=1)
+                         n_intervals=0, max_intervals=1, disabled=False)
         ]
 
     def _get_analytics_chart_style(self) -> Dict[str, Any]:
