@@ -54,6 +54,9 @@ class AppSettings:
     MAX_DATASETS_PER_USER = 10
     MAX_STORAGE_SIZE_MB = 50
 
+    # Simple storage settings
+    SIMPLE_STORAGE_KEY = 'real_estate_data'
+
     @classmethod
     def ensure_directories(cls):
         """Ensure required directories exist."""

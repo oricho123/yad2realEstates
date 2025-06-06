@@ -101,7 +101,7 @@ def load_initial_data(data_directory: str, min_properties: int = 1) -> PropertyD
             valid_props = len(property_data.get_valid_properties())
             location_props = len(property_data.get_properties_with_location())
 
-            print(f"📊 Data Quality Summary:")
+            print("📊 Data Quality Summary:")
             print(
                 f"   • Valid properties: {valid_props}/{len(property_data)} ({(valid_props/len(property_data)*100):.1f}%)")
             print(
@@ -128,11 +128,16 @@ def main():
         # AppSettings.DEBUG_MODE = True
         print("🐛 Debug mode enabled")
 
-    # Load initial data
+    # Load initial data (simplified for browser storage approach)
     try:
-        initial_data = load_initial_data(args.data_dir, args.min_properties)
+        # For simple storage approach, always start with empty data
+        # Users' data will auto-load from browser storage if it exists
+        print(
+            "🔄 Starting with empty dataset - user data will auto-load from browser storage")
+        loader = PropertyDataLoader()
+        initial_data = loader.create_empty_dataframe()
     except Exception as e:
-        print(f"❌ Failed to load initial data: {str(e)}")
+        print(f"❌ Failed to initialize data loader: {str(e)}")
         print("🔄 Starting with empty dataset")
         loader = PropertyDataLoader()
         initial_data = loader.create_empty_dataframe()

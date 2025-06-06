@@ -4,8 +4,7 @@ import pandas as pd
 from dash import Input, Output, State, html, clientside_callback
 import dash
 
-from src.storage.browser_storage import BrowserStorageManager
-from src.storage.models import DatasetMetadata
+from src.storage.simple_storage import SimpleStorageManager
 
 
 class ScrapingCallbackManager:
@@ -19,7 +18,7 @@ class ScrapingCallbackManager:
             app: Dash application instance
         """
         self.app = app
-        self.storage_manager = BrowserStorageManager()
+        self.storage_manager = SimpleStorageManager()
 
     def register_all_callbacks(self) -> None:
         """Register all scraping callbacks."""
@@ -127,19 +126,9 @@ class ScrapingCallbackManager:
                     result = scraper.scrape(scraping_params)
 
                     if result.success and result.listings_data:
-                        # Create metadata for storage
-                        metadata = DatasetMetadata(
-                            name=self.storage_manager.generate_dataset_name(
-                                search_params={'city': city, 'area': area}),
-                            scraped_params=scraping_params.__dict__,
-                            property_count=result.listings_count
-                        )
-
-                        # Prepare storage payload
-                        storage_payload = self.storage_manager.prepare_dataset_for_storage(
-                            # Convert to PropertyDataFrame-like format
-                            pd.DataFrame(result.listings_data),
-                            metadata
+                        # Prepare simple storage payload
+                        storage_payload = self.storage_manager.prepare_data_for_storage(
+                            pd.DataFrame(result.listings_data)
                         )
 
                         # Success message
@@ -216,37 +205,64 @@ class ScrapingCallbackManager:
 
         clientside_callback(
             """
-            function(scraped_data_payload) {
-                if (!scraped_data_payload || !scraped_data_payload.data || !window.datasetStorage) {
-                    return window.dash_clientside.no_update;
+            function(scraped_data_payload, n_intervals) {
+                // Handle auto-load on page startup (n_intervals === 1)
+                if (n_intervals === 1) {
+                    if (window.dash_clientside && window.dash_clientside.storage) {
+                        try {
+                            const stored_data = window.dash_clientside.storage.load_data();
+                            if (stored_data && stored_data.data && stored_data.data.length > 0) {
+                                console.log(`🔄 Auto-loaded ${stored_data.data.length} properties from localStorage on page startup`);
+                                return stored_data.data;
+                            } else {
+                                console.log("ℹ️ No stored data found for auto-load on page startup");
+                            }
+                        } catch (error) {
+                            console.error("❌ Failed to auto-load data:", error);
+                        }
+                    }
                 }
 
-                try {
-                    // Extract data and metadata from the payload
-                    const data = scraped_data_payload.data;
-                    const metadata = scraped_data_payload.metadata;
-                    
-                    if (data && data.length > 0) {
-                        // Auto-save the scraped data to browser storage
-                        const datasetId = 'scraped_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                        window.datasetStorage.saveDataset(datasetId, data, metadata);
+                // Handle new scraped data
+                if (scraped_data_payload && scraped_data_payload.data) {
+                    console.log("🔍 New scraped data received:", scraped_data_payload);
+                    try {
+                        // Extract data from the simple storage payload
+                        const data = scraped_data_payload.data;
                         
-                        console.log(`Auto-saved scraped dataset: ${datasetId} with ${data.length} properties`);
-                        
-                        // Return the data to populate current-dataset
-                        return data;
+                        if (data && data.length > 0) {
+                            console.log(`📊 Processing ${data.length} properties for storage`);
+                            
+                            // Auto-save the scraped data using simple storage
+                            if (window.dash_clientside && window.dash_clientside.storage) {
+                                console.log("💾 Attempting to save data to localStorage...");
+                                const saveResult = window.dash_clientside.storage.save_data(scraped_data_payload);
+                                if (saveResult) {
+                                    console.log(`✅ Auto-saved ${data.length} properties to localStorage`);
+                                } else {
+                                    console.error("❌ Failed to save data to localStorage");
+                                }
+                            } else {
+                                console.error("❌ Simple storage clientside functions not available");
+                                console.log("window.dash_clientside:", window.dash_clientside);
+                            }
+                            
+                            // Return the data to populate current-dataset
+                            return data;
+                        }
+                    } catch (error) {
+                        console.error("❌ Failed to integrate scraped data with storage:", error);
+                        return [];
                     }
-                    
-                    return [];
-                } catch (error) {
-                    console.error("Failed to integrate scraped data with storage:", error);
-                    return [];
                 }
+                
+                return window.dash_clientside.no_update;
             }
             """,
             Output('current-dataset', 'data'),
-            [Input('scraped-data-store', 'data')],
-            prevent_initial_call=True
+            [Input('scraped-data-store', 'data'),
+             Input('auto-load-trigger', 'n_intervals')],
+            prevent_initial_call=False  # Allow initial call for auto-load
         )
 
     def _register_button_state_callback(self) -> None:

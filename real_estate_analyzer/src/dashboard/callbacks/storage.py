@@ -25,11 +25,13 @@ class StorageCallbackManager:
 
     def register_all_callbacks(self) -> None:
         """Register all storage-related callbacks."""
-        self._register_save_dataset_callback()
-        self._register_load_dataset_callback()
-        self._register_list_datasets_callback()
-        self._register_delete_dataset_callback()
-        self._register_storage_info_callback()
+        # NOTE: Temporarily disabled complex storage callbacks for simple storage migration
+        # self._register_save_dataset_callback()
+        # self._register_load_dataset_callback()  # CONFLICTS with current-dataset.data
+        # self._register_list_datasets_callback()
+        # self._register_delete_dataset_callback()
+        # self._register_storage_info_callback()
+        pass
 
     def _register_save_dataset_callback(self) -> None:
         """Register client-side callback to save dataset to browser storage."""
@@ -44,7 +46,7 @@ class StorageCallbackManager:
                 try {
                     // Generate dataset ID
                     const datasetId = 'dataset_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                    
+
                     // Create metadata
                     const metadata = {
                         id: datasetId,
@@ -59,7 +61,8 @@ class StorageCallbackManager:
 
                     // Use global storage manager
                     if (window.datasetStorage) {
-                        window.datasetStorage.saveDataset(datasetId, current_data, metadata);
+                        window.datasetStorage.saveDataset(
+                            datasetId, current_data, metadata);
                         return [true, datasetId, "Dataset saved successfully"];
                     } else {
                         return [false, null, "Storage not available"];
@@ -126,7 +129,7 @@ class StorageCallbackManager:
                         label: `${dataset.name} (${dataset.property_count} properties, ${dataset.age_display})`,
                         value: dataset.id
                     }));
-                    
+
                     return [options, "Datasets loaded"];
                 } catch (error) {
                     console.error("Failed to list datasets:", error);
@@ -329,60 +332,5 @@ class StorageCallbackManager:
 
     def register_storage_display_callbacks(self) -> None:
         """Register callbacks for updating storage display components."""
-
-        @self.app.callback(
-            Output('dataset-management-section', 'children'),
-            [Input('dataset-management-section', 'id')]  # Trigger on load
-        )
-        def populate_dataset_management_section(_):
-            """Populate the dataset management section with storage UI."""
-            return self.create_storage_ui_components()
-
-        @self.app.callback(
-            Output('storage-info-display', 'children'),
-            [Input('storage-info', 'data')]
-        )
-        def update_storage_info_display(storage_info):
-            """Update storage information display."""
-            if not storage_info:
-                return html.P("Loading storage information...", style={'color': '#6c757d'})
-
-            if storage_info.get('error'):
-                return html.Div([
-                    html.P(f"❌ Error: {storage_info['error']}", style={
-                           'color': '#dc3545'})
-                ])
-
-            total_datasets = storage_info.get('total_datasets', 0)
-            total_size = storage_info.get('total_size_bytes', 0)
-            quota = storage_info.get('estimated_quota_bytes', 0)
-
-            # Convert bytes to human readable
-            if total_size < 1024:
-                size_display = f"{total_size} B"
-            elif total_size < 1024 * 1024:
-                size_display = f"{total_size / 1024:.1f} KB"
-            else:
-                size_display = f"{total_size / (1024 * 1024):.1f} MB"
-
-            if quota > 0:
-                quota_display = f"{quota / (1024 * 1024):.1f} MB"
-                usage_percentage = (total_size / quota) * 100
-            else:
-                quota_display = "Unknown"
-                usage_percentage = 0
-
-            return html.Div([
-                html.P([
-                    html.Strong("📊 Datasets: "), f"{total_datasets}"
-                ], style={'margin': '5px 0'}),
-                html.P([
-                    html.Strong("💾 Storage Used: "), f"{size_display}"
-                ], style={'margin': '5px 0'}),
-                html.P([
-                    html.Strong("🔄 Estimated Quota: "), f"{quota_display}"
-                ], style={'margin': '5px 0'}),
-                html.P([
-                    html.Strong("📈 Usage: "), f"{usage_percentage:.1f}%"
-                ], style={'margin': '5px 0'})
-            ])
+        # NOTE: Disabled for simple storage migration to avoid conflicts
+        pass

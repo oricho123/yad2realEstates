@@ -40,18 +40,7 @@ class DashboardLayoutManager:
             # Global loading overlay
             self._create_global_loading_overlay(),
 
-            # Initialize storage manager script
-            html.Script("""
-                // Initialize DatasetStorageManager when DOM is ready
-                document.addEventListener('DOMContentLoaded', function() {
-                    if (typeof DatasetStorageManager !== 'undefined') {
-                        window.datasetStorage = new DatasetStorageManager();
-                        console.log('Dataset storage manager initialized');
-                    } else {
-                        console.warn('DatasetStorageManager not found. Make sure storage_manager.js is loaded.');
-                    }
-                });
-            """),
+            # Simple storage is handled via clientside callbacks - no initialization script needed
 
             # Main content wrapper
             html.Div([
@@ -60,9 +49,6 @@ class DashboardLayoutManager:
 
                 # Search controls section
                 self._create_search_section(),
-
-                # Dataset management section
-                self._create_dataset_management_section(),
 
                 # Filter controls section
                 self._create_filter_section(),
@@ -376,28 +362,13 @@ class DashboardLayoutManager:
                       data=self.data.data.to_dict('records') if hasattr(self.data, 'data') and not self.data.is_empty else []),
             dcc.Store(id='scraped-data-store', storage_type='memory'),
 
-            # Enhanced storage management stores
-            dcc.Store(id='available-datasets', storage_type='local', data=[]),
-            dcc.Store(id='dataset-metadata', storage_type='local', data={}),
-            dcc.Store(id='selected-dataset', storage_type='memory', data=None),
+            # Store for loading state
+            dcc.Store(id='loading-state', storage_type='memory',
+                      data={'loading': False}),
 
-            # Storage information and state
-            dcc.Store(id='storage-info', storage_type='memory', data={}),
-            dcc.Store(id='storage-operations', storage_type='memory', data={}),
-
-            # Session management
-            dcc.Store(id='session-state', storage_type='session', data={
-                'user_id': None,
-                'session_start': None,
-                'preferences': {}
-            }),
-
-            # UI state management
-            dcc.Store(id='ui-state', storage_type='memory', data={
-                'active_tab': 'search',
-                'expanded_sections': [],
-                'filter_state': {}
-            })
+            # Auto-load trigger (fires once on page load)
+            dcc.Interval(id='auto-load-trigger', interval=1000,
+                         n_intervals=0, max_intervals=1)
         ]
 
     def _get_analytics_chart_style(self) -> Dict[str, Any]:

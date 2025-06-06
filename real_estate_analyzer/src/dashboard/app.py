@@ -41,6 +41,9 @@ class RealEstateDashboardApp:
 
     def _setup_app(self) -> None:
         """Set up the Dash application with configuration and layout."""
+        # Get correct path to assets folder
+        assets_path = Path(__file__).parent.parent.parent / 'assets'
+
         # Create Dash app with configuration
         self.app = dash.Dash(
             __name__,
@@ -48,7 +51,7 @@ class RealEstateDashboardApp:
             external_stylesheets=DashConfiguration.EXTERNAL_STYLESHEETS,
             suppress_callback_exceptions=DashConfiguration.SUPPRESS_CALLBACK_EXCEPTIONS,
             meta_tags=DashConfiguration.META_TAGS,
-            assets_folder='assets'  # Enable assets folder for JavaScript files
+            assets_folder=str(assets_path)  # Correct path to assets folder
         )
 
         # Set custom CSS with animations
