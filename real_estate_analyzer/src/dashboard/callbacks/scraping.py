@@ -212,46 +212,33 @@ class ScrapingCallbackManager:
                         try {
                             const stored_data = window.dash_clientside.storage.load_data();
                             if (stored_data && stored_data.data && stored_data.data.length > 0) {
-                                console.log(`🔄 Auto-loaded ${stored_data.data.length} properties from localStorage on page startup`);
+                                console.log(`Auto-loaded ${stored_data.data.length} properties from localStorage`);
                                 return stored_data.data;
-                            } else {
-                                console.log("ℹ️ No stored data found for auto-load on page startup");
                             }
                         } catch (error) {
-                            console.error("❌ Failed to auto-load data:", error);
+                            console.error("Failed to auto-load data:", error);
                         }
                     }
                 }
 
                 // Handle new scraped data
                 if (scraped_data_payload && scraped_data_payload.data) {
-                    console.log("🔍 New scraped data received:", scraped_data_payload);
                     try {
                         // Extract data from the simple storage payload
                         const data = scraped_data_payload.data;
                         
                         if (data && data.length > 0) {
-                            console.log(`📊 Processing ${data.length} properties for storage`);
-                            
                             // Auto-save the scraped data using simple storage
                             if (window.dash_clientside && window.dash_clientside.storage) {
-                                console.log("💾 Attempting to save data to localStorage...");
-                                const saveResult = window.dash_clientside.storage.save_data(scraped_data_payload);
-                                if (saveResult) {
-                                    console.log(`✅ Auto-saved ${data.length} properties to localStorage`);
-                                } else {
-                                    console.error("❌ Failed to save data to localStorage");
-                                }
-                            } else {
-                                console.error("❌ Simple storage clientside functions not available");
-                                console.log("window.dash_clientside:", window.dash_clientside);
+                                window.dash_clientside.storage.save_data(scraped_data_payload);
+                                console.log(`Auto-saved ${data.length} properties to localStorage`);
                             }
                             
                             // Return the data to populate current-dataset
                             return data;
                         }
                     } catch (error) {
-                        console.error("❌ Failed to integrate scraped data with storage:", error);
+                        console.error("Failed to save scraped data to storage:", error);
                         return [];
                     }
                 }

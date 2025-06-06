@@ -115,18 +115,5 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
 });
 
 console.log(
-  "🚀 Simple Storage Manager loaded - ready for auto-save/load operations"
+  "Simple Storage Manager loaded - ready for auto-save/load operations"
 );
-console.log(
-  "📝 Available storage functions:",
-  Object.keys(window.dash_clientside.storage)
-);
-
-// Test localStorage availability
-try {
-  localStorage.setItem("storage_test", "test");
-  localStorage.removeItem("storage_test");
-  console.log("✅ localStorage is available and working");
-} catch (e) {
-  console.error("❌ localStorage is not available:", e);
-}

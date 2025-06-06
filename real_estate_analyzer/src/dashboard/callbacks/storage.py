@@ -4,7 +4,7 @@ import dash
 from dash import clientside_callback, Output, Input, State, html
 import logging
 
-from ...storage.browser_storage import BrowserStorageManager
+# BrowserStorageManager no longer used - replaced with SimpleStorageManager
 
 
 logger = logging.getLogger(__name__)
@@ -21,16 +21,13 @@ class StorageCallbackManager:
             app: Dash application instance
         """
         self.app = app
-        self.storage_manager = BrowserStorageManager()
+        # Complex storage manager no longer needed with simple storage approach
+        self.storage_manager = None
 
     def register_all_callbacks(self) -> None:
         """Register all storage-related callbacks."""
-        # NOTE: Temporarily disabled complex storage callbacks for simple storage migration
-        # self._register_save_dataset_callback()
-        # self._register_load_dataset_callback()  # CONFLICTS with current-dataset.data
-        # self._register_list_datasets_callback()
-        # self._register_delete_dataset_callback()
-        # self._register_storage_info_callback()
+        # All storage functionality now handled by SimpleStorageManager
+        # Complex dataset management has been replaced with simple auto-save/load
         pass
 
     def _register_save_dataset_callback(self) -> None:
@@ -332,5 +329,5 @@ class StorageCallbackManager:
 
     def register_storage_display_callbacks(self) -> None:
         """Register callbacks for updating storage display components."""
-        # NOTE: Disabled for simple storage migration to avoid conflicts
+        # Simple storage approach doesn't require display callbacks
         pass
