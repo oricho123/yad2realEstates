@@ -1,8 +1,10 @@
 """Scraping callback handlers for the dashboard with browser storage integration."""
 
 import pandas as pd
+from datetime import datetime
 from dash import Input, Output, State, html, clientside_callback
 import dash
+
 
 from src.storage.simple_storage import SimpleStorageManager
 
@@ -126,10 +128,15 @@ class ScrapingCallbackManager:
                     result = scraper.scrape(scraping_params)
 
                     if result.success and result.listings_data:
-                        # Prepare simple storage payload
+                        # Prepare simple storage payload with fresh metadata
                         storage_payload = self.storage_manager.prepare_data_for_storage(
                             pd.DataFrame(result.listings_data)
                         )
+
+                        # Ensure the payload has current timestamp to mark it as new data
+                        storage_payload['scraped_at'] = datetime.now(
+                        ).isoformat()
+                        storage_payload['is_new_data'] = True
 
                         # Success message
                         success_message = html.Div([
@@ -206,7 +213,41 @@ class ScrapingCallbackManager:
         clientside_callback(
             """
             function(scraped_data_payload, n_intervals) {
-                // Handle auto-load on page startup (n_intervals === 1)
+                // Handle new scraped data FIRST (higher priority)
+                if (scraped_data_payload && scraped_data_payload.data) {
+                    try {
+                        // Extract data from the simple storage payload
+                        const data = scraped_data_payload.data;
+                        
+                        if (data && data.length > 0) {
+                                                         // Clear existing storage first to ensure complete override
+                             if (window.dash_clientside && window.dash_clientside.storage) {
+                                 const hadExistingData = window.dash_clientside.storage.has_data();
+                                 if (hadExistingData) {
+                                     console.log("Clearing existing storage before saving new data");
+                                     window.dash_clientside.storage.clear_data();
+                                 }
+                                 
+                                 // Save the new scraped data
+                                 const success = window.dash_clientside.storage.save_data(scraped_data_payload);
+                                 if (success) {
+                                     const action = hadExistingData ? "overrode" : "saved";
+                                     console.log(`Successfully ${action} storage with ${data.length} new properties`);
+                                 } else {
+                                     console.error("Failed to save new data to localStorage");
+                                 }
+                             }
+                            
+                            // Return the new data to populate current-dataset
+                            return data;
+                        }
+                    } catch (error) {
+                        console.error("Failed to save scraped data to storage:", error);
+                        return [];
+                    }
+                }
+
+                // Handle auto-load on page startup ONLY if no new data was scraped
                 if (n_intervals === 1) {
                     if (window.dash_clientside && window.dash_clientside.storage) {
                         try {
@@ -218,28 +259,6 @@ class ScrapingCallbackManager:
                         } catch (error) {
                             console.error("Failed to auto-load data:", error);
                         }
-                    }
-                }
-
-                // Handle new scraped data
-                if (scraped_data_payload && scraped_data_payload.data) {
-                    try {
-                        // Extract data from the simple storage payload
-                        const data = scraped_data_payload.data;
-                        
-                        if (data && data.length > 0) {
-                            // Auto-save the scraped data using simple storage
-                            if (window.dash_clientside && window.dash_clientside.storage) {
-                                window.dash_clientside.storage.save_data(scraped_data_payload);
-                                console.log(`Auto-saved ${data.length} properties to localStorage`);
-                            }
-                            
-                            // Return the data to populate current-dataset
-                            return data;
-                        }
-                    } catch (error) {
-                        console.error("Failed to save scraped data to storage:", error);
-                        return [];
                     }
                 }
                 

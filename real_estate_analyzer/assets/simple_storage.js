@@ -15,12 +15,26 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           return false;
         }
 
-        localStorage.setItem("real_estate_data", JSON.stringify(data));
+        // Add timestamp to track when data was saved
+        const dataWithTimestamp = {
+          ...data,
+          saved_at: new Date().toISOString(),
+          version: "1.0",
+        };
+
+        localStorage.setItem(
+          "real_estate_data",
+          JSON.stringify(dataWithTimestamp)
+        );
 
         // Get property count from payload
         const propertyCount =
-          data.property_count || (data.data ? data.data.length : 0) || 0;
-        console.log(`Saved ${propertyCount} properties to localStorage`);
+          dataWithTimestamp.property_count ||
+          (dataWithTimestamp.data ? dataWithTimestamp.data.length : 0) ||
+          0;
+        console.log(
+          `Saved ${propertyCount} properties to localStorage at ${dataWithTimestamp.saved_at}`
+        );
         return true;
       } catch (e) {
         console.error("Failed to save data to localStorage:", e);
