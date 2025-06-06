@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional
 
 from src.config.constants import MapConfiguration, ChartConfiguration
 from src.visualization.hover_data import MapHoverData, HoverTemplate
+from src.utils import TrendAnalyzer
 
 
 class PropertyMapView:
@@ -34,21 +35,29 @@ class PropertyMapView:
         if len(map_df) == 0:
             return self._create_empty_map("No properties with location data")
 
-        # Create the scatter mapbox plot
+        # Add market value analysis to the data
+        map_df = self._add_value_analysis(map_df)
+
+        # Create the scatter mapbox plot with value score coloring
         fig = px.scatter_mapbox(
             map_df,
             lat='lat',
             lon='lng',
-            color='price_per_sqm',
+            color='value_score',
             size='rooms',
             size_max=ChartConfiguration.SCATTER_SIZE_MAX,
-            hover_data=['neighborhood', 'price',
-                        'square_meters', 'rooms', 'condition_text'],
-            color_continuous_scale=ChartConfiguration.COLOR_SCALE,
+            hover_data=['neighborhood', 'price', 'square_meters', 'rooms',
+                        'condition_text', 'value_category', 'savings_amount'],
+            color_continuous_scale='thermal',
+            color_continuous_midpoint=0,  # Center the scale at 0
             zoom=self.config.DEFAULT_ZOOM,
             height=self.config.DEFAULT_HEIGHT,
             labels={
-                'price_per_sqm': 'Price/sqm (₪)', 'lat': 'Latitude', 'lng': 'Longitude'}
+                'value_score': 'Market Value Score (%)',
+                'lat': 'Latitude',
+                'lng': 'Longitude',
+                'value_category': 'Value Category'
+            }
         )
 
         # Update layout for better appearance
@@ -61,14 +70,16 @@ class PropertyMapView:
             ),
             margin={"r": 0, "t": 30, "l": 0, "b": 0},
             title={
+                'text': 'Property Locations by Market Value Analysis',
                 'x': 0.5,
                 'xanchor': 'center',
                 'font': {'size': 16}
             },
             coloraxis_colorbar=dict(
-                title="₪/sqm",
+                title="Value Score (%)",
                 title_font=dict(size=13),
-                tickfont=dict(size=11)
+                tickfont=dict(size=11),
+                ticksuffix="%"
             )
         )
 
@@ -76,6 +87,20 @@ class PropertyMapView:
         self._update_hover_template(fig, map_df)
 
         return fig
+
+    def _add_value_analysis(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add market value analysis to the map data."""
+        try:
+            # Use centralized LOWESS-based value analysis
+            return TrendAnalyzer.calculate_complete_value_analysis(df)
+        except Exception as e:
+            # Fallback: add empty value analysis columns
+            result_df = df.copy()
+            result_df['value_score'] = 0
+            result_df['value_category'] = 'Unknown'
+            result_df['predicted_price'] = df.get('price', 0)
+            result_df['savings_amount'] = 0
+            return result_df
 
     def _create_empty_map(self, message: str) -> go.Figure:
         """Create an empty map with a message."""

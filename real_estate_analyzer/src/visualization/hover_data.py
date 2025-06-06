@@ -33,6 +33,10 @@ class MapHoverDataFields(IntEnum):
     STREET_DISPLAY = 5
     FLOOR = 6
     FULL_URL = 7
+    VALUE_SCORE = 8
+    VALUE_CATEGORY = 9
+    PREDICTED_PRICE = 10
+    SAVINGS_AMOUNT = 11
 
 
 class AnalyticsHoverDataFields(IntEnum):
@@ -112,12 +116,17 @@ class MapHoverData:
     street_display: str
     floor: str
     full_url: str
+    value_score: float
+    value_category: str
+    predicted_price: int
+    savings_amount: int
 
     def to_list(self) -> List:
         """Convert to list for Plotly customdata."""
         return [
             self.neighborhood, self.price, self.rooms, self.condition_text,
-            self.ad_type, self.street_display, self.floor, self.full_url
+            self.ad_type, self.street_display, self.floor, self.full_url,
+            self.value_score, self.value_category, self.predicted_price, self.savings_amount
         ]
 
     @classmethod
@@ -140,7 +149,15 @@ class MapHoverData:
             street_display=str(street_display),
             floor=str(row['floor']) if pd.notna(
                 row['floor']) else 'Not specified',
-            full_url=str(row['full_url']) if pd.notna(row['full_url']) else ''
+            full_url=str(row['full_url']) if pd.notna(row['full_url']) else '',
+            value_score=round(float(row['value_score']), 1) if pd.notna(
+                row['value_score']) else 0.0,
+            value_category=str(row['value_category']) if pd.notna(
+                row['value_category']) else 'Unknown',
+            predicted_price=int(round(row['predicted_price'])) if pd.notna(
+                row['predicted_price']) else 0,
+            savings_amount=int(round(row['savings_amount'])) if pd.notna(
+                row['savings_amount']) else 0
         )
 
 
@@ -183,11 +200,16 @@ class HoverTemplate:
         return (
             f'<b>🏡 %{{customdata[{MapHoverDataFields.NEIGHBORHOOD}]}}</b><br>'
             f'<i>📍 %{{customdata[{MapHoverDataFields.STREET_DISPLAY}]}}</i><br><br>'
+            '<b>📊 Property Details:</b><br>'
             f'<b>Price:</b> ₪%{{customdata[{MapHoverDataFields.PRICE}]:,.0f}}<br>'
             '<b>Size:</b> %{text} sqm<br>'
-            '<b>Price/sqm:</b> ₪%{marker.color:,.0f}<br>'
             f'<b>Rooms:</b> %{{customdata[{MapHoverDataFields.ROOMS}]}}<br>'
             f'<b>Condition:</b> %{{customdata[{MapHoverDataFields.CONDITION_TEXT}]}}<br><br>'
+            '<b>💡 Market Value Analysis:</b><br>'
+            f'<b>Expected Price:</b> ₪%{{customdata[{MapHoverDataFields.PREDICTED_PRICE}]:,.0f}}<br>'
+            f'<b>Value Score:</b> %{{customdata[{MapHoverDataFields.VALUE_SCORE}]}}%<br>'
+            f'<b>Assessment:</b> %{{customdata[{MapHoverDataFields.VALUE_CATEGORY}]}}<br>'
+            f'<b>Savings/Premium:</b> ₪%{{customdata[{MapHoverDataFields.SAVINGS_AMOUNT}]:,.0f}}<br><br>'
             '<b>👆 Click to view listing</b><extra></extra>'
         )
 

@@ -126,9 +126,13 @@ def test_map_hover_data():
 
     # Test list conversion
     data_list = hover_data.to_list()
-    assert len(data_list) == 8
+    assert len(data_list) == 12  # Updated to include value analysis fields
     assert data_list[MapHoverDataFields.NEIGHBORHOOD] == 'Jerusalem'
     assert data_list[MapHoverDataFields.FULL_URL] == 'https://example.com/2'
+
+    # Test value analysis fields
+    assert data_list[MapHoverDataFields.VALUE_SCORE] == hover_data.value_score
+    assert data_list[MapHoverDataFields.VALUE_CATEGORY] == hover_data.value_category
 
     print("✅ MapHoverData tests passed!")
 
