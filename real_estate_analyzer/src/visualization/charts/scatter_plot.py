@@ -5,6 +5,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from typing import Dict, Any
+from statsmodels.nonparametric.smoothers_lowess import lowess
 
 from src.config.constants import ChartConfiguration, ValueAnalysisConstants
 from src.visualization.hover_data import PropertyHoverData, HoverTemplate
@@ -34,7 +35,6 @@ class PropertyScatterPlot:
         fig = self._create_base_scatter_plot(plot_df)
 
         # Add enhancements
-        self._add_trend_line(fig, plot_df)
         self._add_median_lines(fig, plot_df)
         self._update_styling_and_hover(fig, plot_df)
 
@@ -47,7 +47,7 @@ class PropertyScatterPlot:
         return self._calculate_value_analysis(plot_df)
 
     def _create_base_scatter_plot(self, plot_df: pd.DataFrame) -> go.Figure:
-        """Create the base scatter plot with color categories."""
+        """Create the base scatter plot with color categories and built-in trendline."""
         return px.scatter(
             plot_df,
             x='square_meters',
@@ -56,6 +56,8 @@ class PropertyScatterPlot:
             size='rooms',
             size_max=ChartConfiguration.SIZE_MAX,
             color_discrete_map=self._get_value_category_colors(),
+            trendline="lowess",
+            trendline_scope="overall",
             labels={
                 'square_meters': 'Square Meters',
                 'price': 'Price (₪)',
@@ -65,22 +67,34 @@ class PropertyScatterPlot:
         )
 
     def _calculate_value_analysis(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Calculate trend line and value scores for properties."""
+        """Calculate LOWESS trend line and value scores for properties."""
         result_df = df.copy(deep=True)
         x, y = result_df['square_meters'].values, result_df['price'].values
 
         try:
-            # Fit trend line and calculate value metrics
-            z = np.polyfit(x, y, ValueAnalysisConstants.POLYNOMIAL_DEGREE)
-            trend_line_y = np.poly1d(z)(x)
+            # Use LOWESS (same as Plotly's trendline) for consistent analysis
+            # Sort by x values for proper LOWESS calculation
+            sorted_indices = np.argsort(x)
+            x_sorted = x[sorted_indices]
+            y_sorted = y[sorted_indices]
 
-            result_df['predicted_price'] = trend_line_y
-            result_df['value_score'] = (y - trend_line_y) / trend_line_y * 100
-            result_df['savings_amount'] = trend_line_y - y
+            # Apply LOWESS smoothing
+            lowess_result = lowess(
+                y_sorted, x_sorted, return_sorted=False)
+
+            # Map LOWESS predictions back to original order
+            predicted_prices = np.zeros_like(y)
+            predicted_prices[sorted_indices] = lowess_result
+
+            result_df['predicted_price'] = predicted_prices
+            result_df['value_score'] = (
+                y - predicted_prices) / predicted_prices * 100
+            result_df['savings_amount'] = predicted_prices - y
             result_df['value_category'] = result_df['value_score'].apply(
                 self._categorize_property_value)
 
-        except Exception:
+        except Exception as e:
+            print(f"Warning: LOWESS calculation failed: {e}")
             # Fallback if trend calculation fails
             result_df['value_score'] = 0
             result_df['value_category'] = 'Unknown'
@@ -112,20 +126,6 @@ class PropertyScatterPlot:
             'Above Market': '#fd7e14',
             'Overpriced': '#dc3545'
         }
-
-    def _add_trend_line(self, fig: go.Figure, df: pd.DataFrame) -> None:
-        """Add trend line to the scatter plot."""
-        if 'predicted_price' in df.columns:
-            fig.add_scatter(
-                x=df['square_meters'],
-                y=df['predicted_price'],
-                mode='lines',
-                name='Market Trend',
-                line=dict(color='rgba(102, 126, 234, 0.6)',
-                          width=2, dash='dash'),
-                hoverinfo='skip',
-                showlegend=True
-            )
 
     def _add_median_lines(self, fig: go.Figure, df: pd.DataFrame) -> None:
         """Add median reference lines to the scatter plot."""
@@ -186,8 +186,8 @@ class PropertyScatterPlot:
     def _update_layout(self, fig: go.Figure) -> None:
         """Update the figure layout."""
         fig.update_layout(
-            clickmode='event+select',
-            hoverdistance=100,
+            clickmode='event',
+            hoverdistance=20,
             hovermode='closest',
             dragmode='zoom',
             plot_bgcolor='rgba(240,240,240,0.2)',
