@@ -169,7 +169,7 @@ class DashboardLayoutManager:
                 html.H3([
                     html.I(className="fas fa-map-marked-alt",
                            style={'margin-right': '10px', 'color': '#667eea'}),
-                    "Geographic Distribution"
+                    "Property Locations by Market Value Analysis"
                 ], style={'color': '#2c3e50', 'margin-bottom': '20px', 'font-weight': '600', 'font-size': '18px'}),
                 self.loading_manager.create_loading_component("map-view",
                                                               dcc.Graph(

@@ -70,7 +70,6 @@ class PropertyMapView:
             ),
             margin={"r": 0, "t": 30, "l": 0, "b": 0},
             title={
-                'text': 'Property Locations by Market Value Analysis',
                 'x': 0.5,
                 'xanchor': 'center',
                 'font': {'size': 16}
