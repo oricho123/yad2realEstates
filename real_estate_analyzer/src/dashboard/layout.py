@@ -4,8 +4,7 @@ import pandas as pd
 from dash import html, dcc
 from typing import Dict, List, Any
 
-from ..config.styles import DashboardStyles, SummaryStyles
-from ..config.constants import CityOptions
+from ..config.styles import DashboardStyles
 from .components.filters import FilterComponentManager
 from .components.search import SearchComponentManager
 from .components.loading import LoadingComponentManager
@@ -25,6 +24,7 @@ class DashboardLayoutManager:
         self.filter_manager = FilterComponentManager(initial_data)
         self.search_manager = SearchComponentManager()
         self.loading_manager = LoadingComponentManager()
+        # Note: storage_manager will be initialized in the app setup
 
     def create_main_layout(self) -> html.Div:
         """
@@ -37,6 +37,19 @@ class DashboardLayoutManager:
             # Global loading overlay
             self._create_global_loading_overlay(),
 
+            # Initialize storage manager script
+            html.Script("""
+                // Initialize DatasetStorageManager when DOM is ready
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (typeof DatasetStorageManager !== 'undefined') {
+                        window.datasetStorage = new DatasetStorageManager();
+                        console.log('Dataset storage manager initialized');
+                    } else {
+                        console.warn('DatasetStorageManager not found. Make sure storage_manager.js is loaded.');
+                    }
+                });
+            """),
+
             # Main content wrapper
             html.Div([
                 # Header section
@@ -44,6 +57,9 @@ class DashboardLayoutManager:
 
                 # Search controls section
                 self._create_search_section(),
+
+                # Dataset management section (placeholder - will be populated by storage manager)
+                html.Div(id='dataset-management-section'),
 
                 # Filter controls section
                 self._create_filter_section(),
