@@ -5,10 +5,10 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from typing import Dict, Any
-from statsmodels.nonparametric.smoothers_lowess import lowess
 
-from src.config.constants import ChartConfiguration, ValueAnalysisConstants
+from src.config.constants import ChartConfiguration
 from src.visualization.hover_data import PropertyHoverData, HoverTemplate
+from src.utils import TrendAnalyzer
 
 
 class PropertyScatterPlot:
@@ -67,55 +67,8 @@ class PropertyScatterPlot:
         )
 
     def _calculate_value_analysis(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Calculate LOWESS trend line and value scores for properties."""
-        result_df = df.copy(deep=True)
-        x, y = result_df['square_meters'].values, result_df['price'].values
-
-        try:
-            # Use LOWESS (same as Plotly's trendline) for consistent analysis
-            # Sort by x values for proper LOWESS calculation
-            sorted_indices = np.argsort(x)
-            x_sorted = x[sorted_indices]
-            y_sorted = y[sorted_indices]
-
-            # Apply LOWESS smoothing
-            lowess_result = lowess(
-                y_sorted, x_sorted, return_sorted=False)
-
-            # Map LOWESS predictions back to original order
-            predicted_prices = np.zeros_like(y)
-            predicted_prices[sorted_indices] = lowess_result
-
-            result_df['predicted_price'] = predicted_prices
-            result_df['value_score'] = (
-                y - predicted_prices) / predicted_prices * 100
-            result_df['savings_amount'] = predicted_prices - y
-            result_df['value_category'] = result_df['value_score'].apply(
-                self._categorize_property_value)
-
-        except Exception as e:
-            print(f"Warning: LOWESS calculation failed: {e}")
-            # Fallback if trend calculation fails
-            result_df['value_score'] = 0
-            result_df['value_category'] = 'Unknown'
-            result_df['predicted_price'] = y.copy()
-            result_df['savings_amount'] = 0
-
-        return result_df
-
-    def _categorize_property_value(self, value_score: float) -> str:
-        """Categorize property based on value score."""
-        thresholds = ValueAnalysisConstants
-        if value_score < thresholds.EXCELLENT_DEAL_THRESHOLD:
-            return 'Excellent Deal'
-        elif value_score < thresholds.GOOD_DEAL_THRESHOLD:
-            return 'Good Deal'
-        elif value_score < thresholds.FAIR_PRICE_THRESHOLD:
-            return 'Fair Price'
-        elif value_score < thresholds.ABOVE_MARKET_THRESHOLD:
-            return 'Above Market'
-        else:
-            return 'Overpriced'
+        """Calculate LOWESS trend line and value scores for properties using centralized utility."""
+        return TrendAnalyzer.calculate_complete_value_analysis(df)
 
     def _get_value_category_colors(self) -> Dict[str, str]:
         """Get color mapping for value categories."""
