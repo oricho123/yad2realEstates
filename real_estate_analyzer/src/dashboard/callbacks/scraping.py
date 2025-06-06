@@ -240,7 +240,7 @@ class ScrapingCallbackManager:
                         
                         if (data && data.length > 0) {
                                                          // Clear existing storage first to ensure complete override
-                             if (window.dash_clientside && window.dash_clientside.storage) {
+                            if (window.dash_clientside && window.dash_clientside.storage) {
                                  const hadExistingData = window.dash_clientside.storage.has_data();
                                  if (hadExistingData) {
                                      console.log("Clearing existing storage before saving new data");
@@ -345,6 +345,23 @@ class ScrapingCallbackManager:
     def _register_city_to_area_callback(self) -> None:
         """Register callback to handle area updates from city selection and saved filters."""
 
+        # Import here to avoid circular imports
+        from src.config.constants import CityOptions
+
+        # Build city-to-area mapping dynamically from constants
+        city_to_area_map = {}
+        for city in CityOptions.CITIES:
+            city_value = city['value']
+            area_code = int(city['area_code'])
+
+            # Add both the original value and numeric conversion if it's a string
+            city_to_area_map[city_value] = area_code
+            if isinstance(city_value, str) and city_value.isdigit():
+                city_to_area_map[int(city_value)] = area_code
+
+        # Convert to JavaScript object string
+        js_mapping = str(city_to_area_map).replace("'", '"')
+
         clientside_callback(
             """
             function(selected_city, n_intervals) {
@@ -357,14 +374,8 @@ class ScrapingCallbackManager:
                 
                 // Handle city selection changes (user interactions) - has higher priority
                 if (selected_city !== undefined && selected_city !== null && !window._city_area_initial_load) {
-                    // Map of city values to their corresponding area codes
-                    const cityToAreaMap = {
-                        9500: 6,     // קרית ביאליק (Kiryat Bialik) -> אזור הקריות
-                        8200: 6,     // קרית מוצקין (Kiryat Motzkin) -> אזור הקריות
-                        4000: 5,     // חיפה (Haifa) -> אזור חיפה והסביבה
-                        '0874': 91,  // מגדל העמק (Migdal HaEmek) -> אזור נצרת - שפרעם והסביבה
-                        874: 91      // Also support numeric version of 0874
-                    };
+                    // Map of city values to their corresponding area codes (dynamically generated from CityOptions)
+                    const cityToAreaMap = """ + js_mapping + """;
                     
                     const area = cityToAreaMap[selected_city];
                     if (area !== undefined) {
