@@ -2,14 +2,12 @@
 
 import pandas as pd
 from dash import html, dcc
-import dash_bootstrap_components as dbc
 from typing import Dict, List, Any
 
 from ..config.styles import DashboardStyles
 from .components.filters import FilterComponentManager
 from .components.search import SearchComponentManager
 from .components.loading import LoadingComponentManager
-from .components.dataset_manager import DatasetManagerComponent
 
 
 class DashboardLayoutManager:
@@ -26,7 +24,6 @@ class DashboardLayoutManager:
         self.filter_manager = FilterComponentManager(initial_data)
         self.search_manager = SearchComponentManager()
         self.loading_manager = LoadingComponentManager()
-        self.dataset_manager = DatasetManagerComponent()
         # Note: storage_manager will be initialized in the app setup
 
     def create_main_layout(self) -> html.Div:
@@ -105,37 +102,6 @@ class DashboardLayoutManager:
     def _create_search_section(self) -> html.Div:
         """Create the search controls section."""
         return self.search_manager.create_search_section()
-
-    def _create_dataset_management_section(self) -> html.Div:
-        """Create the dataset management section."""
-        return html.Div([
-            # Collapsible dataset management section
-            html.Div([
-                dbc.Button([
-                    html.I(className="fas fa-database",
-                           style={'margin-right': '10px'}),
-                    "My Datasets ",
-                    html.Small("(click to manage)", style={
-                               'color': 'rgba(255,255,255,0.8)'})
-                ], id="dataset-management-toggle",
-                    color="info",
-                    style={'margin-bottom': '15px', 'width': '100%'},
-                    n_clicks=0),
-
-                dbc.Collapse([
-                    self.dataset_manager.create_dataset_management_section(),
-                    self.dataset_manager.create_save_dataset_modal(),
-                    self.dataset_manager.create_rename_dataset_modal()
-                ], id="dataset-management-collapse", is_open=False)
-            ])
-        ], style={
-            'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            'padding': '25px',
-            'border-radius': '15px',
-            'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
-            'margin-bottom': '25px',
-            'border': '1px solid rgba(255,255,255,0.3)'
-        }, className="fade-in")
 
     def _create_filter_section(self) -> html.Div:
         """Create the filter controls section."""
@@ -349,17 +315,17 @@ class DashboardLayoutManager:
         ], style=DashboardStyles.SUMMARY, className="fade-in")
 
     def _create_data_stores(self) -> List[dcc.Store]:
-        """Create enhanced data stores for comprehensive state management."""
+        """Create data stores for state management."""
         return [
-            # Core application stores
+            # Store for clicked links
             dcc.Store(id='clicked-link', storage_type='memory'),
             dcc.Store(id='clicked-map-link', storage_type='memory'),
-            dcc.Store(id='loading-state', storage_type='memory',
-                      data={'loading': False}),
 
-            # Dataset management stores
+            # Store for current dataset
             dcc.Store(id='current-dataset', storage_type='memory',
                       data=self.data.data.to_dict('records') if hasattr(self.data, 'data') and not self.data.is_empty else []),
+
+            # Store for scraped data (browser storage integration)
             dcc.Store(id='scraped-data-store', storage_type='memory'),
 
             # Store for loading state

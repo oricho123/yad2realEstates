@@ -7,8 +7,6 @@ from pathlib import Path
 import dash
 import pandas as pd
 from src.config.settings import AppSettings, DashConfiguration
-from src.storage.browser_storage import BrowserStorageManager
-from src.dashboard.callbacks.storage_manager import EnhancedStorageCallbackManager
 from src.config.styles import CustomCSS
 from src.dashboard.callbacks.filtering import FilterCallbackManager
 from src.dashboard.callbacks.interactions import InteractionCallbackManager
@@ -61,11 +59,8 @@ class RealEstateDashboardApp:
         layout_manager = DashboardLayoutManager(self.initial_data)
         self.app.layout = layout_manager.create_main_layout()
 
-        # Initialize storage managers after app is created
+        # Initialize storage manager after app is created
         self.storage_manager = StorageCallbackManager(self.app)
-        self.browser_storage_manager = BrowserStorageManager()
-        self.enhanced_storage_manager = EnhancedStorageCallbackManager(
-            self.app, self.browser_storage_manager)
 
     def _register_callbacks(self) -> None:
         """Register all dashboard callbacks."""
