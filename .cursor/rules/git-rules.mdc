@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Git Commit Guidelines
+
+When making code changes, follow these strict guidelines:
+
+1. NEVER commit code directly in the user's name
+2. DO NOT run git commit commands automatically 
