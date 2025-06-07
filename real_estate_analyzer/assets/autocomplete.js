@@ -20,7 +20,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                 outline: none;
                 transition: border-color 0.3s ease;
             `;
-      container.appendChild(input);
+      container?.appendChild(input);
 
       // Create results container
       const resultsContainer = document.createElement("div");
@@ -40,9 +40,10 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                 display: none;
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             `;
-      container.appendChild(resultsContainer);
+      container?.appendChild(resultsContainer);
 
       // Style the container for proper positioning
+      if (container) {
       container.style.position = "relative";
 
       let debounceTimeout;
@@ -50,7 +51,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
 
       // Input event handler
       input.addEventListener("input", function (e) {
-        const query = e.target.value.trim();
+        const query = e?.target?.value?.trim();
 
         if (query.length < 2) {
           resultsContainer.style.display = "none";
