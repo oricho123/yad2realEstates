@@ -326,7 +326,7 @@ class CustomCSS:
     
     .button-hover:hover {
         transform: translateY(-2px);
-        boxShadow: 0 8px 25px rgba(40, 167, 69, 0.4) !important;
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4) !important;
     }
     
     body {
