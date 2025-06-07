@@ -44,7 +44,8 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
 
       // Style the container for proper positioning
       if (container) {
-      container.style.position = "relative";
+        container.style.position = "relative";
+      }
 
       let debounceTimeout;
       let selectedData = null;
