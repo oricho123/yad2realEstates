@@ -4,8 +4,7 @@ import pandas as pd
 from dash import html, dcc
 from typing import Dict, List, Any
 
-from ..config.styles import DashboardStyles, SummaryStyles
-from ..config.constants import CityOptions
+from ..config.styles import DashboardStyles
 from .components.filters import FilterComponentManager
 from .components.search import SearchComponentManager
 from .components.loading import LoadingComponentManager
@@ -25,6 +24,7 @@ class DashboardLayoutManager:
         self.filter_manager = FilterComponentManager(initial_data)
         self.search_manager = SearchComponentManager()
         self.loading_manager = LoadingComponentManager()
+        # Note: storage_manager will be initialized in the app setup
 
     def create_main_layout(self) -> html.Div:
         """
@@ -36,6 +36,8 @@ class DashboardLayoutManager:
         return html.Div([
             # Global loading overlay
             self._create_global_loading_overlay(),
+
+            # Simple storage is handled via clientside callbacks - no initialization script needed
 
             # Main content wrapper
             html.Div([
@@ -323,9 +325,16 @@ class DashboardLayoutManager:
             dcc.Store(id='current-dataset', storage_type='memory',
                       data=self.data.data.to_dict('records') if hasattr(self.data, 'data') and not self.data.is_empty else []),
 
+            # Store for scraped data (browser storage integration)
+            dcc.Store(id='scraped-data-store', storage_type='memory'),
+
             # Store for loading state
             dcc.Store(id='loading-state', storage_type='memory',
-                      data={'loading': False})
+                      data={'loading': False}),
+
+            # Auto-load trigger (fires once on page load)
+            dcc.Interval(id='auto-load-trigger', interval=1000,
+                         n_intervals=0, max_intervals=1, disabled=False)
         ]
 
     def _get_analytics_chart_style(self) -> Dict[str, Any]:

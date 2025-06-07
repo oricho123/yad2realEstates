@@ -5,12 +5,9 @@ import json
 import time
 import pandas as pd
 from datetime import datetime
-from pathlib import Path
 import logging
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass
-
-from src.config.settings import AppSettings
 
 
 @dataclass
@@ -32,23 +29,20 @@ class ScrapingParams:
 
 @dataclass
 class ScrapingResult:
-    """Type-safe result of scraping operation."""
+    """Type-safe result of scraping operation for browser storage."""
     success: bool
-    csv_path: str
-    json_path: str
+    listings_data: List[Dict[str, Any]]
+    raw_data: Optional[Dict[str, Any]]
     listings_count: int
     error_message: Optional[str] = None
+    scraped_params: Optional[ScrapingParams] = None
 
 
 class Yad2Scraper:
-    """Modernized scraper for Yad2 real estate API data."""
+    """Modernized scraper for Yad2 real estate API data with browser storage."""
 
-    def __init__(self, output_dir: Optional[str] = None):
+    def __init__(self):
         """Initialize the scraper with configuration."""
-        self.output_dir = Path(
-            output_dir) if output_dir else AppSettings.DATA_DIRECTORY
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-
         # Setup logging
         self.logger = logging.getLogger(__name__)
 
@@ -252,47 +246,55 @@ class Yad2Scraper:
         listing['condition_text'] = condition_map.get(
             listing['condition_id'], 'לא ידוע')
 
-    def save_raw_data(self, data: Dict[str, Any], filename: Optional[str] = None) -> str:
-        """Save raw API response to JSON file."""
-        if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"raw_api_response_{timestamp}.json"
+    def prepare_for_storage(self, listings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Prepare listings data for browser storage by ensuring JSON serialization compatibility.
 
-        file_path = self.output_dir / filename
+        Args:
+            listings: List of parsed listing dictionaries
 
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-
-        self.logger.info(f"Saved raw data to {file_path}")
-        return str(file_path)
-
-    def save_listings_csv(self, listings: List[Dict[str, Any]], filename: Optional[str] = None) -> str:
-        """Save parsed listings to CSV file."""
+        Returns:
+            List of storage-ready listing dictionaries
+        """
         if not listings:
-            self.logger.warning("No listings to save")
-            return ""
+            self.logger.warning("No listings to prepare for storage")
+            return []
 
-        if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"real_estate_listings_{timestamp}.csv"
+        storage_ready_listings = []
 
-        file_path = self.output_dir / filename
+        for listing in listings:
+            # Create a copy to avoid modifying original data
+            storage_listing = listing.copy()
 
-        df = pd.DataFrame(listings)
-        df.to_csv(file_path, index=False, encoding='utf-8')
+            # Ensure all datetime objects are converted to ISO strings
+            if 'scraped_at' in storage_listing:
+                if isinstance(storage_listing['scraped_at'], datetime):
+                    storage_listing['scraped_at'] = storage_listing['scraped_at'].isoformat(
+                    )
 
-        self.logger.info(f"Saved {len(listings)} listings to {file_path}")
-        return str(file_path)
+            # Handle None values that might cause issues in JSON
+            for key, value in storage_listing.items():
+                if value is None:
+                    # Explicitly keep as None for JSON
+                    storage_listing[key] = None
+                elif isinstance(value, float) and pd.isna(value):
+                    storage_listing[key] = None  # Convert NaN to None
+
+            storage_ready_listings.append(storage_listing)
+
+        self.logger.info(
+            f"Prepared {len(storage_ready_listings)} listings for browser storage")
+        return storage_ready_listings
 
     def scrape(self, params: ScrapingParams) -> ScrapingResult:
         """
-        Main method to scrape data and save results.
+        Main method to scrape data and prepare for browser storage.
 
         Args:
             params: Structured scraping parameters
 
         Returns:
-            ScrapingResult with outcome details
+            ScrapingResult with data ready for browser storage
         """
         try:
             # Fetch data from API
@@ -300,37 +302,37 @@ class Yad2Scraper:
             if not raw_data:
                 return ScrapingResult(
                     success=False,
-                    csv_path="",
-                    json_path="",
+                    listings_data=[],
+                    raw_data=None,
                     listings_count=0,
-                    error_message="Failed to fetch data from API"
+                    error_message="Failed to fetch data from API",
+                    scraped_params=params
                 )
-
-            # Save raw data
-            json_path = self.save_raw_data(raw_data)
 
             # Parse listings
             listings = self.parse_listings(raw_data)
 
-            # Save processed data
-            csv_path = self.save_listings_csv(listings)
+            # Prepare listings for browser storage
+            storage_ready_listings = self.prepare_for_storage(listings)
 
             # Add rate limiting delay
             time.sleep(self.request_delay)
 
             return ScrapingResult(
                 success=True,
-                csv_path=csv_path,
-                json_path=json_path,
-                listings_count=len(listings)
+                listings_data=storage_ready_listings,
+                raw_data=raw_data,
+                listings_count=len(storage_ready_listings),
+                scraped_params=params
             )
 
         except Exception as e:
             self.logger.error(f"Scraping failed: {str(e)}")
             return ScrapingResult(
                 success=False,
-                csv_path="",
-                json_path="",
+                listings_data=[],
+                raw_data=None,
                 listings_count=0,
-                error_message=str(e)
+                error_message=str(e),
+                scraped_params=params
             )

@@ -5,11 +5,9 @@ Replaces the monolithic real_estate_analyzer.py with modular architecture
 """
 import argparse
 import sys
-from pathlib import Path
 
 # Import local modules using relative imports
 from src.dashboard.app import create_real_estate_app
-from src.data.models import PropertyDataFrame
 from src.data.loaders import PropertyDataLoader
 from src.config.settings import AppSettings
 
@@ -27,12 +25,12 @@ Examples:
         """
     )
 
-    # Data options
+    # Data options (kept for backward compatibility but not used with simple storage)
     parser.add_argument(
         '--data-dir',
         type=str,
         default=str(AppSettings.DATA_DIRECTORY),
-        help='Directory containing scraped real estate data'
+        help='Directory containing scraped real estate data (not used with browser storage)'
     )
 
     # Server options
@@ -57,62 +55,18 @@ Examples:
         help='Run in debug mode with hot reloading'
     )
 
-    # Data filtering options
+    # Data filtering options (kept for backward compatibility but not used with simple storage)
     parser.add_argument(
         '--min-properties',
         type=int,
         default=1,
-        help='Minimum number of properties required to start dashboard'
+        help='Minimum number of properties required to start dashboard (not used with browser storage)'
     )
 
     return parser.parse_args()
 
 
-def load_initial_data(data_directory: str, min_properties: int = 1) -> PropertyDataFrame:
-    """Load initial property data for the dashboard"""
-    print("🔍 Loading Real Estate Data...")
-    print(f"📁 Data directory: {data_directory}")
-
-    # Initialize data loader
-    loader = PropertyDataLoader(Path(data_directory))
-
-    # Try to find and load the latest data file
-    latest_file = loader.find_latest_data_file()
-
-    if latest_file is None:
-        print("⚠️  No existing data files found.")
-        print("💡 Tip: Run the scraper first from the UI")
-        return loader.create_empty_dataframe()
-
-    print(f"📄 Loading data from: {latest_file.name}")
-
-    # Load the data
-    try:
-        property_data = loader.load_property_listings(str(latest_file))
-
-        if len(property_data) < min_properties:
-            print(
-                f"⚠️  Found only {len(property_data)} properties (minimum: {min_properties})")
-            print("💡 The dashboard will start with limited functionality")
-        else:
-            print(f"✅ Successfully loaded {len(property_data)} properties")
-
-            # Show data quality summary
-            valid_props = len(property_data.get_valid_properties())
-            location_props = len(property_data.get_properties_with_location())
-
-            print(f"📊 Data Quality Summary:")
-            print(
-                f"   • Valid properties: {valid_props}/{len(property_data)} ({(valid_props/len(property_data)*100):.1f}%)")
-            print(
-                f"   • Properties with location: {location_props}/{len(property_data)} ({(location_props/len(property_data)*100):.1f}%)")
-
-        return property_data
-
-    except Exception as e:
-        print(f"❌ Error loading data: {str(e)}")
-        print("🔄 Starting with empty dataset")
-        return loader.create_empty_dataframe()
+# File loading logic removed - simple storage approach uses browser localStorage only
 
 
 def main():
@@ -128,11 +82,16 @@ def main():
         # AppSettings.DEBUG_MODE = True
         print("🐛 Debug mode enabled")
 
-    # Load initial data
+    # Load initial data (simplified for browser storage approach)
     try:
-        initial_data = load_initial_data(args.data_dir, args.min_properties)
+        # For simple storage approach, always start with empty data
+        # Users' data will auto-load from browser storage if it exists
+        print(
+            "🔄 Starting with empty dataset - user data will auto-load from browser storage")
+        loader = PropertyDataLoader()
+        initial_data = loader.create_empty_dataframe()
     except Exception as e:
-        print(f"❌ Failed to load initial data: {str(e)}")
+        print(f"❌ Failed to initialize data loader: {str(e)}")
         print("🔄 Starting with empty dataset")
         loader = PropertyDataLoader()
         initial_data = loader.create_empty_dataframe()
