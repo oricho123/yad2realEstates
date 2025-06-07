@@ -94,6 +94,70 @@ def create_dashboard(df, port=8050):
         suppress_callback_exceptions=True  # Needed for clientside callbacks
     )
 
+    # Add responsive CSS
+    app.index_string = '''
+    <!DOCTYPE html>
+    <html>
+        <head>
+            {%metas%}
+            <title>{%title%}</title>
+            {%favicon%}
+            {%css%}
+            <style>
+                /* Responsive design for vehicles analyzer */
+                @media (max-width: 768px) {
+                    .filter-container-responsive {
+                        flex-direction: column !important;
+                        gap: 10px !important;
+                    }
+                    
+                    .filter-responsive {
+                        width: 100% !important;
+                        min-width: unset !important;
+                    }
+                    
+                    .container-responsive {
+                        padding: 15px !important;
+                        margin: 10px !important;
+                    }
+                    
+                    .graph-responsive {
+                        padding: 10px !important;
+                    }
+                    
+                    .summary-responsive {
+                        padding: 10px !important;
+                    }
+                    
+                    .summary-container-responsive {
+                        flex-direction: column !important;
+                        gap: 10px !important;
+                    }
+                    
+                    .summary-card-responsive {
+                        min-width: unset !important;
+                    }
+                }
+                
+                @media (max-width: 1024px) and (min-width: 769px) {
+                    .filter-responsive {
+                        width: 48% !important;
+                        min-width: 200px !important;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            {%app_entry%}
+            <footer>
+                {%config%}
+                {%scripts%}
+                {%renderer%}
+            </footer>
+        </body>
+    </html>
+    '''
+
     # Get unique values for filters
     km_ranges = [
         {'label': 'All', 'value': 'all'},

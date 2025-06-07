@@ -62,9 +62,9 @@ class DashboardLayoutManager:
                 # Summary section
                 self._create_summary_section(),
 
-            ] + self._create_data_stores(), style=DashboardStyles.CONTENT_WRAPPER)
+            ] + self._create_data_stores(), style=DashboardStyles.CONTENT_WRAPPER, className="container-responsive")
 
-        ], style=DashboardStyles.CONTAINER)
+        ], style=DashboardStyles.CONTAINER, className="container-responsive")
 
     def _create_global_loading_overlay(self) -> html.Div:
         """Create the global loading overlay component."""
@@ -97,7 +97,7 @@ class DashboardLayoutManager:
                 html.P("Discover market insights with interactive data visualization & geographic mapping",
                        style={'margin': '10px 0 0 0', 'opacity': '0.9', 'fontSize': '16px'})
             ], style=DashboardStyles.HEADER_CONTENT)
-        ], style=DashboardStyles.HEADER)
+        ], style=DashboardStyles.HEADER, className="header-responsive")
 
     def _create_search_section(self) -> html.Div:
         """Create the search controls section."""
@@ -164,7 +164,7 @@ class DashboardLayoutManager:
                                                                   }
                                                               ), "Analyzing data and creating visualization"
                                                               )
-            ], style=DashboardStyles.GRAPH, className="fade-in"),
+            ], style=DashboardStyles.GRAPH, className="fade-in graph-responsive"),
 
             # Map section
             html.Div([
@@ -189,7 +189,7 @@ class DashboardLayoutManager:
                                                                   }
                                                               ), "Loading geographic visualization"
                                                               )
-            ], style=DashboardStyles.MAP_CONTAINER, className="fade-in"),
+            ], style=DashboardStyles.MAP_CONTAINER, className="fade-in graph-responsive"),
 
         ], style=DashboardStyles.DUAL_VIEW_CONTAINER, className="fade-in dual-view-responsive")
 
@@ -221,7 +221,7 @@ class DashboardLayoutManager:
                                                                       "Creating neighborhood comparison"
                                                                       )
                     ], style=self._get_analytics_chart_style()),
-                ], style={'display': 'grid', 'gridTemplateColumns': '1fr 1fr', 'gap': '20px', 'marginBottom': '20px'}),
+                ], style={'display': 'grid', 'gridTemplateColumns': '1fr 1fr', 'gap': '20px', 'marginBottom': '20px'}, className="analytics-row"),
 
                 # Row 2: Bar Chart and Efficiency Scatter
                 html.Div([
@@ -240,7 +240,7 @@ class DashboardLayoutManager:
                                                                       "Computing room efficiency metrics"
                                                                       )
                     ], style=self._get_analytics_chart_style()),
-                ], style={'display': 'grid', 'gridTemplateColumns': '1fr 1fr', 'gap': '20px', 'marginBottom': '20px'}),
+                ], style={'display': 'grid', 'gridTemplateColumns': '1fr 1fr', 'gap': '20px', 'marginBottom': '20px'}, className="analytics-row"),
 
                 # Row 3: Neighborhood ranking (full width)
                 html.Div([
@@ -259,7 +259,7 @@ class DashboardLayoutManager:
                 'boxShadow': '0 8px 32px rgba(0,0,0,0.1)',
                 'marginBottom': '25px',
                 'border': '1px solid rgba(255,255,255,0.3)'
-            })
+            }, className="analytics-grid")
         ], className="fade-in")
 
     def _create_decision_support_section(self) -> html.Div:
@@ -290,7 +290,7 @@ class DashboardLayoutManager:
                                                                   "Analyzing market trends"
                                                                   )
                 ], style=self._get_decision_support_style()),
-            ], style={'display': 'flex', 'gap': '25px', 'alignItems': 'flex-start'})
+            ], style={'display': 'flex', 'gap': '25px', 'alignItems': 'flex-start'}, className="decision-support-layout")
         ], style={
             'background': 'linear-gradient(135deg, #e8f5e8 0%, #d4f1d4 100%)',
             'padding': '25px',

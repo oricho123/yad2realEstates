@@ -347,16 +347,86 @@ class CustomCSS:
     }
     
     /* Responsive design for dual view */
-    @media (maxWidth: 1200px) {
+    @media (max-width: 1200px) {
         .dual-view-responsive {
-            gridTemplateColumns: 1fr !important;
+            grid-template-columns: 1fr !important;
         }
     }
     
-    /* Responsive design for analytics */
-    @media (maxWidth: 900px) {
+    /* Responsive design for analytics - 2x2 to 1x4 grid */
+    @media (max-width: 900px) {
         .analytics-grid {
-            gridTemplateColumns: 1fr !important;
+            grid-template-columns: 1fr !important;
+        }
+        
+        .analytics-row {
+            grid-template-columns: 1fr !important;
+        }
+    }
+    
+    /* Mobile responsive design */
+    @media (max-width: 768px) {
+        .dual-view-responsive {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+        }
+        
+        .analytics-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+        }
+        
+        .analytics-row {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+            margin-bottom: 15px !important;
+        }
+        
+        .decision-support-layout {
+            flex-direction: column !important;
+            gap: 15px !important;
+        }
+        
+        .filter-container-responsive {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+        }
+        
+        .search-controls-responsive {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+        }
+        
+        .container-responsive {
+            padding: 15px !important;
+            margin: 10px !important;
+        }
+        
+        .graph-responsive {
+            padding: 15px !important;
+        }
+        
+        .header-responsive h1 {
+            font-size: 20px !important;
+        }
+        
+        .header-responsive p {
+            font-size: 14px !important;
+        }
+    }
+    
+    /* Tablet responsive design */
+    @media (max-width: 1024px) and (min-width: 769px) {
+        .analytics-row {
+            grid-template-columns: 1fr 1fr !important;
+        }
+        
+        .filter-container-responsive {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+        }
+        
+        .search-controls-responsive {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
         }
     }
     """

@@ -181,7 +181,7 @@ class FilterComponentManager:
                     )
                 ], style=DashboardStyles.FILTER),
 
-            ], style=DashboardStyles.FILTER_CONTAINER, className="fade-in")
+            ], style=DashboardStyles.FILTER_CONTAINER, className="fade-in filter-container-responsive")
 
         ])
 

@@ -197,7 +197,7 @@ class SearchComponentManager:
                     ),
                 ], style={'display': 'flex', 'justifyContent': 'center', 'alignItems': 'center'})
 
-            ], style=DashboardStyles.SEARCH_CONTROLS),
+            ], style=DashboardStyles.SEARCH_CONTROLS, className="search-controls-responsive"),
 
             # Search status display
             html.Div(id='scrape-status',
