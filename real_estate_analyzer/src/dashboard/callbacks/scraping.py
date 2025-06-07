@@ -191,73 +191,71 @@ class ScrapingCallbackManager:
 
                 except Exception as scraping_error:
                     print(f"Scraping failed with error: {scraping_error}")
-
-                    # Scraping failed - provide error message
-                    error_message = html.Div([
-                        html.I(className="fas fa-exclamation-triangle",
-                               style={'margin-right': '10px', 'color': '#dc3545'}),
-                        f"Scraping failed: {str(scraping_error)}"
-                    ], style={'color': '#dc3545', 'font-weight': '500'})
-
-                    return (
-                        {},  # Empty data
-                        error_message,
-                        False,  # Re-enable button
-                        {'loading': False},
-                        {'display': 'none'}  # Hide loading overlay
-                    )
+                    return self._create_error_response(f"Scraping failed: {str(scraping_error)}")
 
             except Exception as e:
-                # Error handling
-                error_message = html.Div([
-                    html.I(className="fas fa-exclamation-triangle",
-                           style={'margin-right': '10px', 'color': '#dc3545'}),
-                    f"Error during search: {str(e)}"
-                ], style={'color': '#dc3545', 'font-weight': '500'})
+                return self._create_error_response(f"Error during search: {str(e)}")
 
-                return (
-                    {},  # Empty data
-                    error_message,
-                    False,  # Re-enable button
-                    {'loading': False},
-                    {'display': 'none'}  # Hide loading overlay
-                )
+    def _create_error_response(self, error_msg: str) -> tuple:
+        """Create standardized error response for scraping callbacks."""
+        error_message = html.Div([
+            html.I(className="fas fa-exclamation-triangle",
+                   style={'margin-right': '10px', 'color': '#dc3545'}),
+            error_msg
+        ], style={'color': '#dc3545', 'font-weight': '500'})
+
+        return (
+            {},  # Empty data
+            error_message,
+            False,  # Re-enable button
+            {'loading': False},
+            {'display': 'none'}  # Hide loading overlay
+        )
 
     def _register_storage_integration_callback(self) -> None:
-        """Register client-side callback to integrate scraped data with browser storage.
-
-        TODO: Optimize to not run any storage checks after initial page load for better performance.
-        """
+        """Register client-side callback to integrate scraped data with browser storage."""
 
         clientside_callback(
             """
             function(scraped_data_payload, n_intervals) {
+                // Shared utility to load storage data with error handling
+                function loadStorageData() {
+                    if (!window.dash_clientside || !window.dash_clientside.storage) return null;
+                    try {
+                        return window.dash_clientside.storage.load_data();
+                    } catch (error) {
+                        console.error("Failed to load storage data:", error);
+                        return null;
+                    }
+                }
+                
+                // Shared utility to set prevention flags
+                function setPreventionFlag(flagName, logMessage) {
+                    window[flagName] = true;
+                    if (logMessage) console.log(logMessage);
+                }
+                
+                
                 // Handle new scraped data FIRST (higher priority)
                 if (scraped_data_payload && scraped_data_payload.data) {
                     try {
-                        // Extract data from the simple storage payload
                         const data = scraped_data_payload.data;
                         
                         if (data && data.length > 0) {
-                                                         // Clear existing storage first to ensure complete override
                             if (window.dash_clientside && window.dash_clientside.storage) {
                                  const hadExistingData = window.dash_clientside.storage.has_data();
                                  if (hadExistingData) {
-                                     console.log("Clearing existing storage before saving new data");
                                      window.dash_clientside.storage.clear_data();
                                  }
                                  
-                                 // Save the new scraped data
                                  const success = window.dash_clientside.storage.save_data(scraped_data_payload);
                                  if (success) {
                                      const action = hadExistingData ? "overrode" : "saved";
-                                     console.log(`Successfully ${action} storage with ${data.length} new properties`);
+                                     console.log(`Successfully ${action} storage with ${data.length} properties`);
                                  } else {
                                      console.error("Failed to save new data to localStorage");
                                  }
                              }
-                            
-                            // Return the new data to populate current-dataset
                             return data;
                         }
                     } catch (error) {
@@ -268,32 +266,17 @@ class ScrapingCallbackManager:
 
                 // Handle auto-load on page startup ONLY if no new data was scraped
                 if (n_intervals === 1) {
-                    // Check if we've already loaded to prevent duplicate loading
                     if (window._data_loaded) {
-                        console.log("Storage integration: data already loaded, skipping");
                         return window.dash_clientside.no_update;
                     }
                     
-                    if (window.dash_clientside && window.dash_clientside.storage) {
-                        try {
-                            const stored_data = window.dash_clientside.storage.load_data();
-                            if (stored_data && stored_data.data && stored_data.data.length > 0) {
-                                console.log(`Auto-loaded ${stored_data.data.length} properties from localStorage on page load`);
-                                window._data_loaded = true;
-                                return stored_data.data;
-                            } else {
-                                console.log("No stored data found on page load");
-                            }
-                        } catch (error) {
-                            console.error("Failed to auto-load data:", error);
-                        }
+                    const stored_data = loadStorageData();
+                    if (stored_data && stored_data.data && stored_data.data.length > 0) {
+                        console.log(`Auto-loaded ${stored_data.data.length} properties on page load`);
+                        setPreventionFlag('_data_loaded');
+                        return stored_data.data;
                     }
-                    window._data_loaded = true; // Mark as checked even if no data
-                } else if (n_intervals > 1) {
-                    // Don't reload data on subsequent triggers
-                    console.log(`Storage integration callback triggered with n_intervals=${n_intervals}, ignoring`);
-                } else {
-                    console.log(`Storage integration callback triggered with n_intervals=${n_intervals} (unexpected)`);
+                    setPreventionFlag('_data_loaded');
                 }
                 
                 return window.dash_clientside.no_update;
@@ -365,7 +348,17 @@ class ScrapingCallbackManager:
         clientside_callback(
             """
             function(selected_city, n_intervals) {
-                console.log(`City-to-area callback: city=${selected_city}, n_intervals=${n_intervals}`);
+                // Shared utility to load storage data with error handling
+                function loadStorageData() {
+                    if (!window.dash_clientside || !window.dash_clientside.storage) return null;
+                    try {
+                        return window.dash_clientside.storage.load_data();
+                    } catch (error) {
+                        console.error("Failed to load storage data:", error);
+                        return null;
+                    }
+                }
+                
                 
                 // Initialize tracking if not exists
                 if (window._city_area_initial_load === undefined) {
@@ -374,44 +367,28 @@ class ScrapingCallbackManager:
                 
                 // Handle city selection changes (user interactions) - has higher priority
                 if (selected_city !== undefined && selected_city !== null && !window._city_area_initial_load) {
-                    // Map of city values to their corresponding area codes (dynamically generated from CityOptions)
                     const cityToAreaMap = """ + js_mapping + """;
-                    
                     const area = cityToAreaMap[selected_city];
                     if (area !== undefined) {
-                        console.log(`✅ Setting area ${area} for city ${selected_city} (user change)`);
+                        console.log(`Setting area ${area} for city ${selected_city}`);
                         return area;
-                    } else {
-                        console.log(`❌ No area mapping found for city ${selected_city}, available mappings:`, Object.keys(cityToAreaMap));
-                        return window.dash_clientside.no_update;
                     }
+                    return window.dash_clientside.no_update;
                 }
 
                 // On initial page load, try to load saved area from storage
                 if (window._city_area_initial_load && n_intervals === 1) {
-                    console.log("City-to-area: handling initial page load");
-                    
-                    if (window.dash_clientside && window.dash_clientside.storage) {
-                        try {
-                            const stored_data = window.dash_clientside.storage.load_data();
-                            if (stored_data && stored_data.search_filters && stored_data.search_filters.area !== undefined) {
-                                console.log("Loading saved area from storage:", stored_data.search_filters.area);
-                                // Mark initial load as complete after a delay to allow all initial callbacks to process
-                                setTimeout(() => { window._city_area_initial_load = false; }, 100);
-                                return stored_data.search_filters.area;
-                            }
-                        } catch (error) {
-                            console.error("Failed to load saved area:", error);
-                        }
+                    const stored_data = loadStorageData();
+                    if (stored_data && stored_data.search_filters && stored_data.search_filters.area !== undefined) {
+                        console.log("Loading saved area:", stored_data.search_filters.area);
+                        setTimeout(() => { window._city_area_initial_load = false; }, 100);
+                        return stored_data.search_filters.area;
                     }
-                    // If no saved area, fall back to default
-                    console.log("No saved area found, using default (6)");
-                    // Mark initial load as complete after a delay
+                    // Fall back to default area
                     setTimeout(() => { window._city_area_initial_load = false; }, 100);
                     return 6;
                 }
 
-                console.log(`City-to-area: no action needed (initial_load=${window._city_area_initial_load})`);
                 return window.dash_clientside.no_update;
             }
             """,
@@ -424,57 +401,52 @@ class ScrapingCallbackManager:
     def _register_load_saved_filters_callback(self) -> None:
         """Register client-side callback to load saved search filters on page load."""
 
-        # Add a flag to track if filters have been loaded
         clientside_callback(
             """
             function(n_intervals) {
-                // Prevent multiple runs - only run on exact first trigger
-                if (n_intervals !== 1) {
-                    console.log(`Load saved filters: skipping n_intervals=${n_intervals}`);
-                    return Array(9).fill(window.dash_clientside.no_update);
-                }
-                
-                // Check if we've already loaded (prevent multiple runs)
-                if (window._filters_loaded) {
-                    console.log("Load saved filters: already loaded, skipping");
-                    return Array(9).fill(window.dash_clientside.no_update);
-                }
-                
-                console.log("Load saved filters: attempting to load on first page load");
-                
-                if (window.dash_clientside && window.dash_clientside.storage) {
+                // Shared utility to load storage data with error handling
+                function loadStorageData() {
+                    if (!window.dash_clientside || !window.dash_clientside.storage) return null;
                     try {
-                        const stored_data = window.dash_clientside.storage.load_data();
-                        if (stored_data && stored_data.search_filters) {
-                            const filters = stored_data.search_filters;
-                            console.log("Loading saved search filters on page load:", filters);
-                            
-                            // Mark as loaded to prevent subsequent runs
-                            window._filters_loaded = true;
-                            
-                            // Return all the filter values except area (handled by city-to-area callback)
-                            return [
-                                filters.city || 9500,                    // search-city-dropdown
-                                filters.min_price || 1000000,           // search-min-price
-                                filters.max_price || 2000000,           // search-max-price
-                                filters.min_rooms || 1,                 // search-min-rooms
-                                filters.max_rooms || 10,                // search-max-rooms
-                                filters.min_sqm || 30,                  // search-min-sqm
-                                filters.max_sqm || 300,                 // search-max-sqm
-                                filters.min_floor,                      // search-min-floor (can be null)
-                                filters.max_floor                       // search-max-floor (can be null)
-                            ];
-                        } else {
-                            console.log("No saved search filters found on page load");
-                            window._filters_loaded = true; // Mark as checked
-                        }
+                        return window.dash_clientside.storage.load_data();
                     } catch (error) {
-                        console.error("Failed to load saved search filters:", error);
-                        window._filters_loaded = true; // Mark as checked even on error
+                        console.error("Failed to load storage data:", error);
+                        return null;
                     }
                 }
                 
-                // Return no_update for all outputs if not loading
+                // Shared utility to set prevention flags
+                function setPreventionFlag(flagName, logMessage) {
+                    window[flagName] = true;
+                    if (logMessage) console.log(logMessage);
+                }
+                
+                
+                if (n_intervals !== 1 || window._filters_loaded) {
+                    return Array(9).fill(window.dash_clientside.no_update);
+                }
+                
+                const stored_data = loadStorageData();
+                if (stored_data && stored_data.search_filters) {
+                    const filters = stored_data.search_filters;
+                    console.log("Loading saved search filters:", filters);
+                    
+                    setPreventionFlag('_filters_loaded');
+                    
+                    return [
+                        filters.city || 9500,
+                        filters.min_price || 1000000,
+                        filters.max_price || 2000000,
+                        filters.min_rooms || 1,
+                        filters.max_rooms || 10,
+                        filters.min_sqm || 30,
+                        filters.max_sqm || 300,
+                        filters.min_floor,
+                        filters.max_floor
+                    ];
+                }
+                
+                setPreventionFlag('_filters_loaded');
                 return Array(9).fill(window.dash_clientside.no_update);
             }
             """,
@@ -498,12 +470,7 @@ class ScrapingCallbackManager:
         clientside_callback(
             """
             function(n_intervals) {
-                // After first trigger, disable the interval to prevent any future triggers
-                if (n_intervals >= 1) {
-                    console.log(`Disabling auto-load trigger after n_intervals=${n_intervals}`);
-                    return true;  // Set disabled=True
-                }
-                return false;  // Keep enabled
+                return n_intervals >= 1;  // Disable after first trigger
             }
             """,
             Output('auto-load-trigger', 'disabled'),

@@ -32,9 +32,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           dataWithTimestamp.property_count ||
           (dataWithTimestamp.data ? dataWithTimestamp.data.length : 0) ||
           0;
-        console.log(
-          `Saved ${propertyCount} properties to localStorage at ${dataWithTimestamp.saved_at}`
-        );
+        console.log(`Saved ${propertyCount} properties to localStorage`);
         return true;
       } catch (e) {
         console.error("Failed to save data to localStorage:", e);
@@ -58,9 +56,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
         }
 
         const parsed = JSON.parse(data);
-        console.log(
-          `Loaded ${parsed.data?.length || 0} properties from localStorage`
-        );
+        console.log(`Loaded ${parsed.data?.length || 0} properties`);
         return parsed;
       } catch (e) {
         console.error("Failed to load data from localStorage:", e);
@@ -71,9 +67,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
     has_data: function () {
       try {
         const data = localStorage.getItem("real_estate_data");
-        const hasData = data !== null;
-        console.log(`Storage has data: ${hasData}`);
-        return hasData;
+        return data !== null;
       } catch (e) {
         console.error("Failed to check data existence:", e);
         return false;
@@ -83,7 +77,6 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
     clear_data: function () {
       try {
         localStorage.removeItem("real_estate_data");
-        console.log("Cleared stored data");
         return true;
       } catch (e) {
         console.error("Failed to clear data:", e);
@@ -132,18 +125,11 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
         const data = localStorage.getItem("real_estate_data");
 
         if (!data) {
-          console.log("No stored data found for search filters");
           return null;
         }
 
         const parsed = JSON.parse(data);
-        if (parsed.search_filters) {
-          console.log("Found saved search filters:", parsed.search_filters);
-          return parsed.search_filters;
-        } else {
-          console.log("No search filters found in stored data");
-          return null;
-        }
+        return parsed.search_filters || null;
       } catch (e) {
         console.error("Failed to get search filters from localStorage:", e);
         return null;
