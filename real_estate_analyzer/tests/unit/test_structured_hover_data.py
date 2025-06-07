@@ -7,7 +7,6 @@ from src.visualization.hover_data import (
     HoverTemplate,
     HoverDataFields
 )
-import numpy as np
 import pandas as pd
 import sys
 from pathlib import Path
@@ -22,6 +21,7 @@ def test_property_hover_data():
 
     # Create a sample DataFrame row
     sample_data = {
+        'city': 'Tel Aviv',
         'neighborhood': 'Tel Aviv',
         'rooms': 3.5,
         'price': 1800000,
@@ -41,6 +41,7 @@ def test_property_hover_data():
     hover_data = PropertyHoverData.from_row(row)
 
     # Test that we get the expected values
+    assert hover_data.city == 'Tel Aviv'
     assert hover_data.neighborhood == 'Tel Aviv'
     assert hover_data.rooms == 3  # Should be converted to int
     assert hover_data.price == 1800000  # Test the new price field
@@ -50,7 +51,8 @@ def test_property_hover_data():
 
     # Test conversion to list
     data_list = hover_data.to_list()
-    assert len(data_list) == 13  # Should have 13 fields now (was 12)
+    assert len(data_list) == 14  # Should have 14 fields now (was 13)
+    assert data_list[HoverDataFields.CITY] == 'Tel Aviv'
     assert data_list[HoverDataFields.NEIGHBORHOOD] == 'Tel Aviv'
     assert data_list[HoverDataFields.ROOMS] == 3
     # Test the new price field
@@ -67,6 +69,7 @@ def test_hover_template():
     template = HoverTemplate.build_property_hover_template()
 
     # Test that template contains expected field references
+    assert f'customdata[{HoverDataFields.CITY}]' in template
     assert f'customdata[{HoverDataFields.NEIGHBORHOOD}]' in template
     assert f'customdata[{HoverDataFields.VALUE_SCORE}]' in template
     assert f'customdata[{HoverDataFields.PREDICTED_PRICE}]' in template
@@ -86,6 +89,7 @@ def test_enum_consistency():
 
     # Create a sample hover data object
     sample_data = {
+        'city': 'Test City',
         'neighborhood': 'Test',
         'rooms': 3,
         'price': 1500000,
@@ -106,6 +110,7 @@ def test_enum_consistency():
     data_list = hover_data.to_list()
 
     # Test that enum indices match the actual data positions
+    assert data_list[HoverDataFields.CITY] == hover_data.city
     assert data_list[HoverDataFields.NEIGHBORHOOD] == hover_data.neighborhood
     assert data_list[HoverDataFields.ROOMS] == hover_data.rooms
     assert data_list[HoverDataFields.PRICE] == hover_data.price
@@ -126,6 +131,7 @@ def test_integration_with_scatter_plot():
             'price': 1800000,
             'square_meters': 90,
             'rooms': 3.5,
+            'city': 'Tel Aviv',
             'neighborhood': 'Tel Aviv',
             'street': 'Rothschild Blvd',
             'condition_text': 'Excellent',
@@ -138,6 +144,7 @@ def test_integration_with_scatter_plot():
             'price': 2200000,
             'square_meters': 110,
             'rooms': 4,
+            'city': 'Jerusalem',
             'neighborhood': 'Jerusalem',
             'street': 'King George St',
             'condition_text': 'Good',

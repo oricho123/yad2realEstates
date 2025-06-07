@@ -13,7 +13,6 @@ from src.visualization.hover_data import (
     MapHoverDataFields,
     AnalyticsHoverDataFields
 )
-import numpy as np
 import pandas as pd
 import sys
 from pathlib import Path
@@ -29,6 +28,7 @@ def create_sample_dataframe() -> pd.DataFrame:
             'price': 1800000,
             'square_meters': 90,
             'rooms': 3.5,
+            'city': 'Tel Aviv',
             'neighborhood': 'Tel Aviv',
             'street': 'Rothschild Blvd',
             'condition_text': 'Excellent',
@@ -47,6 +47,7 @@ def create_sample_dataframe() -> pd.DataFrame:
             'price': 2200000,
             'square_meters': 110,
             'rooms': 4,
+            'city': 'Jerusalem',
             'neighborhood': 'Jerusalem',
             'street': 'King George St',
             'condition_text': 'Good',
@@ -65,6 +66,7 @@ def create_sample_dataframe() -> pd.DataFrame:
             'price': 1500000,
             'square_meters': 75,
             'rooms': 3,
+            'city': 'Tel Aviv',
             'neighborhood': 'Tel Aviv',
             'street': 'Dizengoff St',
             'condition_text': 'Good',
@@ -92,6 +94,7 @@ def test_property_hover_data():
     hover_data = PropertyHoverData.from_row(row)
 
     # Test basic fields
+    assert hover_data.city == 'Tel Aviv'
     assert hover_data.neighborhood == 'Tel Aviv'
     assert hover_data.rooms == 3  # Should be converted to int
     assert hover_data.price == 1800000  # Test the new price field
@@ -100,7 +103,8 @@ def test_property_hover_data():
 
     # Test list conversion
     data_list = hover_data.to_list()
-    assert len(data_list) == 13  # Now 13 fields instead of 12
+    assert len(data_list) == 14  # Now 14 fields instead of 13
+    assert data_list[HoverDataFields.CITY] == 'Tel Aviv'
     assert data_list[HoverDataFields.NEIGHBORHOOD] == 'Tel Aviv'
     # Test the new price field
     assert data_list[HoverDataFields.PRICE] == 1800000
@@ -161,6 +165,7 @@ def test_hover_templates():
 
     # Test scatter plot template
     scatter_template = HoverTemplate.build_property_hover_template()
+    assert f'customdata[{HoverDataFields.CITY}]' in scatter_template
     assert f'customdata[{HoverDataFields.NEIGHBORHOOD}]' in scatter_template
     assert f'customdata[{HoverDataFields.VALUE_SCORE}]' in scatter_template
     assert 'Market Value Analysis' in scatter_template

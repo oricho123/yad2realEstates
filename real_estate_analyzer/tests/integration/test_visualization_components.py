@@ -19,6 +19,7 @@ def create_test_data():
     # Generate realistic property data
     neighborhoods = ['Kiryat Bialik', 'Kiryat Yam',
                      'Kiryat Motzkin', 'Haifa Center', 'Neve Shaanan']
+    cities = ['Haifa', 'Haifa', 'Haifa', 'Haifa', 'Haifa']  # All in Haifa area
     conditions = ['חדש/משופץ', 'במצב טוב', 'דרוש שיפוץ']
     ad_types = ['פרטי', 'תיווך']
 
@@ -26,6 +27,7 @@ def create_test_data():
         'price': np.random.normal(1400000, 200000, n_properties),
         'square_meters': np.random.normal(90, 20, n_properties),
         'rooms': np.random.choice([2, 2.5, 3, 3.5, 4, 4.5, 5], n_properties),
+        'city': np.random.choice(cities, n_properties),
         'neighborhood': np.random.choice(neighborhoods, n_properties),
         'condition_text': np.random.choice(conditions, n_properties),
         'ad_type': np.random.choice(ad_types, n_properties),
