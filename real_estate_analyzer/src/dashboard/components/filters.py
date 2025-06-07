@@ -3,7 +3,7 @@ from src.utils.formatters import NumberFormatter
 
 import pandas as pd
 from dash import html, dcc
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 from src.config.styles import DashboardStyles
 
@@ -36,7 +36,7 @@ class FilterComponentManager:
             # Click instruction
             html.Div([
                 html.I(className="fas fa-hand-pointer",
-                       style={'margin-right': '8px'}),
+                       style={'marginRight': '8px'}),
                 "Click on any point in the charts below to open the property listing on Yad2"
             ], style=DashboardStyles.CLICK_INSTRUCTION, className="fade-in"),
 
@@ -46,7 +46,7 @@ class FilterComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-shekel-sign",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Price Range:"
                     ], style=DashboardStyles.LABEL),
                     dcc.RangeSlider(
@@ -65,7 +65,7 @@ class FilterComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-ruler-combined",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Size (SQM):"
                     ], style=DashboardStyles.LABEL),
                     dcc.RangeSlider(
@@ -84,7 +84,7 @@ class FilterComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-map-marker-alt",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Neighborhood:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Dropdown(
@@ -99,7 +99,7 @@ class FilterComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-times-circle",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Exclude Areas:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Dropdown(
@@ -115,7 +115,7 @@ class FilterComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-bed",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Number of Rooms:"
                     ], style=DashboardStyles.LABEL),
                     dcc.RangeSlider(
@@ -135,7 +135,7 @@ class FilterComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-building",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Floor:"
                     ], style=DashboardStyles.LABEL),
                     dcc.RangeSlider(
@@ -155,7 +155,7 @@ class FilterComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-hammer",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Property Condition:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Dropdown(
@@ -170,7 +170,7 @@ class FilterComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-user-tag",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Ad Type:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Dropdown(
@@ -181,7 +181,7 @@ class FilterComponentManager:
                     )
                 ], style=DashboardStyles.FILTER),
 
-            ], style=DashboardStyles.FILTER_CONTAINER, className="fade-in")
+            ], style=DashboardStyles.FILTER_CONTAINER, className="fade-in filter-container-responsive")
 
         ])
 

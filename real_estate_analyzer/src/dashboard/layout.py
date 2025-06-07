@@ -62,9 +62,9 @@ class DashboardLayoutManager:
                 # Summary section
                 self._create_summary_section(),
 
-            ] + self._create_data_stores(), style=DashboardStyles.CONTENT_WRAPPER)
+            ] + self._create_data_stores(), style=DashboardStyles.CONTENT_WRAPPER, className="container-responsive")
 
-        ], style=DashboardStyles.CONTAINER)
+        ], style=DashboardStyles.CONTAINER, className="container-responsive")
 
     def _create_global_loading_overlay(self) -> html.Div:
         """Create the global loading overlay component."""
@@ -91,13 +91,13 @@ class DashboardLayoutManager:
             html.Div([
                 html.H1([
                     html.I(className="fas fa-home",
-                           style={'margin-right': '15px'}),
+                           style={'marginRight': '15px'}),
                     "Real Estate Price Analysis Dashboard"
-                ], style={'margin': '0', 'font-weight': '700', 'font-size': '28px'}),
+                ], style={'margin': '0', 'fontWeight': '700', 'fontSize': '28px'}),
                 html.P("Discover market insights with interactive data visualization & geographic mapping",
-                       style={'margin': '10px 0 0 0', 'opacity': '0.9', 'font-size': '16px'})
+                       style={'margin': '10px 0 0 0', 'opacity': '0.9', 'fontSize': '16px'})
             ], style=DashboardStyles.HEADER_CONTENT)
-        ], style=DashboardStyles.HEADER)
+        ], style=DashboardStyles.HEADER, className="header-responsive")
 
     def _create_search_section(self) -> html.Div:
         """Create the search controls section."""
@@ -114,36 +114,36 @@ class DashboardLayoutManager:
             html.Div([
                 html.H3([
                     html.I(className="fas fa-chart-scatter",
-                           style={'margin-right': '10px', 'color': '#667eea'}),
+                           style={'marginRight': '10px', 'color': '#667eea'}),
                     "Price vs Size Analysis"
-                ], style={'color': '#2c3e50', 'margin-bottom': '20px', 'font-weight': '600', 'font-size': '18px'}),
+                ], style={'color': '#2c3e50', 'marginBottom': '20px', 'fontWeight': '600', 'fontSize': '18px'}),
 
                 # Value score explanation
                 html.Div([
                     html.H6([
                         html.I(className="fas fa-info-circle",
-                               style={'margin-right': '8px', 'color': '#17a2b8'}),
+                               style={'marginRight': '8px', 'color': '#17a2b8'}),
                         "Value Score Explanation"
-                    ], style={'color': '#2c3e50', 'margin-bottom': '10px', 'font-weight': '600'}),
+                    ], style={'color': '#2c3e50', 'marginBottom': '10px', 'fontWeight': '600'}),
                     html.P([
                         "The ", html.Strong(
                             "Value Score"), " shows how a property's price compares to market expectations based on its size:"
-                    ], style={'margin': '0 0 8px 0', 'font-size': '13px'}),
+                    ], style={'margin': '0 0 8px 0', 'fontSize': '13px'}),
                     html.Ul([
                         html.Li([html.Strong("Negative score", style={'color': '#28a745'}), " = Below expected price (Good deal)"],
-                                style={'font-size': '12px', 'margin-bottom': '4px'}),
+                                style={'fontSize': '12px', 'marginBottom': '4px'}),
                         html.Li([html.Strong("Positive score", style={'color': '#dc3545'}), " = Above expected price (Expensive)"],
-                                style={'font-size': '12px', 'margin-bottom': '4px'}),
+                                style={'fontSize': '12px', 'marginBottom': '4px'}),
                         html.Li("Example: -15% means property costs 15% less than similar-sized properties",
-                                style={'font-size': '12px', 'color': '#6c757d', 'font-style': 'italic'})
-                    ], style={'margin': '0', 'padding-left': '16px'}),
+                                style={'fontSize': '12px', 'color': '#6c757d', 'fontStyle': 'italic'})
+                    ], style={'margin': '0', 'paddingLeft': '16px'}),
                 ], style={
                     'background': 'linear-gradient(135deg, #e3f2fd 0%, #f1f8ff 100%)',
                     'border': '1px solid #b3d9ff',
-                    'border-radius': '8px',
+                    'borderRadius': '8px',
                     'padding': '15px',
-                    'margin-bottom': '20px',
-                    'box-shadow': '0 2px 8px rgba(0,0,0,0.05)'
+                    'marginBottom': '20px',
+                    'boxShadow': '0 2px 8px rgba(0,0,0,0.05)'
                 }),
 
                 # Scatter plot
@@ -164,15 +164,15 @@ class DashboardLayoutManager:
                                                                   }
                                                               ), "Analyzing data and creating visualization"
                                                               )
-            ], style=DashboardStyles.GRAPH, className="fade-in"),
+            ], style=DashboardStyles.GRAPH, className="fade-in graph-responsive"),
 
             # Map section
             html.Div([
                 html.H3([
                     html.I(className="fas fa-map-marked-alt",
-                           style={'margin-right': '10px', 'color': '#667eea'}),
+                           style={'marginRight': '10px', 'color': '#667eea'}),
                     "Property Locations by Market Value Analysis"
-                ], style={'color': '#2c3e50', 'margin-bottom': '20px', 'font-weight': '600', 'font-size': '18px'}),
+                ], style={'color': '#2c3e50', 'marginBottom': '20px', 'fontWeight': '600', 'fontSize': '18px'}),
                 self.loading_manager.create_loading_component("map-view",
                                                               dcc.Graph(
                                                                   id='property-map',
@@ -189,7 +189,7 @@ class DashboardLayoutManager:
                                                                   }
                                                               ), "Loading geographic visualization"
                                                               )
-            ], style=DashboardStyles.MAP_CONTAINER, className="fade-in"),
+            ], style=DashboardStyles.MAP_CONTAINER, className="fade-in graph-responsive"),
 
         ], style=DashboardStyles.DUAL_VIEW_CONTAINER, className="fade-in dual-view-responsive")
 
@@ -198,9 +198,9 @@ class DashboardLayoutManager:
         return html.Div([
             html.H3([
                 html.I(className="fas fa-chart-line",
-                       style={'margin-right': '10px', 'color': '#667eea'}),
+                       style={'marginRight': '10px', 'color': '#667eea'}),
                 "Advanced Analytics Dashboard"
-            ], style={'color': '#2c3e50', 'margin-bottom': '30px', 'font-weight': '600', 'font-size': '22px', 'text-align': 'center'}),
+            ], style={'color': '#2c3e50', 'marginBottom': '30px', 'fontWeight': '600', 'fontSize': '22px', 'textAlign': 'center'}),
 
             # Analytics charts in 2x2 grid
             html.Div([
@@ -221,7 +221,7 @@ class DashboardLayoutManager:
                                                                       "Creating neighborhood comparison"
                                                                       )
                     ], style=self._get_analytics_chart_style()),
-                ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr', 'gap': '20px', 'margin-bottom': '20px'}),
+                ], style={'display': 'grid', 'gridTemplateColumns': '1fr 1fr', 'gap': '20px', 'marginBottom': '20px'}, className="analytics-row"),
 
                 # Row 2: Bar Chart and Efficiency Scatter
                 html.Div([
@@ -240,7 +240,7 @@ class DashboardLayoutManager:
                                                                       "Computing room efficiency metrics"
                                                                       )
                     ], style=self._get_analytics_chart_style()),
-                ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr', 'gap': '20px', 'margin-bottom': '20px'}),
+                ], style={'display': 'grid', 'gridTemplateColumns': '1fr 1fr', 'gap': '20px', 'marginBottom': '20px'}, className="analytics-row"),
 
                 # Row 3: Neighborhood ranking (full width)
                 html.Div([
@@ -255,11 +255,11 @@ class DashboardLayoutManager:
             ], style={
                 'background': 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
                 'padding': '25px',
-                'border-radius': '15px',
-                'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
-                'margin-bottom': '25px',
+                'borderRadius': '15px',
+                'boxShadow': '0 8px 32px rgba(0,0,0,0.1)',
+                'marginBottom': '25px',
                 'border': '1px solid rgba(255,255,255,0.3)'
-            })
+            }, className="analytics-grid")
         ], className="fade-in")
 
     def _create_decision_support_section(self) -> html.Div:
@@ -267,9 +267,9 @@ class DashboardLayoutManager:
         return html.Div([
             html.H3([
                 html.I(className="fas fa-lightbulb",
-                       style={'margin-right': '10px', 'color': '#28a745'}),
+                       style={'marginRight': '10px', 'color': '#28a745'}),
                 "Investment Decision Support"
-            ], style={'color': '#2c3e50', 'margin-bottom': '30px', 'font-weight': '600', 'font-size': '22px', 'text-align': 'center'}),
+            ], style={'color': '#2c3e50', 'marginBottom': '30px', 'fontWeight': '600', 'fontSize': '22px', 'textAlign': 'center'}),
 
             # Two column layout: Best deals + Market insights
             html.Div([
@@ -290,13 +290,13 @@ class DashboardLayoutManager:
                                                                   "Analyzing market trends"
                                                                   )
                 ], style=self._get_decision_support_style()),
-            ], style={'display': 'flex', 'gap': '25px', 'align-items': 'flex-start'})
+            ], style={'display': 'flex', 'gap': '25px', 'alignItems': 'flex-start'}, className="decision-support-layout")
         ], style={
             'background': 'linear-gradient(135deg, #e8f5e8 0%, #d4f1d4 100%)',
             'padding': '25px',
-            'border-radius': '15px',
-            'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
-            'margin-bottom': '25px',
+            'borderRadius': '15px',
+            'boxShadow': '0 8px 32px rgba(0,0,0,0.1)',
+            'marginBottom': '25px',
             'border': '1px solid rgba(255,255,255,0.3)'
         }, className="fade-in")
 
@@ -305,7 +305,7 @@ class DashboardLayoutManager:
         return html.Div([
             html.H3([
                 html.I(className="fas fa-chart-bar",
-                       style={'margin-right': '10px'}),
+                       style={'marginRight': '10px'}),
                 "Data Summary"
             ], style=DashboardStyles.SUMMARY_HEADER),
             self.loading_manager.create_loading_component("summary",
@@ -342,8 +342,8 @@ class DashboardLayoutManager:
         return {
             'background': 'rgba(255,255,255,0.95)',
             'padding': '20px',
-            'border-radius': '12px',
-            'box-shadow': '0 4px 15px rgba(0,0,0,0.08)',
+            'borderRadius': '12px',
+            'boxShadow': '0 4px 15px rgba(0,0,0,0.08)',
             'border': '1px solid rgba(255,255,255,0.3)'
         }
 
@@ -352,8 +352,8 @@ class DashboardLayoutManager:
         return {
             'background': 'rgba(255,255,255,0.95)',
             'padding': '25px',
-            'border-radius': '12px',
-            'box-shadow': '0 4px 15px rgba(0,0,0,0.08)',
+            'borderRadius': '12px',
+            'boxShadow': '0 4px 15px rgba(0,0,0,0.08)',
             'border': '1px solid rgba(255,255,255,0.3)',
             'flex': '1'
         }

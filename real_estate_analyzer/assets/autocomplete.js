@@ -206,7 +206,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
 
       // Hide results when clicking outside
       document.addEventListener("click", function (e) {
-        if (!container.contains(e.target)) {
+        if (!container?.contains(e.target)) {
           resultsContainer.style.display = "none";
         }
       });
@@ -219,7 +219,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       input.addEventListener("blur", function () {
         // Delay hiding to allow for click events
         setTimeout(() => {
-          if (!container.contains(document.activeElement)) {
+          if (!container?.contains(document.activeElement)) {
             input.style.borderColor = "#e9ecef";
             resultsContainer.style.display = "none";
           }

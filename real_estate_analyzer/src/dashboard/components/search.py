@@ -26,7 +26,7 @@ class SearchComponentManager:
         return html.Div([
             html.Div([
                 html.I(className="fas fa-search",
-                       style={'margin-right': '10px'}),
+                       style={'marginRight': '10px'}),
                 "Search New Properties"
             ], style=DashboardStyles.SEARCH_HEADER),
 
@@ -35,7 +35,7 @@ class SearchComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-map-marker-alt",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Location:"
                     ], style=DashboardStyles.LABEL),
                     html.Div(id="autocomplete-container",
@@ -50,7 +50,7 @@ class SearchComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-shekel-sign",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Min Price:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Input(
@@ -60,15 +60,15 @@ class SearchComponentManager:
                         step=25000,
                         placeholder=PriceInputFormatter.format_placeholder(
                             1000000),
-                        style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
-                               'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        style={'width': '100%', 'padding': '12px', 'borderRadius': '8px',
+                               'border': '2px solid #e9ecef', 'fontSize': '14px'}
                     )
                 ], style=DashboardStyles.SEARCH_FILTER),
 
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-shekel-sign",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Max Price:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Input(
@@ -78,8 +78,8 @@ class SearchComponentManager:
                         step=25000,
                         placeholder=PriceInputFormatter.format_placeholder(
                             2000000),
-                        style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
-                               'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        style={'width': '100%', 'padding': '12px', 'borderRadius': '8px',
+                               'border': '2px solid #e9ecef', 'fontSize': '14px'}
                     )
                 ], style=DashboardStyles.SEARCH_FILTER),
 
@@ -87,7 +87,7 @@ class SearchComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-bed",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Min Rooms:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Input(
@@ -95,15 +95,15 @@ class SearchComponentManager:
                         type='number',
                         value=1,
                         placeholder="Min Rooms",
-                        style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
-                               'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        style={'width': '100%', 'padding': '12px', 'borderRadius': '8px',
+                               'border': '2px solid #e9ecef', 'fontSize': '14px'}
                     ),
                 ], style=DashboardStyles.SEARCH_FILTER),
 
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-bed",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Max Rooms:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Input(
@@ -111,8 +111,8 @@ class SearchComponentManager:
                         type='number',
                         value=10,
                         placeholder="Max Rooms",
-                        style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
-                               'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        style={'width': '100%', 'padding': '12px', 'borderRadius': '8px',
+                               'border': '2px solid #e9ecef', 'fontSize': '14px'}
                     ),
                 ], style=DashboardStyles.SEARCH_FILTER),
 
@@ -120,7 +120,7 @@ class SearchComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-ruler-combined",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Min SQM:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Input(
@@ -128,15 +128,15 @@ class SearchComponentManager:
                         type='number',
                         value=30,
                         placeholder="Min Square Meters",
-                        style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
-                               'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        style={'width': '100%', 'padding': '12px', 'borderRadius': '8px',
+                               'border': '2px solid #e9ecef', 'fontSize': '14px'}
                     ),
                 ], style=DashboardStyles.SEARCH_FILTER),
 
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-ruler-combined",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Max SQM:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Input(
@@ -144,8 +144,8 @@ class SearchComponentManager:
                         type='number',
                         value=300,
                         placeholder="Max Square Meters",
-                        style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
-                               'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        style={'width': '100%', 'padding': '12px', 'borderRadius': '8px',
+                               'border': '2px solid #e9ecef', 'fontSize': '14px'}
                     ),
                 ], style=DashboardStyles.SEARCH_FILTER),
 
@@ -153,7 +153,7 @@ class SearchComponentManager:
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-building",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Min Floor:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Input(
@@ -161,15 +161,15 @@ class SearchComponentManager:
                         type='number',
                         value=None,
                         placeholder="Min Floor",
-                        style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
-                               'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        style={'width': '100%', 'padding': '12px', 'borderRadius': '8px',
+                               'border': '2px solid #e9ecef', 'fontSize': '14px'}
                     ),
                 ], style=DashboardStyles.SEARCH_FILTER),
 
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-building",
-                               style={'margin-right': '5px'}),
+                               style={'marginRight': '5px'}),
                         "Max Floor:"
                     ], style=DashboardStyles.LABEL),
                     dcc.Input(
@@ -177,8 +177,8 @@ class SearchComponentManager:
                         type='number',
                         value=None,
                         placeholder="Max Floor",
-                        style={'width': '100%', 'padding': '12px', 'border-radius': '8px',
-                               'border': '2px solid #e9ecef', 'font-size': '14px'}
+                        style={'width': '100%', 'padding': '12px', 'borderRadius': '8px',
+                               'border': '2px solid #e9ecef', 'fontSize': '14px'}
                     ),
                 ], style=DashboardStyles.SEARCH_FILTER),
 
@@ -186,7 +186,7 @@ class SearchComponentManager:
                 html.Div([
                     html.Button([
                         html.Span(id='scrape-button-icon', className="fas fa-search",
-                                  style={'margin-right': '8px'}),
+                                  style={'marginRight': '8px'}),
                         html.Span(id='scrape-button-text',
                                   children="Search Properties")
                     ],
@@ -195,13 +195,13 @@ class SearchComponentManager:
                         style=DashboardStyles.SCRAPE_BUTTON,
                         className="button-hover"
                     ),
-                ], style={'display': 'flex', 'justify-content': 'center', 'align-items': 'center'})
+                ], style={'display': 'flex', 'justifyContent': 'center', 'alignItems': 'center'})
 
-            ], style=DashboardStyles.SEARCH_CONTROLS),
+            ], style=DashboardStyles.SEARCH_CONTROLS, className="search-controls-responsive"),
 
             # Search status display
             html.Div(id='scrape-status',
-                     style={'margin-top': '15px', 'text-align': 'center'})
+                     style={'marginTop': '15px', 'textAlign': 'center'})
 
         ], style=DashboardStyles.SEARCH_CONTAINER)
 
