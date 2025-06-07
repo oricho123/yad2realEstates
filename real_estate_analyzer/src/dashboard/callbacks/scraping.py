@@ -84,6 +84,7 @@ class ScrapingCallbackManager:
                 city = None
                 area = None
                 hood = None
+                top_area = None
                 location_desc = "All Locations"
 
                 if location_data:
@@ -91,14 +92,17 @@ class ScrapingCallbackManager:
                     if location_type == 'city':
                         city = location_data.get('cityId')
                         area = location_data.get('areaId')
+                        top_area = location_data.get('topAreaId')
                         location_desc = f"City: {location_data.get('fullText', '')}"
                     elif location_type == 'area':
                         area = location_data.get('areaId')
+                        top_area = location_data.get('topAreaId')
                         location_desc = f"Area: {location_data.get('fullText', '')}"
                     elif location_type == 'hood':
                         city = location_data.get('cityId')
                         area = location_data.get('areaId')
                         hood = location_data.get('hoodId')
+                        top_area = location_data.get('topAreaId')
                         location_desc = f"Neighborhood: {location_data.get('fullText', '')}"
 
                 # Start loading state
@@ -119,7 +123,6 @@ class ScrapingCallbackManager:
 
                 # Run the scraper with browser storage integration
                 from src.scraping import Yad2Scraper, ScrapingParams
-                from src.config.constants import ScrapingConfiguration
 
                 try:
                     # Initialize scraper (no file directory needed)
@@ -130,7 +133,7 @@ class ScrapingCallbackManager:
                         city=city,
                         area=area,
                         neighborhood=hood,  # Add neighborhood support
-                        top_area=ScrapingConfiguration.DEFAULT_TOP_AREA,
+                        top_area=top_area,
                         min_price=min_price if min_price is not None else None,
                         max_price=max_price if max_price is not None else None,
                         min_rooms=min_rooms if min_rooms is not None and min_rooms != 'any' else None,
