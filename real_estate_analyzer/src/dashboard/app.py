@@ -3,9 +3,11 @@
 
 import sys
 from pathlib import Path
+import requests
 
 import dash
 import pandas as pd
+from flask import request, jsonify
 from src.config.settings import AppSettings, DashConfiguration
 from src.config.styles import CustomCSS
 from src.dashboard.callbacks.filtering import FilterCallbackManager
@@ -36,6 +38,7 @@ class RealEstateDashboardApp:
         self.app = None
         self._setup_app()
         self._register_callbacks()
+        self._register_proxy_routes()
 
     def _setup_app(self) -> None:
         """Set up the Dash application with configuration and layout."""
@@ -79,6 +82,57 @@ class RealEstateDashboardApp:
         # Register storage callbacks
         self.storage_manager.register_all_callbacks()
         self.storage_manager.register_storage_display_callbacks()
+
+        # Register autocomplete callbacks
+        from src.dashboard.components.search import SearchComponentManager
+        search_manager = SearchComponentManager()
+        search_manager.register_autocomplete_callbacks(self.app)
+
+    def _register_proxy_routes(self) -> None:
+        """Register proxy routes for external API calls."""
+
+        @self.app.server.route("/proxy_yad2_autocomplete")
+        def proxy_yad2_autocomplete():
+            """Proxy route to avoid CORS issues with Yad2 autocomplete API."""
+            text = request.args.get("text", "")
+
+            if len(text) < 2:
+                return jsonify({"cities": [], "areas": [], "hoods": [], "topAreas": [], "streets": []})
+
+            try:
+                # Headers to mimic a browser request
+                headers = {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Accept-Language': 'he,en-US;q=0.9,en-IL;q=0.8,en;q=0.7,he-IL;q=0.6',
+                    'Connection': 'keep-alive',
+                    'Origin': 'https://www.yad2.co.il',
+                    'Referer': 'https://www.yad2.co.il/',
+                    'Sec-Fetch-Dest': 'empty',
+                    'Sec-Fetch-Mode': 'cors',
+                    'Sec-Fetch-Site': 'same-site',
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+                    'sec-ch-ua': '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"macOS"'
+                }
+
+                # Make request to Yad2 API
+                response = requests.get(
+                    f"https://gw.yad2.co.il/address-autocomplete/realestate/v2?text={text}",
+                    headers=headers,
+                    timeout=10
+                )
+
+                if response.status_code == 200:
+                    return jsonify(response.json())
+                else:
+                    print(
+                        f"Yad2 API returned status code: {response.status_code}")
+                    return jsonify({"cities": [], "areas": [], "hoods": [], "topAreas": [], "streets": []}), 500
+
+            except Exception as e:
+                print(f"Error fetching from Yad2 API: {e}")
+                return jsonify({"cities": [], "areas": [], "hoods": [], "topAreas": [], "streets": []}), 500
 
     def run(self, debug: bool = None, port: int = None, host: str = None) -> None:
         """

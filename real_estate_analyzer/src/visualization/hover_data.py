@@ -8,19 +8,20 @@ from enum import IntEnum
 
 class HoverDataFields(IntEnum):
     """Enum for hover data field indices to prevent magic numbers."""
-    NEIGHBORHOOD = 0
-    ROOMS = 1
-    PRICE = 2
-    PRICE_PER_SQM = 3
-    CONDITION_TEXT = 4
-    AD_TYPE = 5
-    STREET_DISPLAY = 6
-    FLOOR = 7
-    FULL_URL = 8
-    VALUE_SCORE = 9
-    VALUE_CATEGORY = 10
-    PREDICTED_PRICE = 11
-    SAVINGS_AMOUNT = 12
+    CITY = 0
+    NEIGHBORHOOD = 1
+    ROOMS = 2
+    PRICE = 3
+    PRICE_PER_SQM = 4
+    CONDITION_TEXT = 5
+    AD_TYPE = 6
+    STREET_DISPLAY = 7
+    FLOOR = 8
+    FULL_URL = 9
+    VALUE_SCORE = 10
+    VALUE_CATEGORY = 11
+    PREDICTED_PRICE = 12
+    SAVINGS_AMOUNT = 13
 
 
 class MapHoverDataFields(IntEnum):
@@ -48,6 +49,7 @@ class AnalyticsHoverDataFields(IntEnum):
 @dataclass
 class PropertyHoverData:
     """Structured data for property hover information."""
+    city: str
     neighborhood: str
     rooms: int
     price: int
@@ -65,7 +67,7 @@ class PropertyHoverData:
     def to_list(self) -> List:
         """Convert to list for Plotly customdata."""
         return [
-            self.neighborhood, self.rooms, self.price, self.price_per_sqm,
+            self.city, self.neighborhood, self.rooms, self.price, self.price_per_sqm,
             self.condition_text, self.ad_type, self.street_display, self.floor,
             self.full_url, self.value_score, self.value_category,
             self.predicted_price, self.savings_amount
@@ -80,6 +82,8 @@ class PropertyHoverData:
         )
 
         return cls(
+            city=str(row['city']) if pd.notna(
+                row['city']) else 'Unknown',
             neighborhood=str(row['neighborhood']) if pd.notna(
                 row['neighborhood']) else 'Unknown',
             rooms=int(row['rooms']) if pd.notna(row['rooms']) else 0,
@@ -180,6 +184,7 @@ class HoverTemplate:
         """Build hover template for scatter plot."""
         return (
             f'<b>🏡 %{{customdata[{HoverDataFields.NEIGHBORHOOD}]}}</b><br>'
+            f'<i>🏙️ %{{customdata[{HoverDataFields.CITY}]}}</i><br>'
             f'<i>📍 %{{customdata[{HoverDataFields.STREET_DISPLAY}]}}</i><br><br>'
             '<b>📊 Property Details:</b><br>'
             f'<b>Actual Price:</b> ₪%{{customdata[{HoverDataFields.PRICE}]:,.0f}}<br>'
