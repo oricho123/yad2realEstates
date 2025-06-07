@@ -105,7 +105,7 @@ class ScrapingCallbackManager:
                 loading_state = {'loading': True}
                 loading_overlay_style = {'position': 'fixed', 'top': '0', 'left': '0', 'right': '0',
                                          'bottom': '0', 'background': 'rgba(0,0,0,0.7)', 'display': 'flex',
-                                         'align-items': 'center', 'justify-content': 'center', 'z-index': '9999'}
+                                         'alignItems': 'center', 'justifyContent': 'center', 'zIndex': '9999'}
 
                 # Create search description
                 search_desc = f"{location_desc}, Price: ₪{min_price:,}-₪{max_price:,}"
@@ -113,9 +113,9 @@ class ScrapingCallbackManager:
                 # Status message during scraping
                 status_message = html.Div([
                     html.I(className="fas fa-spinner fa-spin",
-                           style={'margin-right': '10px'}),
+                           style={'marginRight': '10px'}),
                     f"Searching for properties... {search_desc}"
-                ], style={'color': '#007bff', 'font-weight': '500'})
+                ], style={'color': '#007bff', 'fontWeight': '500'})
 
                 # Run the scraper with browser storage integration
                 from src.scraping import Yad2Scraper, ScrapingParams
@@ -174,9 +174,9 @@ class ScrapingCallbackManager:
                         # Success message
                         success_message = html.Div([
                             html.I(className="fas fa-check-circle",
-                                   style={'margin-right': '10px', 'color': '#28a745'}),
+                                   style={'marginRight': '10px', 'color': '#28a745'}),
                             f"Successfully scraped {result.listings_count} properties matching your search criteria"
-                        ], style={'color': '#28a745', 'font-weight': '500'})
+                        ], style={'color': '#28a745', 'fontWeight': '500'})
 
                         print(
                             f"DEBUG: Returning {len(result.listings_data)} records for browser storage")
@@ -194,9 +194,9 @@ class ScrapingCallbackManager:
 
                         error_message = html.Div([
                             html.I(className="fas fa-exclamation-triangle",
-                                   style={'margin-right': '10px', 'color': '#dc3545'}),
+                                   style={'marginRight': '10px', 'color': '#dc3545'}),
                             error_msg
-                        ], style={'color': '#dc3545', 'font-weight': '500'})
+                        ], style={'color': '#dc3545', 'fontWeight': '500'})
 
                         return (
                             {},  # Empty data
@@ -217,9 +217,9 @@ class ScrapingCallbackManager:
         """Create standardized error response for scraping callbacks."""
         error_message = html.Div([
             html.I(className="fas fa-exclamation-triangle",
-                   style={'margin-right': '10px', 'color': '#dc3545'}),
+                   style={'marginRight': '10px', 'color': '#dc3545'}),
             error_msg
-        ], style={'color': '#dc3545', 'font-weight': '500'})
+        ], style={'color': '#dc3545', 'fontWeight': '500'})
 
         return (
             {},  # Empty data

@@ -1,10 +1,9 @@
 """Visualization callback handlers for the dashboard."""
 
 import pandas as pd
-from dash import callback, Input, Output
-from dash.dependencies import State
+from dash import Input, Output
 import dash
-from typing import Tuple, Dict, Any, List
+from typing import Tuple, Dict, Any
 
 from src.analysis.filters import PropertyDataFilter
 from src.analysis.statistical import StatisticalCalculator
@@ -155,7 +154,7 @@ class VisualizationCallbackManager:
 
         empty_figure = ChartUtils.create_empty_figure("No data available")
         empty_div = html.Div("No data available to display",
-                             style={'text-align': 'center', 'padding': '20px', 'color': '#666'})
+                             style={'textAlign': 'center', 'padding': '20px', 'color': '#666'})
 
         return (
             empty_figure,  # scatter plot
@@ -186,7 +185,7 @@ class VisualizationCallbackManager:
 
         if not stats:
             return html.Div("No statistics available",
-                            style={'text-align': 'center', 'padding': '20px', 'color': '#666'})
+                            style={'textAlign': 'center', 'padding': '20px', 'color': '#666'})
 
         # Extract key statistics with correct nested structure
         price_stats = stats.get('price_stats', {})

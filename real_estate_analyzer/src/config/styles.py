@@ -15,20 +15,20 @@ class DashboardStyles:
 
     # Base container styles
     CONTAINER = {
-        'font-family': 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-        'max-width': '1400px',
+        'fontFamily': 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+        'maxWidth': '1400px',
         'margin': '0 auto',
         'padding': '20px',
         'background': f'linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%)',
-        'min-height': '100vh'
+        'minHeight': '100vh'
     }
 
     CONTENT_WRAPPER = {
-        'background-color': 'rgba(255, 255, 255, 0.95)',
-        'border-radius': '20px',
+        'backgroundColor': 'rgba(255, 255, 255, 0.95)',
+        'borderRadius': '20px',
         'padding': '30px',
-        'box-shadow': '0 20px 40px rgba(0,0,0,0.1)',
-        'backdrop-filter': 'blur(10px)'
+        'boxShadow': '0 20px 40px rgba(0,0,0,0.1)',
+        'backdropFilter': 'blur(10px)'
     }
 
     # Header styles
@@ -37,8 +37,8 @@ class DashboardStyles:
         'color': 'white',
         'padding': '25px',
         'margin': '-30px -30px 30px -30px',
-        'border-radius': '20px 20px 0 0',
-        'text-align': 'center',
+        'borderRadius': '20px 20px 0 0',
+        'textAlign': 'center',
         'position': 'relative',
         'overflow': 'hidden'
     }
@@ -50,68 +50,68 @@ class DashboardStyles:
         'right': '0',
         'bottom': '0',
         'background': 'rgba(255,255,255,0.1)',
-        'z-index': '1'
+        'zIndex': '1'
     }
 
     HEADER_CONTENT = {
         'position': 'relative',
-        'z-index': '2'
+        'zIndex': '2'
     }
 
     # Filter container styles
     FILTER_CONTAINER = {
         'display': 'grid',
-        'grid-template-columns': 'repeat(auto-fit, minmax(280px, 1fr))',
+        'gridTemplateColumns': 'repeat(auto-fit, minmax(280px, 1fr))',
         'gap': '20px',
         'background': 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
         'padding': '25px',
-        'border-radius': '15px',
-        'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
-        'margin-bottom': '25px',
-        'backdrop-filter': 'blur(10px)',
+        'borderRadius': '15px',
+        'boxShadow': '0 8px 32px rgba(0,0,0,0.1)',
+        'marginBottom': '25px',
+        'backdropFilter': 'blur(10px)',
         'border': '1px solid rgba(255,255,255,0.2)'
     }
 
     FILTER = {
         'background': 'rgba(255,255,255,0.9)',
         'padding': '20px',
-        'border-radius': '12px',
-        'box-shadow': '0 4px 15px rgba(0,0,0,0.08)',
+        'borderRadius': '12px',
+        'boxShadow': '0 4px 15px rgba(0,0,0,0.08)',
         'border': '1px solid rgba(255,255,255,0.3)',
         'transition': 'all 0.3s ease'
     }
 
     LABEL = {
-        'font-weight': '600',
-        'margin-bottom': '10px',
+        'fontWeight': '600',
+        'marginBottom': '10px',
         'color': '#2c3e50',
-        'font-size': '14px',
+        'fontSize': '14px',
         'display': 'flex',
-        'align-items': 'center',
+        'alignItems': 'center',
         'gap': '8px'
     }
 
     # Visualization styles
     DUAL_VIEW_CONTAINER = {
         'display': 'grid',
-        'grid-template-columns': '1fr 1fr',
+        'gridTemplateColumns': '1fr 1fr',
         'gap': '25px',
-        'margin-bottom': '25px'
+        'marginBottom': '25px'
     }
 
     GRAPH = {
         'background': 'rgba(255,255,255,0.95)',
         'padding': '25px',
-        'border-radius': '15px',
-        'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
+        'borderRadius': '15px',
+        'boxShadow': '0 8px 32px rgba(0,0,0,0.1)',
         'border': '1px solid rgba(255,255,255,0.2)'
     }
 
     MAP_CONTAINER = {
         'background': 'rgba(255,255,255,0.95)',
         'padding': '25px',
-        'border-radius': '15px',
-        'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
+        'borderRadius': '15px',
+        'boxShadow': '0 8px 32px rgba(0,0,0,0.1)',
         'border': '1px solid rgba(255,255,255,0.2)'
     }
 
@@ -119,53 +119,53 @@ class DashboardStyles:
     SUMMARY = {
         'background': 'rgba(255,255,255,0.95)',
         'padding': '25px',
-        'border-radius': '15px',
-        'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
+        'borderRadius': '15px',
+        'boxShadow': '0 8px 32px rgba(0,0,0,0.1)',
         'border': '1px solid rgba(255,255,255,0.2)'
     }
 
     SUMMARY_HEADER = {
         'color': '#2c3e50',
-        'border-bottom': f'3px solid {PRIMARY_COLOR}',
-        'padding-bottom': '15px',
-        'margin-bottom': '20px',
-        'font-weight': '600'
+        'borderBottom': f'3px solid {PRIMARY_COLOR}',
+        'paddingBottom': '15px',
+        'marginBottom': '20px',
+        'fontWeight': '600'
     }
 
     # Search container styles
     SEARCH_CONTAINER = {
         'background': 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
         'padding': '25px',
-        'border-radius': '15px',
-        'box-shadow': '0 8px 32px rgba(0,0,0,0.1)',
-        'margin-bottom': '25px',
+        'borderRadius': '15px',
+        'boxShadow': '0 8px 32px rgba(0,0,0,0.1)',
+        'marginBottom': '25px',
         'border': '1px solid rgba(255,255,255,0.3)'
     }
 
     SEARCH_HEADER = {
         'color': '#155724',
-        'font-weight': '700',
-        'font-size': '20px',
-        'margin-bottom': '20px',
-        'text-align': 'center',
+        'fontWeight': '700',
+        'fontSize': '20px',
+        'marginBottom': '20px',
+        'textAlign': 'center',
         'display': 'flex',
-        'align-items': 'center',
-        'justify-content': 'center',
+        'alignItems': 'center',
+        'justifyContent': 'center',
         'gap': '10px'
     }
 
     SEARCH_CONTROLS = {
         'display': 'grid',
-        'grid-template-columns': 'repeat(auto-fit, minmax(200px, 1fr))',
+        'gridTemplateColumns': 'repeat(auto-fit, minmax(200px, 1fr))',
         'gap': '20px',
-        'align-items': 'end'
+        'alignItems': 'end'
     }
 
     SEARCH_FILTER = {
         'background': 'rgba(255,255,255,0.9)',
         'padding': '15px',
-        'border-radius': '10px',
-        'box-shadow': '0 4px 15px rgba(0,0,0,0.08)'
+        'borderRadius': '10px',
+        'boxShadow': '0 4px 15px rgba(0,0,0,0.08)'
     }
 
     # Button styles
@@ -174,17 +174,17 @@ class DashboardStyles:
         'color': 'white',
         'border': 'none',
         'padding': '15px 25px',
-        'border-radius': '10px',
+        'borderRadius': '10px',
         'cursor': 'pointer',
-        'font-weight': '600',
-        'font-size': '14px',
-        'min-width': '180px',
+        'fontWeight': '600',
+        'fontSize': '14px',
+        'minWidth': '180px',
         'height': '50px',
         'transition': 'all 0.3s ease',
-        'box-shadow': '0 4px 15px rgba(40, 167, 69, 0.3)',
+        'boxShadow': '0 4px 15px rgba(40, 167, 69, 0.3)',
         'display': 'flex',
-        'align-items': 'center',
-        'justify-content': 'center',
+        'alignItems': 'center',
+        'justifyContent': 'center',
         'gap': '8px'
     }
 
@@ -197,19 +197,19 @@ class DashboardStyles:
         'bottom': '0',
         'background': 'rgba(0,0,0,0.7)',
         'display': 'flex',
-        'align-items': 'center',
-        'justify-content': 'center',
-        'z-index': '9999',
-        'backdrop-filter': 'blur(5px)'
+        'alignItems': 'center',
+        'justifyContent': 'center',
+        'zIndex': '9999',
+        'backdropFilter': 'blur(5px)'
     }
 
     LOADING_CONTENT = {
         'background': 'white',
         'padding': '40px',
-        'border-radius': '20px',
-        'text-align': 'center',
-        'box-shadow': '0 20px 40px rgba(0,0,0,0.3)',
-        'max-width': '400px',
+        'borderRadius': '20px',
+        'textAlign': 'center',
+        'boxShadow': '0 20px 40px rgba(0,0,0,0.3)',
+        'maxWidth': '400px',
         'margin': '20px'
     }
 
@@ -217,36 +217,36 @@ class DashboardStyles:
         'width': '60px',
         'height': '60px',
         'border': '6px solid #f3f3f3',
-        'border-top': f'6px solid {PRIMARY_COLOR}',
-        'border-radius': '50%',
+        'borderTop': f'6px solid {PRIMARY_COLOR}',
+        'borderRadius': '50%',
         'animation': 'spin 1s linear infinite',
         'margin': '0 auto 20px auto'
     }
 
     LOADING_TEXT = {
         'color': PRIMARY_COLOR,
-        'font-weight': '600',
-        'font-size': '18px',
-        'margin-bottom': '10px'
+        'fontWeight': '600',
+        'fontSize': '18px',
+        'marginBottom': '10px'
     }
 
     LOADING_SUBTITLE = {
         'color': '#6c757d',
-        'font-size': '14px',
-        'line-height': '1.5'
+        'fontSize': '14px',
+        'lineHeight': '1.5'
     }
 
     # Click instruction
     CLICK_INSTRUCTION = {
-        'text-align': 'center',
-        'font-style': 'italic',
+        'textAlign': 'center',
+        'fontStyle': 'italic',
         'color': PRIMARY_COLOR,
         'margin': '15px 0',
         'padding': '15px',
-        'background': f'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
-        'border-radius': '12px',
-        'border-left': f'4px solid {PRIMARY_COLOR}',
-        'font-weight': '500'
+        'background': 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+        'borderRadius': '12px',
+        'borderLeft': f'4px solid {PRIMARY_COLOR}',
+        'fontWeight': '500'
     }
 
 
@@ -255,42 +255,42 @@ class SummaryStyles:
 
     CONTAINER = {
         'display': 'grid',
-        'grid-template-columns': 'repeat(auto-fit, minmax(220px, 1fr))',
+        'gridTemplateColumns': 'repeat(auto-fit, minmax(220px, 1fr))',
         'gap': '20px'
     }
 
     CARD = {
         'padding': '20px',
-        'border-radius': '12px',
+        'borderRadius': '12px',
         'background': 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-        'box-shadow': '0 4px 15px rgba(0,0,0,0.08)',
-        'text-align': 'center',
+        'boxShadow': '0 4px 15px rgba(0,0,0,0.08)',
+        'textAlign': 'center',
         'border': '1px solid rgba(255,255,255,0.3)',
         'transition': 'all 0.3s ease'
     }
 
     VALUE = {
-        'font-size': '24px',
-        'font-weight': '700',
+        'fontSize': '24px',
+        'fontWeight': '700',
         'color': DashboardStyles.PRIMARY_COLOR,
         'margin': '10px 0',
-        'text-shadow': '0 1px 3px rgba(0,0,0,0.1)'
+        'textShadow': '0 1px 3px rgba(0,0,0,0.1)'
     }
 
     LABEL = {
-        'font-size': '14px',
+        'fontSize': '14px',
         'color': '#495057',
         'margin': '0',
-        'font-weight': '500',
+        'fontWeight': '500',
         'display': 'flex',
-        'align-items': 'center',
-        'justify-content': 'center',
+        'alignItems': 'center',
+        'justifyContent': 'center',
         'gap': '6px'
     }
 
     ICON = {
         'color': DashboardStyles.PRIMARY_COLOR,
-        'font-size': '16px'
+        'fontSize': '16px'
     }
 
 
@@ -326,7 +326,7 @@ class CustomCSS:
     
     .button-hover:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4) !important;
+        boxShadow: 0 8px 25px rgba(40, 167, 69, 0.4) !important;
     }
     
     body {
@@ -347,16 +347,16 @@ class CustomCSS:
     }
     
     /* Responsive design for dual view */
-    @media (max-width: 1200px) {
+    @media (maxWidth: 1200px) {
         .dual-view-responsive {
-            grid-template-columns: 1fr !important;
+            gridTemplateColumns: 1fr !important;
         }
     }
     
     /* Responsive design for analytics */
-    @media (max-width: 900px) {
+    @media (maxWidth: 900px) {
         .analytics-grid {
-            grid-template-columns: 1fr !important;
+            gridTemplateColumns: 1fr !important;
         }
     }
     """

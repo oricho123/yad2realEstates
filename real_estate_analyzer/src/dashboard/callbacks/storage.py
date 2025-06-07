@@ -242,27 +242,27 @@ class StorageCallbackManager:
             html.Div([
                 html.H4([
                     html.I(className="fas fa-database",
-                           style={'margin-right': '10px'}),
+                           style={'marginRight': '10px'}),
                     "Dataset Management"
-                ], style={'color': '#2c3e50', 'margin-bottom': '20px'}),
+                ], style={'color': '#2c3e50', 'marginBottom': '20px'}),
 
                 # Save Dataset Section
                 html.Div([
                     html.H6("💾 Save Current Dataset", style={
-                            'margin-bottom': '15px'}),
+                            'marginBottom': '15px'}),
                     html.Div([
                         dash.dcc.Input(
                             id='dataset-name-input',
                             type='text',
                             placeholder='Enter dataset name...',
                             style={'width': '100%',
-                                   'margin-bottom': '10px', 'padding': '8px'}
+                                   'marginBottom': '10px', 'padding': '8px'}
                         ),
                         dash.dcc.Textarea(
                             id='dataset-description-input',
                             placeholder='Optional description...',
                             style={'width': '100%', 'height': '60px',
-                                   'margin-bottom': '10px', 'padding': '8px'}
+                                   'marginBottom': '10px', 'padding': '8px'}
                         ),
                         html.Button(
                             "Save Dataset",
@@ -272,25 +272,25 @@ class StorageCallbackManager:
                         )
                     ])
                 ], style={
-                    'background': '#f8f9fa', 'padding': '15px', 'border-radius': '8px', 'margin-bottom': '20px'
+                    'background': '#f8f9fa', 'padding': '15px', 'borderRadius': '8px', 'marginBottom': '20px'
                 }),
 
                 # Load Dataset Section
                 html.Div([
                     html.H6("📂 Load Saved Dataset", style={
-                            'margin-bottom': '15px'}),
+                            'marginBottom': '15px'}),
                     html.Div([
                         dash.dcc.Dropdown(
                             id='dataset-selector',
                             placeholder='Select a dataset to load...',
-                            style={'margin-bottom': '10px'}
+                            style={'marginBottom': '10px'}
                         ),
                         html.Div([
                             html.Button(
                                 "🔄 Refresh List",
                                 id='refresh-datasets-btn',
                                 className="btn btn-outline-secondary",
-                                style={'margin-right': '10px'}
+                                style={'marginRight': '10px'}
                             ),
                             html.Button(
                                 "🗑️ Delete Selected",
@@ -300,30 +300,30 @@ class StorageCallbackManager:
                         ])
                     ])
                 ], style={
-                    'background': '#f8f9fa', 'padding': '15px', 'border-radius': '8px', 'margin-bottom': '20px'
+                    'background': '#f8f9fa', 'padding': '15px', 'borderRadius': '8px', 'marginBottom': '20px'
                 }),
 
                 # Storage Info Section
                 html.Div([
                     html.H6("📊 Storage Information", style={
-                            'margin-bottom': '15px'}),
+                            'marginBottom': '15px'}),
                     html.Div(id='storage-info-display'),
                     html.Button(
                         "🔄 Refresh Info",
                         id='refresh-storage-info-btn',
                         className="btn btn-outline-info btn-sm",
-                        style={'margin-top': '10px'}
+                        style={'marginTop': '10px'}
                     )
                 ], style={
-                    'background': '#f8f9fa', 'padding': '15px', 'border-radius': '8px'
+                    'background': '#f8f9fa', 'padding': '15px', 'borderRadius': '8px'
                 })
 
             ], style={
                 'background': 'white',
                 'padding': '25px',
-                'border-radius': '12px',
-                'box-shadow': '0 4px 15px rgba(0,0,0,0.08)',
-                'margin-bottom': '25px'
+                'borderRadius': '12px',
+                'boxShadow': '0 4px 15px rgba(0,0,0,0.08)',
+                'marginBottom': '25px'
             })
         ])
 

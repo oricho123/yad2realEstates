@@ -14,11 +14,11 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       input.style.cssText = `
                 width: 100%;
                 padding: 12px;
-                border-radius: 8px;
+                borderRadius: 8px;
                 border: 2px solid #e9ecef;
-                font-size: 14px;
+                fontSize: 14px;
                 outline: none;
-                transition: border-color 0.3s ease;
+                transition: borderColor 0.3s ease;
             `;
       container?.appendChild(input);
 
@@ -32,13 +32,13 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                 right: 0;
                 background: white;
                 border: 1px solid #e9ecef;
-                border-top: none;
-                border-radius: 0 0 8px 8px;
+                borderTop: none;
+                borderRadius: 0 0 8px 8px;
                 max-height: 300px;
                 overflow-y: auto;
-                z-index: 1000;
+                zIndex: 1000;
                 display: none;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                boxShadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             `;
       container?.appendChild(resultsContainer);
 
@@ -96,9 +96,9 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           citiesHeader.style.cssText = `
                         padding: 8px 12px;
                         background: #f8f9fa;
-                        font-weight: bold;
+                        fontWeight: bold;
                         color: #495057;
-                        border-bottom: 1px solid #e9ecef;
+                        borderBottom: 1px solid #e9ecef;
                     `;
           resultsContainer.appendChild(citiesHeader);
 
@@ -121,9 +121,9 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           areasHeader.style.cssText = `
                         padding: 8px 12px;
                         background: #f8f9fa;
-                        font-weight: bold;
+                        fontWeight: bold;
                         color: #495057;
-                        border-bottom: 1px solid #e9ecef;
+                        borderBottom: 1px solid #e9ecef;
                     `;
           resultsContainer.appendChild(areasHeader);
 
@@ -145,9 +145,9 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           hoodsHeader.style.cssText = `
                         padding: 8px 12px;
                         background: #f8f9fa;
-                        font-weight: bold;
+                        fontWeight: bold;
                         color: #495057;
-                        border-bottom: 1px solid #e9ecef;
+                        borderBottom: 1px solid #e9ecef;
                     `;
           resultsContainer.appendChild(hoodsHeader);
 
@@ -174,8 +174,8 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
         item.style.cssText = `
                     padding: 10px 12px;
                     cursor: pointer;
-                    border-bottom: 1px solid #f1f3f4;
-                    transition: background-color 0.2s ease;
+                    borderBottom: 1px solid #f1f3f4;
+                    transition: backgroundColor 0.2s ease;
                 `;
 
         item.addEventListener("mouseenter", function () {
