@@ -1,6 +1,6 @@
 """Search components for new property data scraping."""
 
-from dash import html, dcc
+from dash import html, dcc, clientside_callback, Input, Output
 from typing import List, Dict, Any
 
 from src.config.styles import DashboardStyles
@@ -31,38 +31,19 @@ class SearchComponentManager:
             ], style=DashboardStyles.SEARCH_HEADER),
 
             html.Div([
-                # City selection
+                # Location autocomplete section
                 html.Div([
                     html.Label([
                         html.I(className="fas fa-map-marker-alt",
                                style={'margin-right': '5px'}),
-                        "City:"
+                        "Location:"
                     ], style=DashboardStyles.LABEL),
-                    dcc.Dropdown(
-                        id='search-city-dropdown',
-                        options=self.city_options,
-                        value=9500,  # Default to Kiryat Bialik
-                        clearable=False,
-                        style={'border-radius': '8px'}
-                    ),
-                ], style=DashboardStyles.SEARCH_FILTER),
-
-                # Area selection dropdown
-                html.Div([
-                    html.Label([
-                        html.I(className="fas fa-map",
-                               style={'margin-right': '5px'}),
-                        "Area:"
-                    ], style=DashboardStyles.LABEL),
-                    dcc.Dropdown(
-                        id='search-area',
-                        options=self.area_options,
-                        # Default to area code 6 (matches Kiryat Bialik area_code)
-                        value=6,
-                        clearable=True,
-                        placeholder="Select area...",
-                        style={'border-radius': '8px'}
-                    ),
+                    html.Div(id="autocomplete-container",
+                             style={'position': 'relative'}),
+                    # Store for selected location
+                    dcc.Store(id="location-selection-store"),
+                    dcc.Input(id="dummy-autocomplete-trigger",
+                              style={"display": "none"}),  # Hidden input to trigger JS init
                 ], style=DashboardStyles.SEARCH_FILTER),
 
                 # Price range inputs
@@ -255,3 +236,45 @@ class SearchComponentManager:
                 'value': value
             })
         return options
+
+    def register_autocomplete_callbacks(self, app):
+        """Register the autocomplete callbacks."""
+
+        # Trigger JS initialization after layout renders
+        clientside_callback(
+            """
+            function(container_id) {
+                if (window.dash_clientside && window.dash_clientside.clientside) {
+                    return window.dash_clientside.clientside.initAutocomplete(container_id);
+                }
+                return "";
+            }
+            """,
+            Output("dummy-autocomplete-trigger", "value"),
+            Input("autocomplete-container", "id")
+        )
+
+        # Handle location selection updates
+        clientside_callback(
+            """
+            function(n_intervals) {
+                // Listen for custom autocomplete selection events
+                const input = document.getElementById("autocomplete-input");
+                if (input && !input.hasAttribute('data-listener-added')) {
+                    input.setAttribute('data-listener-added', 'true');
+                    
+                    input.addEventListener('autocomplete-selection', function(event) {
+                        if (window.dash_clientside && window.dash_clientside.set_props) {
+                            window.dash_clientside.set_props('location-selection-store', {
+                                data: event.detail
+                            });
+                        }
+                    });
+                }
+                return window.dash_clientside.no_update;
+            }
+            """,
+            Output("location-selection-store", "data"),
+            Input("dummy-autocomplete-trigger", "value"),
+            prevent_initial_call=True
+        )

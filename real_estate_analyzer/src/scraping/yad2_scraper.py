@@ -15,6 +15,7 @@ class ScrapingParams:
     """Type-safe parameters for scraping."""
     city: Optional[Union[int, str]] = None
     area: Optional[Union[int, str]] = None
+    neighborhood: Optional[Union[int, str]] = None
     top_area: Optional[Union[int, str]] = None
     min_price: Optional[int] = None
     max_price: Optional[int] = None
@@ -83,6 +84,8 @@ class Yad2Scraper:
             query_params['city'] = params.city
         if params.area:
             query_params['area'] = params.area
+        if params.neighborhood:
+            query_params['neighborhood'] = params.neighborhood
         if params.top_area:
             query_params['topArea'] = params.top_area
         if params.min_price:

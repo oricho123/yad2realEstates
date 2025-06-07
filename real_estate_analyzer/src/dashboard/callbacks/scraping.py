@@ -27,7 +27,6 @@ class ScrapingCallbackManager:
         self._register_scraping_callback()
         self._register_storage_integration_callback()
         self._register_button_state_callback()
-        self._register_city_to_area_callback()
         self._register_load_saved_filters_callback()
         self._register_interval_disable_callback()
 
@@ -41,8 +40,7 @@ class ScrapingCallbackManager:
              Output('loading-state', 'data'),
              Output('global-loading-overlay', 'style')],
             [Input('scrape-button', 'n_clicks')],
-            [State('search-city-dropdown', 'value'),
-             State('search-area', 'value'),
+            [State('location-selection-store', 'data'),
              State('search-min-price', 'value'),
              State('search-max-price', 'value'),
              State('search-min-rooms', 'value'),
@@ -54,7 +52,7 @@ class ScrapingCallbackManager:
              State('loading-state', 'data')],
             prevent_initial_call=True
         )
-        def handle_scrape_request(n_clicks, city, area, min_price, max_price,
+        def handle_scrape_request(n_clicks, location_data, min_price, max_price,
                                   min_rooms, max_rooms, min_sqm, max_sqm,
                                   min_floor, max_floor, loading_state):
             """
@@ -62,8 +60,7 @@ class ScrapingCallbackManager:
 
             Args:
                 n_clicks: Number of button clicks
-                city: Selected city ID
-                area: Area ID  
+                location_data: Selected location data from autocomplete
                 min_price: Minimum price filter
                 max_price: Maximum price filter
                 min_rooms: Minimum rooms filter
@@ -83,6 +80,27 @@ class ScrapingCallbackManager:
                     # No action needed
                     return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
+                # Extract location parameters from autocomplete selection
+                city = None
+                area = None
+                hood = None
+                location_desc = "All Locations"
+
+                if location_data:
+                    location_type = location_data.get('type')
+                    if location_type == 'city':
+                        city = location_data.get('cityId')
+                        area = location_data.get('areaId')
+                        location_desc = f"City: {location_data.get('fullText', '')}"
+                    elif location_type == 'area':
+                        area = location_data.get('areaId')
+                        location_desc = f"Area: {location_data.get('fullText', '')}"
+                    elif location_type == 'hood':
+                        city = location_data.get('cityId')
+                        area = location_data.get('areaId')
+                        hood = location_data.get('hoodId')
+                        location_desc = f"Neighborhood: {location_data.get('fullText', '')}"
+
                 # Start loading state
                 loading_state = {'loading': True}
                 loading_overlay_style = {'position': 'fixed', 'top': '0', 'left': '0', 'right': '0',
@@ -90,8 +108,7 @@ class ScrapingCallbackManager:
                                          'align-items': 'center', 'justify-content': 'center', 'z-index': '9999'}
 
                 # Create search description
-                area_display = "All Areas" if area == 'all' else area
-                search_desc = f"City: {city}, Area: {area_display}, Price: ₪{min_price:,}-₪{max_price:,}"
+                search_desc = f"{location_desc}, Price: ₪{min_price:,}-₪{max_price:,}"
 
                 # Status message during scraping
                 status_message = html.Div([
@@ -111,7 +128,8 @@ class ScrapingCallbackManager:
                     # Create ScrapingParams object with the provided filters
                     scraping_params = ScrapingParams(
                         city=city,
-                        area=area if area != 'all' else None,
+                        area=area,
+                        neighborhood=hood,  # Add neighborhood support
                         top_area=ScrapingConfiguration.DEFAULT_TOP_AREA,
                         min_price=min_price if min_price is not None else None,
                         max_price=max_price if max_price is not None else None,
@@ -142,8 +160,7 @@ class ScrapingCallbackManager:
 
                         # Save the search filters for reloading on page refresh
                         storage_payload['search_filters'] = {
-                            'city': city,
-                            'area': area,
+                            'location_data': location_data,
                             'min_price': min_price,
                             'max_price': max_price,
                             'min_rooms': min_rooms,
@@ -325,79 +342,6 @@ class ScrapingCallbackManager:
                     DashboardStyles.SCRAPE_BUTTON
                 )
 
-    def _register_city_to_area_callback(self) -> None:
-        """Register callback to handle area updates from city selection and saved filters."""
-
-        # Import here to avoid circular imports
-        from src.config.constants import CityOptions
-
-        # Build city-to-area mapping dynamically from constants
-        city_to_area_map = {}
-        for city in CityOptions.CITIES:
-            city_value = city['value']
-            area_code = int(city['area_code'])
-
-            # Add both the original value and numeric conversion if it's a string
-            city_to_area_map[city_value] = area_code
-            if isinstance(city_value, str) and city_value.isdigit():
-                city_to_area_map[int(city_value)] = area_code
-
-        # Convert to JavaScript object string
-        js_mapping = str(city_to_area_map).replace("'", '"')
-
-        clientside_callback(
-            """
-            function(selected_city, n_intervals) {
-                // Shared utility to load storage data with error handling
-                function loadStorageData() {
-                    if (!window.dash_clientside || !window.dash_clientside.storage) return null;
-                    try {
-                        return window.dash_clientside.storage.load_data();
-                    } catch (error) {
-                        console.error("Failed to load storage data:", error);
-                        return null;
-                    }
-                }
-                
-                
-                // Initialize tracking if not exists
-                if (window._city_area_initial_load === undefined) {
-                    window._city_area_initial_load = true;
-                }
-                
-                // Handle city selection changes (user interactions) - has higher priority
-                if (selected_city !== undefined && selected_city !== null && !window._city_area_initial_load) {
-                    const cityToAreaMap = """ + js_mapping + """;
-                    const area = cityToAreaMap[selected_city];
-                    if (area !== undefined) {
-                        console.log(`Setting area ${area} for city ${selected_city}`);
-                        return area;
-                    }
-                    return window.dash_clientside.no_update;
-                }
-
-                // On initial page load, try to load saved area from storage
-                if (window._city_area_initial_load && n_intervals === 1) {
-                    const stored_data = loadStorageData();
-                    if (stored_data && stored_data.search_filters && stored_data.search_filters.area !== undefined) {
-                        console.log("Loading saved area:", stored_data.search_filters.area);
-                        setTimeout(() => { window._city_area_initial_load = false; }, 100);
-                        return stored_data.search_filters.area;
-                    }
-                    // Fall back to default area
-                    setTimeout(() => { window._city_area_initial_load = false; }, 100);
-                    return 6;
-                }
-
-                return window.dash_clientside.no_update;
-            }
-            """,
-            Output('search-area', 'value'),
-            [Input('search-city-dropdown', 'value'),
-             Input('auto-load-trigger', 'n_intervals')],
-            prevent_initial_call=False  # Allow initial call for auto-load
-        )
-
     def _register_load_saved_filters_callback(self) -> None:
         """Register client-side callback to load saved search filters on page load."""
 
@@ -423,7 +367,7 @@ class ScrapingCallbackManager:
                 
                 
                 if (n_intervals !== 1 || window._filters_loaded) {
-                    return Array(9).fill(window.dash_clientside.no_update);
+                    return Array(8).fill(window.dash_clientside.no_update);
                 }
                 
                 const stored_data = loadStorageData();
@@ -433,8 +377,23 @@ class ScrapingCallbackManager:
                     
                     setPreventionFlag('_filters_loaded');
                     
+                    // Load location data if available and set autocomplete input
+                    if (filters.location_data && filters.location_data.fullText) {
+                        setTimeout(() => {
+                            const input = document.getElementById("autocomplete-input");
+                            if (input) {
+                                input.value = filters.location_data.fullText;
+                                // Store the selection data
+                                if (window.dash_clientside && window.dash_clientside.set_props) {
+                                    window.dash_clientside.set_props('location-selection-store', {
+                                        data: filters.location_data
+                                    });
+                                }
+                            }
+                        }, 500); // Delay to ensure autocomplete input is created
+                    }
+                    
                     return [
-                        filters.city || 9500,
                         filters.min_price || 1000000,
                         filters.max_price || 2000000,
                         filters.min_rooms || 1,
@@ -447,11 +406,10 @@ class ScrapingCallbackManager:
                 }
                 
                 setPreventionFlag('_filters_loaded');
-                return Array(9).fill(window.dash_clientside.no_update);
+                return Array(8).fill(window.dash_clientside.no_update);
             }
             """,
-            [Output('search-city-dropdown', 'value'),
-             Output('search-min-price', 'value'),
+            [Output('search-min-price', 'value'),
              Output('search-max-price', 'value'),
              Output('search-min-rooms', 'value'),
              Output('search-max-rooms', 'value'),
