@@ -262,21 +262,55 @@ class ScrapingCallbackManager:
                         const data = scraped_data_payload.data;
                         
                         if (data && data.length > 0) {
+                            // NEW: Detect new properties before saving
+                            let processedPayload = scraped_data_payload;
+                            let newCount = 0;
+                            
                             if (window.dash_clientside && window.dash_clientside.storage) {
+                                 
+                                 if (window.dash_clientside.storage.detect_new_properties) {
+                                     try {
+                                         const detectionResult = window.dash_clientside.storage.detect_new_properties(scraped_data_payload);
+                                         if (detectionResult && detectionResult.processedData) {
+                                             processedPayload = detectionResult.processedData;
+                                             newCount = detectionResult.newCount || 0;
+                                             console.log(`Detected ${newCount} new properties out of ${data.length} total`);
+                                         } else {
+                                             console.warn("Detection failed, using original data");
+                                         }
+                                     } catch (detectionError) {
+                                         console.error("Error in new property detection:", detectionError);
+                                         console.log("Falling back to original data");
+                                     }
+                                 } else {
+                                     console.warn("detect_new_properties function not available, using original data");
+                                 }
+                                 
                                  const hadExistingData = window.dash_clientside.storage.has_data();
                                  if (hadExistingData) {
                                      window.dash_clientside.storage.clear_data();
                                  }
                                  
-                                 const success = window.dash_clientside.storage.save_data(scraped_data_payload);
+                                 const success = window.dash_clientside.storage.save_data(processedPayload);
                                  if (success) {
                                      const action = hadExistingData ? "overrode" : "saved";
-                                     console.log(`Successfully ${action} storage with ${data.length} properties`);
+                                     const newInfo = newCount > 0 ? ` (${newCount} NEW)` : "";
+                                     console.log(`Successfully ${action} storage with ${data.length} properties${newInfo}`);
                                  } else {
                                      console.error("Failed to save new data to localStorage");
                                  }
+                             } else {
+                                 console.warn("dash_clientside.storage not available");
                              }
-                            return data;
+                            // Add new status to the data before returning (since it's not stored anymore)
+                            let finalData = processedPayload.data;
+                            if (window.dash_clientside && window.dash_clientside.storage && 
+                                window.dash_clientside.storage.add_new_status_to_data) {
+                                finalData = window.dash_clientside.storage.add_new_status_to_data(processedPayload.data);
+                            }
+                            
+                            console.log(`DEBUG: Returning ${finalData ? finalData.length : 'undefined'} properties to visualization`);
+                            return finalData;
                         }
                     } catch (error) {
                         console.error("Failed to save scraped data to storage:", error);
@@ -292,9 +326,16 @@ class ScrapingCallbackManager:
                     
                     const stored_data = loadStorageData();
                     if (stored_data && stored_data.data && stored_data.data.length > 0) {
-                        console.log(`Auto-loaded ${stored_data.data.length} properties on page load`);
+                        // Add new status to existing properties on-the-fly
+                        let processedData = stored_data.data;
+                        if (window.dash_clientside && window.dash_clientside.storage && 
+                            window.dash_clientside.storage.add_new_status_to_data) {
+                            processedData = window.dash_clientside.storage.add_new_status_to_data(stored_data.data);
+                        }
+                        
+                        console.log(`Auto-loaded ${processedData.length} properties on page load`);
                         setPreventionFlag('_data_loaded');
-                        return stored_data.data;
+                        return processedData;
                     }
                     setPreventionFlag('_data_loaded');
                 }

@@ -47,7 +47,14 @@ class PropertyScatterPlot:
 
     def _create_base_scatter_plot(self, plot_df: pd.DataFrame) -> go.Figure:
         """Create the base scatter plot with color categories and built-in trendline."""
-        return px.scatter(
+        # Separate new and regular properties
+        is_new_series = plot_df.get('is_new', pd.Series(
+            [False] * len(plot_df), index=plot_df.index))
+        new_properties = plot_df[is_new_series]
+        regular_properties = plot_df[~is_new_series]
+
+        # Always use ALL data for trendline to represent complete market picture
+        fig = px.scatter(
             plot_df,
             x='square_meters',
             y='price',
@@ -64,6 +71,74 @@ class PropertyScatterPlot:
             },
             title='Property Size vs Price with Market Value Analysis'
         )
+
+        # Hide ALL original markers since we'll add them back separately with proper styling
+        for trace in fig.data:
+            if hasattr(trace, 'mode') and trace.mode == 'markers':
+                trace.visible = False  # Hide original markers, keep trendline
+
+        # Add regular properties back as proper markers
+        if not regular_properties.empty:
+            for category in regular_properties['value_category'].unique():
+                category_data = regular_properties[regular_properties['value_category'] == category]
+
+                fig.add_trace(go.Scatter(
+                    x=category_data['square_meters'],
+                    y=category_data['price'],
+                    mode='markers',
+                    marker=dict(
+                        size=category_data['rooms'] * 3 + 4,
+                        color=self._get_value_category_colors()[category],
+                        opacity=ChartConfiguration.OPACITY,
+                        line=dict(width=ChartConfiguration.LINE_WIDTH,
+                                  color=ChartConfiguration.LINE_COLOR)
+                    ),
+                    name=category,
+                    showlegend=True,
+                    meta={'is_new_property': False}
+                ))
+
+        # Add new properties as star symbols if any exist
+        if not new_properties.empty:
+            for category in new_properties['value_category'].unique():
+                category_data = new_properties[new_properties['value_category'] == category]
+
+                fig.add_trace(go.Scatter(
+                    x=category_data['square_meters'],
+                    y=category_data['price'],
+                    mode='markers',
+                    marker=dict(
+                        size=category_data['rooms'] * 3 + 4,
+                        color=self._get_value_category_colors()[category],
+                        line=dict(width=2, color='gold'),
+                        opacity=0.9
+                    ),
+                    name=f'NEW {category}',
+                    showlegend=True,
+                    # Use meta flag instead of name checking
+                    meta={'is_new_property': True}
+                    # Note: hover template will be set in _update_styling_and_hover
+                ))
+
+        # Move trendline to front so it's visible above markers
+        self._bring_trendline_to_front(fig)
+
+        return fig
+
+    def _bring_trendline_to_front(self, fig: go.Figure) -> None:
+        """Move trendline traces to the front so they appear above markers."""
+        # Find trendline traces (they have mode='lines')
+        trendline_traces = []
+        other_traces = []
+
+        for trace in fig.data:
+            if hasattr(trace, 'mode') and trace.mode == 'lines':
+                trendline_traces.append(trace)
+            else:
+                other_traces.append(trace)
+
+        # Reorder: other traces first, then trendlines on top
+        fig.data = tuple(other_traces + trendline_traces)
 
     def _calculate_value_analysis(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate LOWESS trend line and value scores for properties using centralized utility."""
@@ -112,14 +187,27 @@ class PropertyScatterPlot:
                 trace_custom_data = self._get_trace_hover_data(
                     trace, df, custom_data)
                 trace.customdata = trace_custom_data
-                trace.update(
-                    marker=dict(
-                        opacity=ChartConfiguration.OPACITY,
-                        line=dict(width=ChartConfiguration.LINE_WIDTH,
-                                  color=ChartConfiguration.LINE_COLOR)
-                    ),
-                    hovertemplate=HoverTemplate.build_property_hover_template()
-                )
+
+                # Use detailed hover template, with "NEW" indicator for new properties
+                is_new_property = hasattr(trace, 'meta') and trace.meta and trace.meta.get(
+                    'is_new_property', False)
+                if is_new_property:
+                    base_template = HoverTemplate.build_property_hover_template()
+                    new_template = '🆕 NEW<br>' + base_template
+                    trace.update(hovertemplate=new_template)
+                else:
+                    trace.update(
+                        hovertemplate=HoverTemplate.build_property_hover_template())
+
+                # Apply styling only to non-new properties (new properties keep their star styling)
+                if not is_new_property:
+                    trace.update(
+                        marker=dict(
+                            opacity=ChartConfiguration.OPACITY,
+                            line=dict(width=ChartConfiguration.LINE_WIDTH,
+                                      color=ChartConfiguration.LINE_COLOR)
+                        )
+                    )
 
         self._update_layout(fig)
 

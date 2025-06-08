@@ -45,6 +45,10 @@ class PropertyListing:
     value_category: Optional[str] = field(default=None, init=False)
     sqm_per_room: Optional[float] = field(default=None, init=False)
 
+    # New property tracking fields
+    is_new: bool = field(default=False, init=False)
+    first_seen_at: Optional[datetime] = None
+
     def __post_init__(self):
         """Calculate derived fields after initialization."""
         if self.price_per_sqm is None and self.price and self.square_meters and self.square_meters > 0:
@@ -58,6 +62,23 @@ class PropertyListing:
         if self.square_meters and self.rooms and self.rooms > 0:
             return self.square_meters / self.rooms
         return None
+
+    def mark_as_new(self, first_seen: Optional[datetime] = None) -> None:
+        """Mark property as new with timestamp."""
+        self.is_new = True
+        self.first_seen_at = first_seen or datetime.now()
+
+    def age_new_status(self, max_age_hours: int = 12) -> bool:
+        """Age the 'new' status based on time. Returns True if still new."""
+        if not self.is_new or not self.first_seen_at:
+            return False
+
+        age_hours = (datetime.now() -
+                     self.first_seen_at).total_seconds() / 3600
+        if age_hours > max_age_hours:
+            self.is_new = False
+
+        return self.is_new
 
     def is_valid(self) -> bool:
         """Check if property has minimum required data for analysis."""
@@ -99,13 +120,15 @@ class PropertyListing:
             'scraped_at': self.scraped_at,
             'value_score': self.value_score,
             'value_category': self.value_category,
-            'sqm_per_room': self.sqm_per_room
+            'sqm_per_room': self.sqm_per_room,
+            'is_new': self.is_new,
+            'first_seen_at': self.first_seen_at
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'PropertyListing':
         """Create PropertyListing from dictionary."""
-        # Handle datetime conversion
+        # Handle datetime conversion for scraped_at
         scraped_at = data.get('scraped_at')
         if isinstance(scraped_at, str):
             try:
@@ -113,7 +136,15 @@ class PropertyListing:
             except (ValueError, TypeError):
                 scraped_at = None
 
-        return cls(
+        # Handle datetime conversion for first_seen_at
+        first_seen_at = data.get('first_seen_at')
+        if isinstance(first_seen_at, str):
+            try:
+                first_seen_at = datetime.fromisoformat(first_seen_at)
+            except (ValueError, TypeError):
+                first_seen_at = None
+
+        property_listing = cls(
             id=data.get('id'),
             token=data.get('token'),
             price=data.get('price'),
@@ -131,8 +162,14 @@ class PropertyListing:
             floor=data.get('floor'),
             ad_type=data.get('ad_type'),
             full_url=data.get('full_url'),
-            scraped_at=scraped_at
+            scraped_at=scraped_at,
+            first_seen_at=first_seen_at
         )
+
+        # Set new property tracking fields after creation
+        property_listing.is_new = data.get('is_new', False)
+
+        return property_listing
 
 
 @dataclass

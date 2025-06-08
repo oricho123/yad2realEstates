@@ -70,8 +70,14 @@ class VisualizationCallbackManager:
             Returns:
                 Tuple of updated visualization components
             """
+            print("DEBUG: Visualization callback triggered")
+            print(f"DEBUG: current_data type: {type(current_data)}")
+            print(f"DEBUG: current_data is None: {current_data is None}")
             print(
-                f"DEBUG: Visualization callback triggered with {len(current_data) if current_data else 0} properties")
+                f"DEBUG: current_data length: {len(current_data) if current_data else 'N/A'}")
+            if current_data:
+                print(
+                    f"DEBUG: First few items: {current_data[:2] if len(current_data) >= 2 else current_data}")
             try:
                 # Convert current data back to DataFrame
                 if not current_data:
@@ -121,6 +127,10 @@ class VisualizationCallbackManager:
                 stats_calculator = StatisticalCalculator(filtered_df)
                 summary_stats = stats_calculator.calculate_summary_statistics()
 
+                # Count new properties
+                new_count = filtered_df.get(
+                    'is_new', pd.Series([False] * len(filtered_df))).sum()
+
                 # Return all visualizations
                 return (
                     charts['scatter_plot'],
@@ -133,7 +143,7 @@ class VisualizationCallbackManager:
                     charts['best_deals_table'],
                     charts['market_insights'],
                     self._create_summary_stats_display(
-                        summary_stats, len(filtered_df))
+                        summary_stats, len(filtered_df), new_count)
                 )
 
             except Exception as e:
@@ -169,13 +179,14 @@ class VisualizationCallbackManager:
             empty_div      # summary stats
         )
 
-    def _create_summary_stats_display(self, stats: Dict[str, Any], data_count: int) -> Any:
+    def _create_summary_stats_display(self, stats: Dict[str, Any], data_count: int, new_count: int = 0) -> Any:
         """
         Create the summary statistics display component.
 
         Args:
             stats: Summary statistics dictionary
             data_count: Number of properties in current view
+            new_count: Number of new properties in current view
 
         Returns:
             HTML component with summary statistics
@@ -199,6 +210,13 @@ class VisualizationCallbackManager:
                 html.Div([
                     html.H4("Properties", style=SummaryStyles.LABEL),
                     html.P(f"{data_count:,}", style=SummaryStyles.VALUE)
+                ], style=SummaryStyles.CARD),
+
+                # New properties card
+                html.Div([
+                    html.H4("New ⭐", style=SummaryStyles.LABEL),
+                    html.P(f"{new_count:,}", style={**SummaryStyles.VALUE,
+                           'color': '#28a745' if new_count > 0 else SummaryStyles.VALUE.get('color', '#333')})
                 ], style=SummaryStyles.CARD),
 
                 # Average price card
