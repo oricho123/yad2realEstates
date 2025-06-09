@@ -35,7 +35,7 @@ class PropertyScatterPlot:
 
         # Add enhancements
         self._add_median_lines(fig, plot_df)
-        self._update_styling_and_hover(fig, plot_df)
+        self._update_layout(fig)
 
         return fig
 
@@ -47,23 +47,45 @@ class PropertyScatterPlot:
 
     def _create_base_scatter_plot(self, plot_df: pd.DataFrame) -> go.Figure:
         """Create the base scatter plot with color categories and built-in trendline."""
-        return px.scatter(
+        # Ensure is_new column exists
+        if 'is_new' not in plot_df.columns:
+            plot_df = plot_df.copy()
+            plot_df['is_new'] = False
+
+        # Create a composite column to properly separate new vs regular properties
+        plot_df = plot_df.copy()
+        plot_df['category_type'] = plot_df.apply(
+            lambda row: f"NEW {row['value_category']}" if row['is_new'] else row['value_category'],
+            axis=1
+        )
+
+        # Create scatter plot with the composite category (no automatic boolean suffixes!)
+        fig = px.scatter(
             plot_df,
             x='square_meters',
             y='price',
-            color='value_category',
+            color='category_type',
             size='rooms',
             size_max=ChartConfiguration.SIZE_MAX,
-            color_discrete_map=self._get_value_category_colors(),
             trendline="lowess",
             trendline_scope="overall",
             labels={
                 'square_meters': 'Square Meters',
                 'price': 'Price (₪)',
-                'value_category': 'Market Value Analysis'
+                'category_type': 'Market Value Analysis'
             },
             title='Property Size vs Price with Market Value Analysis'
         )
+
+        # Prepare hover data once
+        custom_data = [PropertyHoverData.from_row(
+            row).to_list() for _, row in plot_df.iterrows()]
+
+        # Apply styling and hover data to all traces
+        fig.for_each_trace(lambda trace: self._style_and_hover_trace(
+            trace, plot_df, custom_data))
+
+        return fig
 
     def _calculate_value_analysis(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate LOWESS trend line and value scores for properties using centralized utility."""
@@ -100,28 +122,52 @@ class PropertyScatterPlot:
             annotation_position="right"
         )
 
-    def _update_styling_and_hover(self, fig: go.Figure, df: pd.DataFrame) -> None:
-        """Update scatter plot styling and hover templates."""
-        # Prepare hover data
-        custom_data = [PropertyHoverData.from_row(
-            row).to_list() for _, row in df.iterrows()]
+    def _style_and_hover_trace(self, trace, plot_df: pd.DataFrame, custom_data: list) -> None:
+        """Apply styling and hover data to a single trace."""
+        if hasattr(trace, 'mode') and trace.mode == 'markers':
+            category_name = trace.name
+            is_new_trace = category_name.startswith('NEW ')
 
-        # Update each trace with correct hover data mapping
-        for trace in fig.data:
-            if hasattr(trace, 'marker') and hasattr(trace, 'x'):
-                trace_custom_data = self._get_trace_hover_data(
-                    trace, df, custom_data)
-                trace.customdata = trace_custom_data
+            # Get hover data for this trace
+            trace_custom_data = self._get_trace_hover_data(
+                trace, plot_df, custom_data)
+            trace.customdata = trace_custom_data
+
+            if is_new_trace:
+                # Extract base category name (remove "NEW " prefix)
+                base_category = category_name[4:]  # Remove "NEW "
+                color_map = self._get_value_category_colors()
+
+                # Set hover template for new properties
+                base_template = HoverTemplate.build_property_hover_template()
+                new_template = '🆕 NEW<br>' + base_template
+
                 trace.update(
                     marker=dict(
+                        symbol='diamond',
+                        # fallback to gray
+                        color=color_map.get(base_category, '#6c757d'),
+                        line=dict(width=1, color='gold'),
+                        opacity=0.9
+                    ),
+                    meta={'is_new_property': True},
+                    hovertemplate=new_template
+                )
+            else:
+                # Regular properties
+                color_map = self._get_value_category_colors()
+                trace.update(
+                    marker=dict(
+                        symbol='circle',
+                        # fallback to gray
+                        color=color_map.get(category_name, '#6c757d'),
                         opacity=ChartConfiguration.OPACITY,
                         line=dict(width=ChartConfiguration.LINE_WIDTH,
                                   color=ChartConfiguration.LINE_COLOR)
                     ),
+                    meta={'is_new_property': False},
                     hovertemplate=HoverTemplate.build_property_hover_template()
                 )
-
-        self._update_layout(fig)
 
     def _get_trace_hover_data(self, trace, df: pd.DataFrame, custom_data: list) -> list:
         """Get correctly mapped hover data for a specific trace."""

@@ -125,3 +125,7 @@ class PropertyConditionMapping:
     }
 
     DEFAULT_CONDITION = 'לא ידוע'
+
+
+# Note: New property configuration is handled in assets/simple_storage.js
+# All new property detection logic is client-side for simplicity
