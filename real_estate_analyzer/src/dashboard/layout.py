@@ -332,9 +332,9 @@ class DashboardLayoutManager:
             dcc.Store(id='loading-state', storage_type='memory',
                       data={'loading': False}),
 
-            # Auto-load trigger (fires once on page load)
-            dcc.Interval(id='auto-load-trigger', interval=1000,
-                         n_intervals=0, max_intervals=1, disabled=False)
+            # Initialization trigger (fires once on page load without interval)
+            dcc.Store(id='init-trigger', storage_type='memory',
+                      data={'initialized': False})
         ]
 
     def _get_analytics_chart_style(self) -> Dict[str, Any]:

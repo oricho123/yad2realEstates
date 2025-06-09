@@ -28,7 +28,7 @@ class ScrapingCallbackManager:
         self._register_storage_integration_callback()
         self._register_button_state_callback()
         self._register_load_saved_filters_callback()
-        self._register_interval_disable_callback()
+        self._register_initialization_callback()
 
     def _register_scraping_callback(self) -> None:
         """Register the main scraping callback for browser storage."""
@@ -237,7 +237,7 @@ class ScrapingCallbackManager:
 
         clientside_callback(
             """
-            function(scraped_data_payload, n_intervals) {
+            function(scraped_data_payload, init_data) {
                 // Shared utility to load storage data with error handling
                 function loadStorageData() {
                     if (!window.dash_clientside || !window.dash_clientside.storage) return null;
@@ -285,11 +285,8 @@ class ScrapingCallbackManager:
                 }
 
                 // Handle auto-load on page startup ONLY if no new data was scraped
-                if (n_intervals === 1) {
-                    if (window._data_loaded) {
-                        return window.dash_clientside.no_update;
-                    }
-                    
+                // Check if initialization has been triggered and data hasn't been loaded yet
+                if (init_data && init_data.initialized && !window._data_loaded) {
                     const stored_data = loadStorageData();
                     if (stored_data && stored_data.data && stored_data.data.length > 0) {
                         console.log(`Auto-loaded ${stored_data.data.length} properties on page load`);
@@ -304,7 +301,7 @@ class ScrapingCallbackManager:
             """,
             Output('current-dataset', 'data'),
             [Input('scraped-data-store', 'data'),
-             Input('auto-load-trigger', 'n_intervals')],
+             Input('init-trigger', 'data')],
             prevent_initial_call=False  # Allow initial call for auto-load
         )
 
@@ -350,7 +347,7 @@ class ScrapingCallbackManager:
 
         clientside_callback(
             """
-            function(n_intervals) {
+            function(init_data) {
                 // Shared utility to load storage data with error handling
                 function loadStorageData() {
                     if (!window.dash_clientside || !window.dash_clientside.storage) return null;
@@ -369,7 +366,8 @@ class ScrapingCallbackManager:
                 }
                 
                 
-                if (n_intervals !== 1 || window._filters_loaded) {
+                // Only run when initialization is triggered and filters haven't been loaded yet
+                if (!init_data || !init_data.initialized || window._filters_loaded) {
                     return Array(8).fill(window.dash_clientside.no_update);
                 }
                 
@@ -420,21 +418,22 @@ class ScrapingCallbackManager:
              Output('search-max-sqm', 'value'),
              Output('search-min-floor', 'value'),
              Output('search-max-floor', 'value')],
-            # Only trigger on page load
-            [Input('auto-load-trigger', 'n_intervals')],
+            [Input('init-trigger', 'data')],
             prevent_initial_call=False  # Allow initial call for auto-load
         )
 
-    def _register_interval_disable_callback(self) -> None:
-        """Register callback to disable the auto-load interval after first run."""
+    def _register_initialization_callback(self) -> None:
+        """Register callback to trigger initialization once layout is loaded."""
 
         clientside_callback(
             """
-            function(n_intervals) {
-                return n_intervals >= 1;  // Disable after first trigger
+            function(current_dataset) {
+                // This callback fires once when the current-dataset store is created
+                // We use it to trigger initialization logic
+                return {'initialized': true};
             }
             """,
-            Output('auto-load-trigger', 'disabled'),
-            [Input('auto-load-trigger', 'n_intervals')],
+            Output('init-trigger', 'data'),
+            Input('current-dataset', 'id'),
             prevent_initial_call=False
         )

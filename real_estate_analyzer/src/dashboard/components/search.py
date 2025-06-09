@@ -257,7 +257,7 @@ class SearchComponentManager:
         # Handle location selection updates
         clientside_callback(
             """
-            function(n_intervals) {
+            function(trigger_value) {
                 // Listen for custom autocomplete selection events
                 const input = document.getElementById("autocomplete-input");
                 if (input && !input.hasAttribute('data-listener-added')) {
