@@ -253,10 +253,6 @@ window.dash_clientside.storage.detect_new_properties = function (
         // Truly new property - never seen before
         seenIndex[propId] = {
           first_seen: now.toISOString(),
-          neighborhood: prop.neighborhood || "",
-          price_range: prop.price
-            ? Math.round(prop.price / 100000) * 100000
-            : 0,
         };
         newCount++;
 
@@ -449,7 +445,7 @@ const PROPERTY_SEEN_KEY = "real_estate_seen_index";
 | Storage Key              | Purpose                    | Behavior                                | Size Impact              |
 | ------------------------ | -------------------------- | --------------------------------------- | ------------------------ |
 | `real_estate_data`       | **Current search results** | **Override on each search** (unchanged) | ~50KB per search         |
-| `real_estate_seen_index` | **New property detection** | Grows incrementally                     | ~2KB per 1000 properties |
+| `real_estate_seen_index` | **New property detection** | Grows incrementally                     | ~1KB per 1000 properties |
 
 ### Key Simplifications
 

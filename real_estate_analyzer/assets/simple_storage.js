@@ -172,10 +172,6 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
             // Truly new property - never seen before
             seenIndex[propId] = {
               first_seen: now.toISOString(),
-              neighborhood: prop.neighborhood || "",
-              price_range: prop.price
-                ? Math.round(prop.price / 100000) * 100000
-                : 0,
             };
             newCount++;
           }
