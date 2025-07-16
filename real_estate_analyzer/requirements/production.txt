@@ -1,0 +1,26 @@
+# Production requirements - includes base requirements plus production-specific packages
+-r base.txt
+
+# Production web server with better performance
+gunicorn[gevent]>=21.2.0
+
+# Process management
+supervisor>=4.2.0
+
+# Monitoring and error tracking
+sentry-sdk[flask]>=1.32.0
+
+# Performance monitoring
+prometheus-flask-exporter>=0.23.0
+
+# SSL/TLS support
+pyOpenSSL>=23.2.0
+
+# Database connection pooling (for future database features)
+psycopg2-binary>=2.9.0
+
+# Redis for caching (optional)
+redis>=5.0.0
+
+# Email notifications (for alerts)
+flask-mail>=0.9.1 

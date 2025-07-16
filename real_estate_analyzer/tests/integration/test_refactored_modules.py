@@ -214,7 +214,7 @@ def test_configuration():
     print("✅ Constants are properly configured")
 
     # Test settings
-    AppSettings.ensure_directories()
+    AppSettings.create_directories()
     assert AppSettings.DATA_DIRECTORY.exists(), "Data directory should be created"
     print("✅ Settings work correctly")
 

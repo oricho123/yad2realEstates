@@ -2,9 +2,8 @@
 """Test script to verify that the click functionality works properly."""
 
 from src.data.models import PropertyDataFrame
-from src.dashboard.app import create_real_estate_app
+from app import create_real_estate_app
 from datetime import datetime
-import numpy as np
 import pandas as pd
 import sys
 from pathlib import Path
@@ -100,11 +99,10 @@ def test_click_functionality():
     # Check if interaction callbacks are registered
     print("\n🔧 Checking callback registration...")
     try:
-        from src.dashboard.callbacks.interactions import InteractionCallbackManager
         print("✅ InteractionCallbackManager imported successfully")
 
         # Check if the app has the necessary components
-        app_instance = app.get_dash_app()
+        app_instance = app  # The new factory returns the Dash app directly
         print(f"✅ Dash app instance created: {type(app_instance)}")
 
         print("\n📝 Click functionality test summary:")
@@ -113,8 +111,8 @@ def test_click_functionality():
         print("   ✅ Dashboard app created successfully")
         print("   ✅ Client-side callbacks should be registered")
 
-        print(f"\n🌐 Run the app and test clicking on scatter plot or map points!")
-        print(f"   Expected behavior: Clicking should open URLs in new tabs")
+        print("\n🌐 Run the app and test clicking on scatter plot or map points!")
+        print("   Expected behavior: Clicking should open URLs in new tabs")
         print(f"   Test URLs: {list(df['full_url'].unique())}")
 
     except Exception as e:

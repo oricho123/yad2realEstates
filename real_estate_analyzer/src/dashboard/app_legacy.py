@@ -124,31 +124,14 @@ class RealEstateDashboardApp:
                 )
 
                 if response.status_code == 200:
-                    try:
-                        if not response.text.strip():
-                            print("Yad2 API returned empty response")
-                            return jsonify({"cities": [], "areas": [], "hoods": [], "topAreas": [], "streets": []})
-
-                        response_data = response.json()
-                        return jsonify(response_data)
-                    except ValueError as json_error:
-                        print(
-                            f"Yad2 API returned invalid JSON. Status: {response.status_code}")
-                        print(f"Response content: {response.text[:500]}...")
-                        print(f"JSON parse error: {json_error}")
-                        return jsonify({"cities": [], "areas": [], "hoods": [], "topAreas": [], "streets": []})
+                    return jsonify(response.json())
                 else:
                     print(
                         f"Yad2 API returned status code: {response.status_code}")
-                    print(f"Response content: {response.text[:500]}...")
                     return jsonify({"cities": [], "areas": [], "hoods": [], "topAreas": [], "streets": []}), 500
 
-            except requests.RequestException as req_error:
-                print(
-                    f"Request error when fetching from Yad2 API: {req_error}")
-                return jsonify({"cities": [], "areas": [], "hoods": [], "topAreas": [], "streets": []}), 500
             except Exception as e:
-                print(f"Unexpected error fetching from Yad2 API: {e}")
+                print(f"Error fetching from Yad2 API: {e}")
                 return jsonify({"cities": [], "areas": [], "hoods": [], "topAreas": [], "streets": []}), 500
 
     def run(self, debug: bool = None, port: int = None, host: str = None) -> None:
@@ -171,7 +154,7 @@ class RealEstateDashboardApp:
         return self.app
 
 
-def create_real_estate_app(initial_data: pd.DataFrame) -> dash.Dash:
+def create_real_estate_app(initial_data: pd.DataFrame) -> RealEstateDashboardApp:
     """
     Factory function to create a configured Real Estate Dashboard application.
 
@@ -179,12 +162,6 @@ def create_real_estate_app(initial_data: pd.DataFrame) -> dash.Dash:
         initial_data: DataFrame with property data to initialize the dashboard
 
     Returns:
-        The configured Dash app instance.
+        Configured RealEstateDashboardApp instance
     """
-    dashboard = RealEstateDashboardApp(initial_data)
-    return dashboard.get_dash_app()
-
-
-# Expose the server for Gunicorn
-app_instance = create_real_estate_app(pd.DataFrame())
-server = app_instance.server
+    return RealEstateDashboardApp(initial_data)

@@ -1,5 +1,11 @@
-"""Application settings and environment configuration."""
+"""Application settings and environment configuration.
+
+This module provides environment-based configuration management following
+Python web application best practices.
+"""
+
 import os
+import logging
 from pathlib import Path
 
 
@@ -21,17 +27,19 @@ except Exception as e:
     print(f"⚠️  Error loading .env file: {e}")
 
 
-class AppSettings:
-    """Main application settings."""
+class BaseConfig:
+    """Base configuration with common settings."""
 
     # Environment
-    DEBUG_MODE = os.getenv('DEBUG', 'False').lower() == 'true'
-    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+    ENV = os.getenv('FLASK_ENV', 'development')
+    DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+    TESTING = False
 
     # Directories
     BASE_DIR = Path(__file__).parent.parent.parent
     DATA_DIRECTORY = BASE_DIR / 'data' / 'scraped'
     LOG_DIRECTORY = BASE_DIR / 'logs'
+    ASSETS_DIRECTORY = BASE_DIR / 'assets'
 
     # Server
     SERVER_HOST = os.getenv('HOST', '127.0.0.1')
@@ -41,125 +49,162 @@ class AppSettings:
     CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'True').lower() == 'true'
     CACHE_TIMEOUT = int(os.getenv('CACHE_TIMEOUT', '300'))
 
-    # API
-    REQUEST_TIMEOUT = 30
-    RATE_LIMIT_DELAY = 1.0
+    # API Configuration
+    REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
+    RATE_LIMIT_DELAY = float(os.getenv('RATE_LIMIT_DELAY', '1.0'))
+    MAX_CONCURRENT_REQUESTS = int(os.getenv('MAX_CONCURRENT_REQUESTS', '5'))
+    BATCH_SIZE = int(os.getenv('BATCH_SIZE', '1000'))
+    MAX_RETRIES = int(os.getenv('MAX_RETRIES', '3'))
 
-    # Data processing
-    MAX_CONCURRENT_REQUESTS = 5
-    BATCH_SIZE = 1000
+    # Logging
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
+    LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
-    # Browser storage settings
-    BROWSER_STORAGE_KEY = 'real_estate_analyzer'
-    MAX_DATASETS_PER_USER = 10
-    MAX_STORAGE_SIZE_MB = 50
-
-    # Simple storage settings
-    SIMPLE_STORAGE_KEY = 'real_estate_data'
+    # Security (for future use)
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
     @classmethod
-    def ensure_directories(cls):
-        """Ensure required directories exist."""
+    def init_app(cls, app):
+        """Initialize application with this configuration."""
+        pass
+
+    @classmethod
+    def create_directories(cls):
+        """Create necessary directories."""
         cls.DATA_DIRECTORY.mkdir(parents=True, exist_ok=True)
         cls.LOG_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
-    @classmethod
-    def get_data_file_path(cls, filename: str) -> Path:
-        """Get full path for a data file."""
-        return cls.DATA_DIRECTORY / filename
+
+class DevelopmentConfig(BaseConfig):
+    """Development configuration."""
+
+    DEBUG = True
+    SERVER_HOST = '127.0.0.1'
+    LOG_LEVEL = 'DEBUG'
+    CACHE_TIMEOUT = 60  # Shorter cache for development
 
     @classmethod
-    def get_log_file_path(cls, filename: str) -> Path:
-        """Get full path for a log file."""
-        return cls.LOG_DIRECTORY / filename
+    def init_app(cls, app):
+        """Initialize development-specific settings."""
+        BaseConfig.init_app(app)
+
+        # Setup development logging
+        logging.basicConfig(
+            level=getattr(logging, cls.LOG_LEVEL),
+            format=cls.LOG_FORMAT
+        )
+
+
+class ProductionConfig(BaseConfig):
+    """Production configuration."""
+
+    DEBUG = False
+    SERVER_HOST = os.getenv('HOST', '0.0.0.0')
+    SERVER_PORT = int(os.getenv('PORT', '8000'))
+    LOG_LEVEL = 'WARNING'
+
+    # Production-specific settings
+    CACHE_TIMEOUT = 3600  # Longer cache for production
+    REQUEST_TIMEOUT = 60  # Longer timeout for production
+
+    @classmethod
+    def init_app(cls, app):
+        """Initialize production-specific settings."""
+        BaseConfig.init_app(app)
+
+        # Setup production logging
+        import logging.handlers
+
+        cls.LOG_DIRECTORY.mkdir(parents=True, exist_ok=True)
+
+        file_handler = logging.handlers.RotatingFileHandler(
+            cls.LOG_DIRECTORY / 'app.log',
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=10
+        )
+        file_handler.setLevel(getattr(logging, cls.LOG_LEVEL))
+        file_handler.setFormatter(logging.Formatter(cls.LOG_FORMAT))
+
+        logger = logging.getLogger()
+        logger.addHandler(file_handler)
+        logger.setLevel(getattr(logging, cls.LOG_LEVEL))
+
+
+class TestingConfig(BaseConfig):
+    """Testing configuration."""
+
+    TESTING = True
+    DEBUG = True
+    SERVER_PORT = 8052  # Different port for testing
+    CACHE_ENABLED = False  # Disable cache for testing
+    LOG_LEVEL = 'DEBUG'
+
+    # Test-specific directories
+    DATA_DIRECTORY = BaseConfig.BASE_DIR / 'test_data'
+
+    @classmethod
+    def init_app(cls, app):
+        """Initialize testing-specific settings."""
+        BaseConfig.init_app(app)
+
+        # Setup test logging
+        logging.basicConfig(
+            level=getattr(logging, cls.LOG_LEVEL),
+            format=cls.LOG_FORMAT
+        )
+
+
+# Configuration registry
+config = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'testing': TestingConfig,
+    'default': DevelopmentConfig
+}
+
+
+def get_config(config_name: str = None) -> BaseConfig:
+    """
+    Get configuration class based on environment.
+
+    Args:
+        config_name: Configuration name ('development', 'production', 'testing')
+
+    Returns:
+        Configuration class instance
+    """
+    if config_name is None:
+        config_name = os.getenv('FLASK_ENV', 'development')
+
+    return config.get(config_name, config['default'])
+
+
+# Legacy compatibility - keeping AppSettings for backward compatibility
+AppSettings = DevelopmentConfig()
+
+# Update AppSettings based on current environment
+current_env = os.getenv('FLASK_ENV', 'development')
+if current_env in config:
+    AppSettings = config[current_env]()
 
 
 class DashConfiguration:
-    """Dash-specific configuration."""
+    """Dash-specific configuration settings."""
 
-    # App settings
-    SUPPRESS_CALLBACK_EXCEPTIONS = True
-    SERVE_LOCALLY = True
-
-    # External stylesheets
     EXTERNAL_STYLESHEETS = [
-        {
-            'href': 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-            'rel': 'stylesheet'
-        },
-        {
-            'href': 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
-            'rel': 'stylesheet'
-        }
+        'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
+        'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css'
     ]
 
-    # Meta tags
+    SUPPRESS_CALLBACK_EXCEPTIONS = True
+
     META_TAGS = [
-        {"name": "viewport", "content": "width=device-width, initial-scale=1"}
+        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
+        {"name": "description",
+            "content": "Real Estate Price Analyzer - Interactive dashboard for property market analysis"},
+        {"name": "author", "content": "Real Estate Analytics Team"},
+        {"property": "og:title", "content": "Real Estate Price Analyzer"},
+        {"property": "og:description",
+            "content": "Analyze real estate market data with interactive visualizations"},
+        {"property": "og:type", "content": "website"}
     ]
-
-
-class LoggingConfiguration:
-    """Logging configuration."""
-
-    LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    LOG_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
-
-    # Log file rotation
-    MAX_LOG_SIZE = 10 * 1024 * 1024  # 10MB
-    BACKUP_COUNT = 5
-
-    @classmethod
-    def get_logging_config(cls) -> dict:
-        """Get logging configuration dictionary."""
-        return {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'formatters': {
-                'standard': {
-                    'format': cls.LOG_FORMAT,
-                    'datefmt': cls.LOG_DATE_FORMAT
-                },
-            },
-            'handlers': {
-                'console': {
-                    'level': AppSettings.LOG_LEVEL,
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'standard',
-                },
-                'file': {
-                    'level': 'INFO',
-                    'class': 'logging.handlers.RotatingFileHandler',
-                    'filename': AppSettings.get_log_file_path('real_estate_analyzer.log'),
-                    'maxBytes': cls.MAX_LOG_SIZE,
-                    'backupCount': cls.BACKUP_COUNT,
-                    'formatter': 'standard',
-                },
-            },
-            'loggers': {
-                '': {  # root logger
-                    'handlers': ['console', 'file'],
-                    'level': AppSettings.LOG_LEVEL,
-                    'propagate': False
-                }
-            }
-        }
-
-
-class EnvironmentConfig:
-    """Environment-specific configuration."""
-
-    @classmethod
-    def is_development(cls) -> bool:
-        """Check if running in development mode."""
-        return AppSettings.DEBUG_MODE
-
-    @classmethod
-    def is_production(cls) -> bool:
-        """Check if running in production mode."""
-        return not AppSettings.DEBUG_MODE
-
-    @classmethod
-    def get_environment_name(cls) -> str:
-        """Get current environment name."""
-        return "development" if cls.is_development() else "production"

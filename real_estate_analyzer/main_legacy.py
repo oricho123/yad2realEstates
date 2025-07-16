@@ -7,7 +7,7 @@ import argparse
 import sys
 
 # Import local modules using relative imports
-from src.dashboard.app import create_real_estate_app
+from app import create_real_estate_app
 from src.data.loaders import PropertyDataLoader
 from src.config.settings import AppSettings
 

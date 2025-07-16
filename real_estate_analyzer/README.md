@@ -55,8 +55,11 @@ _Investment decision support with recommendations and market intelligence_
 
 - Python 3.8 or higher
 - Git
+- Docker (optional, for containerized deployment)
 
 ### Installation
+
+#### Option 1: Package Installation (Recommended)
 
 1. **Clone the repository**
 
@@ -65,45 +68,129 @@ _Investment decision support with recommendations and market intelligence_
    cd real-estate-analyzer
    ```
 
-2. **Install dependencies**
+2. **Install the package**
 
    ```bash
+   pip install -e .
+   ```
+
+3. **Initialize environment**
+
+   ```bash
+   real-estate-analyzer init
+   ```
+
+4. **Start the application**
+
+   ```bash
+   real-estate-analyzer serve
+   ```
+
+#### Option 2: Direct Installation
+
+1. **Clone and install dependencies**
+
+   ```bash
+   git clone https://github.com/yourusername/real-estate-analyzer.git
+   cd real-estate-analyzer
    pip install -r requirements.txt
    ```
 
-3. **Set up environment** (optional)
+2. **Start the application**
 
    ```bash
-   python setup_env.py
+   python cli.py serve
    ```
 
-4. **Run the application**
+#### Option 3: Docker (Production)
+
+1. **Using Docker Compose**
 
    ```bash
-   python main.py
+   git clone https://github.com/yourusername/real-estate-analyzer.git
+   cd real-estate-analyzer
+   docker-compose up -d
    ```
 
-5. **Open your browser**
+2. **Access the application**
    ```
-   http://localhost:8051
+   http://localhost:80
    ```
+
+### Quick Commands
+
+After installation, you can use these commands:
+
+```bash
+# Development server
+make run-dev
+# or
+real-estate-analyzer serve --debug
+
+# Production server
+make run-prod
+# or
+gunicorn wsgi:application
+
+# System health check
+real-estate-analyzer doctor
+
+# View all available commands
+real-estate-analyzer --help
+```
 
 ## 📖 Usage Guide
 
 ### Starting the Dashboard
 
+#### Using the CLI (Recommended)
+
 ```bash
 # Basic usage
-python main.py
+real-estate-analyzer serve
 
-# Custom port
-python main.py --port 8080
+# Custom port and host
+real-estate-analyzer serve --port 8080 --host 0.0.0.0
 
 # Debug mode
-python main.py --debug
+real-estate-analyzer serve --debug
 
-# Custom data directory
-python main.py --data-dir /path/to/data
+# Get help
+real-estate-analyzer serve --help
+```
+
+#### Using Python directly
+
+```bash
+# Development server
+python cli.py serve --debug
+
+# Production server
+gunicorn wsgi:application
+```
+
+#### Using Make commands
+
+```bash
+# Development
+make run-dev
+
+# Production
+make run-prod
+
+# Docker
+make docker-build
+make docker-run
+```
+
+#### System Health Check
+
+```bash
+# Check system status
+real-estate-analyzer doctor
+
+# Initialize environment
+real-estate-analyzer init
 ```
 
 ### Scraping New Data
