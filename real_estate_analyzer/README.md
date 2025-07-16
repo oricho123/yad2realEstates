@@ -132,6 +132,14 @@ make run-prod
 # or
 gunicorn wsgi:application
 
+# Production with configuration file
+make run-prod-config
+# or
+gunicorn -c gunicorn.conf.py wsgi:application
+
+# Local production testing
+make run-prod-local
+
 # System health check
 real-estate-analyzer doctor
 
@@ -167,6 +175,12 @@ python cli.py serve --debug
 
 # Production server
 gunicorn wsgi:application
+
+# Production with configuration file
+gunicorn -c gunicorn.conf.py wsgi:application
+
+# Production with custom host/port
+gunicorn --bind 0.0.0.0:8000 wsgi:application
 ```
 
 #### Using Make commands
@@ -175,8 +189,10 @@ gunicorn wsgi:application
 # Development
 make run-dev
 
-# Production
-make run-prod
+# Production (with environment variables)
+make run-prod                    # Uses HOST and PORT env vars (default: 0.0.0.0:8000)
+make run-prod-local             # Local production: 127.0.0.1:8051
+make run-prod-config            # Uses gunicorn.conf.py for advanced config
 
 # Docker
 make docker-build
@@ -269,14 +285,64 @@ DATA_DIRECTORY=data/scraped
 EXPORT_DIRECTORY=data/exports
 
 # Server settings
-SERVER_HOST=0.0.0.0
-SERVER_PORT=8051
+HOST=0.0.0.0
+PORT=8051
 DEBUG_MODE=False
+
+# Production Gunicorn Settings
+WORKERS=4
+WORKER_CLASS=gevent
+WORKER_CONNECTIONS=1000
+TIMEOUT=120
 
 # Scraping settings
 REQUEST_TIMEOUT=30
 RATE_LIMIT_DELAY=1.0
 MAX_RETRIES=3
+```
+
+### Production Deployment Options
+
+#### Option 1: Using Make Commands (Recommended)
+
+```bash
+# Basic production
+make run-prod
+
+# Local production testing
+make run-prod-local
+
+# Advanced configuration
+make run-prod-config
+```
+
+#### Option 2: Direct Gunicorn Commands
+
+```bash
+# Basic production
+gunicorn wsgi:application
+
+# With configuration file
+gunicorn -c gunicorn.conf.py wsgi:application
+
+# Custom host/port
+gunicorn --bind 0.0.0.0:8000 --workers 4 wsgi:application
+
+# With environment variables
+HOST=0.0.0.0 PORT=8000 WORKERS=4 gunicorn wsgi:application
+```
+
+#### Option 3: Environment Variables
+
+```bash
+# Set in .env file or export
+export HOST=0.0.0.0
+export PORT=8000
+export WORKERS=4
+export WORKER_CLASS=gevent
+
+# Then run
+gunicorn wsgi:application
 ```
 
 ## 🏗️ Project Structure
