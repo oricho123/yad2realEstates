@@ -3,21 +3,106 @@
 .env.local
 *.env.*
 
-# Python cache
+# Python cache and bytecode
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+cover/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
 
 # Logs
 logs/
 *.log
+*.log.*
 
 # Data files
 data/scraped/*.csv
 data/scraped/*.json
 
-# IDE
+# Temporary directories and files
+*_temp/
+real_estate_analyzer_temp/
+temp/
+tmp/
+
+# IDE files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # MacOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Backup files
+*.bak
+*.backup
+
+# Docker
+.dockerignore
+
+# Virtual environments (just in case)
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
