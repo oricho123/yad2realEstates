@@ -8,6 +8,7 @@ Usage:
     uwsgi --module wsgi:application
 """
 
+from src.config.settings import get_config
 from app import create_app
 import os
 import sys
@@ -17,10 +18,14 @@ from pathlib import Path
 package_root = Path(__file__).parent
 sys.path.insert(0, str(package_root))
 
+# Import configuration to ensure .env file is loaded
 
 # Set production environment if not already set
 if not os.getenv('FLASK_ENV'):
     os.environ['FLASK_ENV'] = 'production'
+
+# Get configuration (this will load .env file)
+config = get_config('production')
 
 # Create application instance
 app = create_app(config_name='production')
@@ -33,8 +38,9 @@ server = application
 
 if __name__ == "__main__":
     # This allows running the WSGI file directly for testing
+    # Use the configuration values that have been loaded from .env
     application.run(
-        host=os.getenv('HOST', '0.0.0.0'),
-        port=int(os.getenv('PORT', 8000)),
+        host=config.SERVER_HOST,
+        port=config.SERVER_PORT,
         debug=False
     )

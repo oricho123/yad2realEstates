@@ -1,9 +1,9 @@
 """Filter callback handlers for the dashboard."""
 
 import pandas as pd
-from dash import callback, Input, Output
+from dash import Input, Output
 import dash
-from typing import Tuple, List, Dict, Any
+from typing import Tuple
 
 from src.analysis.filters import PropertyDataFilter
 

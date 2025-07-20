@@ -183,8 +183,3 @@ def create_real_estate_app(initial_data: pd.DataFrame) -> dash.Dash:
     """
     dashboard = RealEstateDashboardApp(initial_data)
     return dashboard.get_dash_app()
-
-
-# Expose the server for Gunicorn
-app_instance = create_real_estate_app(pd.DataFrame())
-server = app_instance.server

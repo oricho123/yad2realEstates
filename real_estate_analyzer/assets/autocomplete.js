@@ -11,6 +11,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
         "placeholder",
         "Type city or area name (minimum 2 letters)..."
       );
+      input.setAttribute("autocomplete", "off");
       input.style.cssText = `
                 width: 100%;
                 padding: 12px;

@@ -9,6 +9,24 @@ Usage:
 
 import os
 import multiprocessing
+from pathlib import Path
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+
+    # Look for .env file in the same directory as this config file
+    env_path = Path(__file__).parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"✅ Gunicorn loaded environment variables from {env_path}")
+    else:
+        print(
+            f"ℹ️  No .env file found at {env_path} - using system environment variables")
+except ImportError:
+    print("⚠️  python-dotenv not installed. Install with: pip install python-dotenv")
+except Exception as e:
+    print(f"⚠️  Error loading .env file in gunicorn.conf.py: {e}")
 
 # Server socket
 bind = f"{os.getenv('HOST', '0.0.0.0')}:{os.getenv('PORT', '8000')}"
